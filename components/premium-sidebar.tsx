@@ -66,13 +66,8 @@ const getNavigation = (lowStockCount: number = 0, outOfStockCount: number = 0): 
   {
     section: "Main",
     items: [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }, // Admin only
-      { name: "Operations Dashboard", href: "/dashboard/operations", icon: LayoutDashboard }, // Operations + dept-manager
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "Point of Sale (POS)", href: "/dashboard/pos", icon: ShoppingCart },
-      { name: "Packing Queue", href: "/dashboard/packing-queue", icon: Package },
-      { name: "Track Orders", href: "/dashboard/track-orders", icon: ShoppingCart },
-      { name: "Internal Usage", href: "/dashboard/internal-usage", icon: Users },
-      { name: "Team Performance", href: "/dashboard/agent-performance", icon: BarChart2 }, // dept-manager only
     ],
   },
   {
@@ -96,17 +91,10 @@ const getNavigation = (lowStockCount: number = 0, outOfStockCount: number = 0): 
     ],
   },
   {
-    section: "Analytics",
+    section: "Reports",
     items: [
-      { name: "Sales Channels", href: "/dashboard/sales-channels", icon: TrendingUp },
-      { name: "Sales Analytics", href: "/dashboard/analytics", icon: TrendingUp },
-      { name: "Business Insights", href: "/dashboard/insights", icon: Brain },
-      { name: "Reports", href: "/dashboard/reports", icon: FileBarChart2 },
+      { name: "Sales", href: "/dashboard/sales", icon: FileBarChart2 },
     ],
-  },
-  {
-    section: "CRM",
-    items: [{ name: "Business Contacts", href: "/dashboard/business-contacts", icon: Users }],
   },
   {
     section: "System",
@@ -666,8 +654,6 @@ export function PremiumSidebar({ onNavClick, mobileOpen = false, onMobileClose, 
                               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                                 {currentUser?.role === 'admin' ? 'Main Admin' : 
                                  currentUser?.role === 'logistics-admin' ? 'Logistics Admin' : 
-                                 currentUser?.role === 'operations' ? 'Department User' : 
-                                 currentUser?.role === 'dept-manager' ? 'Department Manager' :
                                  currentUser?.role?.charAt(0).toUpperCase() + currentUser?.role?.slice(1)}
                               </p>
                             </div>
@@ -740,8 +726,6 @@ export function PremiumSidebar({ onNavClick, mobileOpen = false, onMobileClose, 
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {currentUser?.role === 'admin' ? 'Main Admin' : 
                      currentUser?.role === 'logistics-admin' ? 'Logistics Admin' : 
-                     currentUser?.role === 'operations' ? 'Department User' : 
-                     currentUser?.role === 'dept-manager' ? 'Department Manager' :
                      currentUser?.role?.charAt(0).toUpperCase() + currentUser?.role?.slice(1)}
                   </p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Click to open menu</p>
@@ -818,8 +802,6 @@ export function PremiumSidebar({ onNavClick, mobileOpen = false, onMobileClose, 
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           {currentUser?.role === 'admin' ? 'Main Admin' : 
                            currentUser?.role === 'logistics-admin' ? 'Logistics Admin' : 
-                           currentUser?.role === 'operations' ? 'Department User' : 
-                           currentUser?.role === 'dept-manager' ? 'Department Manager' :
                            currentUser?.role?.charAt(0).toUpperCase() + currentUser?.role?.slice(1)}
                         </p>
                       </div>

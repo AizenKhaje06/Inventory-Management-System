@@ -672,7 +672,7 @@ export function generateEmailTemplate(data: ReportData): string {
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/track-orders" class="button">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/sales" class="button">
               View Online Dashboard
             </a>
           </div>

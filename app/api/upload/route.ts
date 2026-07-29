@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
 import { withRoles } from "@/lib/api-helpers"
 
-export const POST = withRoles(['admin', 'operations', 'logistics-admin', 'dept-manager'], async (request: NextRequest) => {
+export const POST = withRoles(['admin', 'logistics-admin'], async (request: NextRequest) => {
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File
@@ -89,7 +89,7 @@ export const POST = withRoles(['admin', 'operations', 'logistics-admin', 'dept-m
   }
 })
 
-export const DELETE = withRoles(['admin', 'operations', 'logistics-admin', 'dept-manager'], async (request: NextRequest) => {
+export const DELETE = withRoles(['admin', 'logistics-admin'], async (request: NextRequest) => {
   try {
     const { path } = await request.json()
 

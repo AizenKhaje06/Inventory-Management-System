@@ -104,24 +104,6 @@ export function CommandPalette() {
               <span className="text-xs">⌘</span>P
             </kbd>
           </CommandItem>
-          <CommandItem
-            onSelect={() => runCommand(() => router.push('/dashboard/analytics'))}
-          >
-            <TrendingUp className="mr-2 h-4 w-4" />
-            <span>Sales Analytics</span>
-          </CommandItem>
-          <CommandItem
-            onSelect={() => runCommand(() => router.push('/dashboard/insights'))}
-          >
-            <Brain className="mr-2 h-4 w-4" />
-            <span>Business Insights</span>
-          </CommandItem>
-          <CommandItem
-            onSelect={() => runCommand(() => router.push('/dashboard/customers'))}
-          >
-            <Users className="mr-2 h-4 w-4" />
-            <span>Customers</span>
-          </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />

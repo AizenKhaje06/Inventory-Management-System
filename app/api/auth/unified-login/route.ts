@@ -127,19 +127,8 @@ export async function POST(request: NextRequest) {
     
     const userRole = account.role
     
-    // Determine redirect path based on role
+    // Determine redirect path based on role (2 roles only: admin, logistics-admin)
     let redirectPath = '/dashboard'
-    if (userRole === 'logistics-admin') {
-      redirectPath = '/logistics/dashboard'
-    } else if (userRole === 'packer') {
-      redirectPath = '/packer/dashboard'
-    } else if (userRole === 'tracker') {
-      redirectPath = '/tracker/dashboard'
-    } else if (userRole === 'dept-manager') {
-      redirectPath = '/dashboard/operations'
-    } else if (userRole === 'operations') {
-      redirectPath = '/dashboard/operations'
-    }
 
     console.log('[Unified Login] Login successful, redirecting to:', redirectPath)
 

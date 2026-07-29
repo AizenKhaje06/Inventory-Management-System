@@ -69,15 +69,6 @@ const commandItems: CommandItem[] = [
     keywords: ['pos', 'sales', 'checkout', 'transaction'],
   },
   {
-    id: 'analytics',
-    title: 'Analytics',
-    description: 'View sales and analytics',
-    icon: FileText,
-    href: '/dashboard/analytics',
-    category: 'pages',
-    keywords: ['analytics', 'data', 'export'],
-  },
-  {
     id: 'customers',
     title: 'Customers',
     description: 'Manage customer information',
@@ -86,15 +77,7 @@ const commandItems: CommandItem[] = [
     category: 'pages',
     keywords: ['clients', 'contacts'],
   },
-  {
-    id: 'sales-channels',
-    title: 'Sales Channels',
-    description: 'Track channel performance',
-    icon: TrendingUp,
-    href: '/dashboard/sales-channels',
-    category: 'pages',
-    keywords: ['shopee', 'lazada', 'facebook', 'tiktok'],
-  },
+
   {
     id: 'activity-logs',
     title: 'Activity Logs',
@@ -113,42 +96,8 @@ const commandItems: CommandItem[] = [
     category: 'pages',
     keywords: ['cancelled', 'refund', 'void'],
   },
-  {
-    id: 'transaction-history',
-    title: 'Packing Queue',
-    description: 'Orders waiting to be packed',
-    icon: FileText,
-    href: '/dashboard/operations/transaction-history',
-    category: 'pages',
-    keywords: ['packing', 'queue', 'pending', 'orders', 'fulfillment'],
-  },
-  {
-    id: 'track-orders',
-    title: 'Track Orders',
-    description: 'Customer orders and delivery',
-    icon: Package,
-    href: '/admin/track-orders',
-    category: 'pages',
-    keywords: ['orders', 'delivery', 'shipping', 'tracking', 'customer'],
-  },
-  {
-    id: 'internal-usage',
-    title: 'Internal Usage',
-    description: 'Track internal consumption',
-    icon: Warehouse,
-    href: '/dashboard/internal-usage',
-    category: 'pages',
-    keywords: ['demo', 'sample', 'internal'],
-  },
-  {
-    id: 'analytics',
-    title: 'Business Analytics',
-    description: 'Detailed insights and trends',
-    icon: BarChart3,
-    href: '/dashboard/analytics',
-    category: 'pages',
-    keywords: ['insights', 'trends', 'metrics', 'charts'],
-  },
+
+
   {
     id: 'settings',
     title: 'Settings',
@@ -177,37 +126,6 @@ const commandItems: CommandItem[] = [
     href: '/dashboard/inventory/out-of-stock',
     category: 'quick-links',
     keywords: ['empty', 'zero', 'restock', 'inventory'],
-  },
-  
-  // Analytics Sub-pages
-  {
-    id: 'sales-analytics',
-    title: 'Sales Analytics',
-    description: 'Sales performance and trends',
-    icon: TrendingUp,
-    href: '/dashboard/analytics',
-    category: 'quick-links',
-    keywords: ['sales', 'revenue', 'performance'],
-  },
-  {
-    id: 'insights',
-    title: 'Business Insights',
-    description: 'Key business metrics',
-    icon: BarChart3,
-    href: '/dashboard/insights',
-    category: 'quick-links',
-    keywords: ['metrics', 'kpi', 'performance'],
-  },
-  
-  // Operations
-  {
-    id: 'operations',
-    title: 'Operations',
-    description: 'Operational management',
-    icon: Settings,
-    href: '/dashboard/operations',
-    category: 'quick-links',
-    keywords: ['manage', 'operations', 'workflow'],
   },
 ]
 

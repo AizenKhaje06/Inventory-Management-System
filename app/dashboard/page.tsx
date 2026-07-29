@@ -313,124 +313,107 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Row 2: Order Status Metrics (4 cards) */}
+      {/* Row 2: Inventory Metrics (4 cards) - Simplified */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Total Delivered */}
+        {/* Total Products */}
         <Card className="p-5 border-0 shadow-lg">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-emerald-600 shadow-lg shadow-emerald-500/30 flex-shrink-0">
-              <CheckCircle className="h-5 w-5 text-white" />
+            <div className="p-2.5 rounded-xl bg-indigo-600 shadow-lg shadow-indigo-500/30 flex-shrink-0">
+              <Package className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Total Delivered</p>
-              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 tabular-nums">
-                <AnimatedNumber value={stats?.totalDelivered || 0} duration={1500} />
+              <p className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Total Products</p>
+              <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100 tabular-nums">
+                <AnimatedNumber value={allItems.length || 0} duration={1500} />
               </p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-500 flex items-center gap-1 mt-0.5">
-                {stats?.deliveredPercentage !== undefined ? (
+              <p className="text-xs text-indigo-600 dark:text-indigo-500 flex items-center gap-1 mt-0.5">
+                Active inventory items
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Low Stock Count */}
+        <Card className="p-5 border-0 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-600 shadow-lg shadow-amber-500/30 flex-shrink-0">
+              <PackageOpen className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Low Stock Alert</p>
+              <p className="text-2xl font-bold text-amber-900 dark:text-amber-100 tabular-nums">
+                <AnimatedNumber value={lowStockCount} duration={1500} />
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1 mt-0.5">
+                {lowStockCount > 0 ? (
                   <>
-                    <AnimatedNumber value={stats.deliveredPercentage} decimals={1} duration={1500} />% of total orders
+                    <AlertTriangle className="h-3 w-3" />
+                    Needs restocking
                   </>
                 ) : (
-                  "No deliveries yet"
+                  "All good"
                 )}
               </p>
             </div>
           </div>
         </Card>
 
-        {/* Total Returns */}
+        {/* Out of Stock Count */}
         <Card className="p-5 border-0 shadow-lg">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-orange-600 shadow-lg shadow-orange-500/30 flex-shrink-0">
-              <RotateCcw className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Total Returns</p>
-              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 tabular-nums">
-                <AnimatedNumber value={stats?.totalReturns || 0} duration={1500} />
-              </p>
-              <p className="text-xs text-orange-600 dark:text-orange-500 flex items-center gap-1 mt-0.5">
-                {stats?.returnRate !== undefined && stats.returnRate > 0 ? (
-                  <>
-                    <AnimatedNumber value={stats.returnRate} decimals={1} duration={1500} />% of delivered
-                  </>
-                ) : (
-                  "No returns yet"
-                )}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Cancelled Orders - Combined Card */}
-        <Card className="p-5 border-0 shadow-lg">
-          <div className="flex items-center gap-3 mb-3">
             <div className="p-2.5 rounded-xl bg-rose-600 shadow-lg shadow-rose-500/30 flex-shrink-0">
               <PackageX className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">Cancelled Orders</p>
+              <p className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">Out of Stock</p>
               <p className="text-2xl font-bold text-rose-900 dark:text-rose-100 tabular-nums">
-                <AnimatedNumber value={(stats?.cancelledPackingQueue || 0) + (stats?.cancelledTrackOrders || 0)} duration={1500} />
+                <AnimatedNumber value={outOfStockCount} duration={1500} />
               </p>
-            </div>
-          </div>
-          {/* Split Display */}
-          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-rose-200 dark:border-rose-800">
-            <div className="text-center">
-              <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mb-1">Packing</p>
-              <p className="text-lg font-bold text-rose-900 dark:text-rose-100 tabular-nums">
-                <AnimatedNumber value={stats?.cancelledPackingQueue || 0} duration={1500} />
+              <p className="text-xs text-rose-600 dark:text-rose-500 flex items-center gap-1 mt-0.5">
+                {outOfStockCount > 0 ? (
+                  <>
+                    <AlertCircle className="h-3 w-3" />
+                    Urgent restock
+                  </>
+                ) : (
+                  "No shortages"
+                )}
               </p>
-              <p className="text-[10px] text-rose-500 dark:text-rose-500">Before packing</p>
-            </div>
-            <div className="text-center border-l border-rose-200 dark:border-rose-800">
-              <p className="text-xs text-pink-600 dark:text-pink-400 font-medium mb-1">Tracked</p>
-              <p className="text-lg font-bold text-pink-900 dark:text-pink-100 tabular-nums">
-                <AnimatedNumber value={stats?.cancelledTrackOrders || 0} duration={1500} />
-              </p>
-              <p className="text-[10px] text-pink-500 dark:text-pink-500">After packing</p>
             </div>
           </div>
         </Card>
 
-        {/* Total Bad Stock - Admin & Logistics Only */}
-        {(currentUser?.role === 'admin' || currentUser?.role === 'logistics-admin') ? (
-          <Card className="p-5 border-0 shadow-lg">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2.5 rounded-xl bg-red-600 shadow-lg shadow-red-500/30 flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Total Bad Stock</p>
-                <p className="text-2xl font-bold text-red-900 dark:text-red-100 tabular-nums">
-                  <AnimatedNumber value={totalBadQty} duration={1500} /> units
-                </p>
-              </div>
+        {/* Total Bad Stock */}
+        <Card className="p-5 border-0 shadow-lg">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2.5 rounded-xl bg-red-600 shadow-lg shadow-red-500/30 flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-white" />
             </div>
-            {/* Split Display */}
-            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-red-200 dark:border-red-800">
-              <div className="text-center">
-                <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">COGS Lost</p>
-                <p className="text-lg font-bold text-red-900 dark:text-red-100 tabular-nums">
-                  ₱<AnimatedNumber value={totalBadCOGS} duration={1500} />
-                </p>
-                <p className="text-[10px] text-red-500 dark:text-red-500">Cost value</p>
-              </div>
-              <div className="text-center border-l border-red-200 dark:border-red-800">
-                <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mb-1">Revenue Lost</p>
-                <p className="text-lg font-bold text-orange-900 dark:text-orange-100 tabular-nums">
-                  ₱<AnimatedNumber value={totalBadRevenueLost} duration={1500} />
-                </p>
-                <p className="text-[10px] text-orange-500 dark:text-orange-500">Selling value</p>
-              </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Total Bad Stock</p>
+              <p className="text-2xl font-bold text-red-900 dark:text-red-100 tabular-nums">
+                <AnimatedNumber value={totalBadQty} duration={1500} /> units
+              </p>
             </div>
-          </Card>
-        ) : (
-          // Placeholder for non-admin users to maintain 4-column grid
-          <div className="hidden lg:block"></div>
-        )}
+          </div>
+          {/* Split Display */}
+          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-red-200 dark:border-red-800">
+            <div className="text-center">
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">COGS Lost</p>
+              <p className="text-lg font-bold text-red-900 dark:text-red-100 tabular-nums">
+                ₱<AnimatedNumber value={totalBadCOGS} duration={1500} />
+              </p>
+              <p className="text-[10px] text-red-500 dark:text-red-500">Cost value</p>
+            </div>
+            <div className="text-center border-l border-red-200 dark:border-red-800">
+              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mb-1">Revenue Lost</p>
+              <p className="text-lg font-bold text-orange-900 dark:text-orange-100 tabular-nums">
+                ₱<AnimatedNumber value={totalBadRevenueLost} duration={1500} />
+              </p>
+              <p className="text-[10px] text-orange-500 dark:text-orange-500">Selling value</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Quick Actions & Alerts */}
@@ -468,9 +451,9 @@ export default function DashboardPage() {
                   </Link>
                 </Button>
                 <Button variant="outline" size="sm" className="h-auto py-3 text-xs justify-start" asChild>
-                  <Link href="/dashboard/analytics">
+                  <Link href="/dashboard/sales">
                     <FileText className="h-3.5 w-3.5 mr-2" />
-                    Analytics
+                    Sales
                   </Link>
                 </Button>
               </div>

@@ -79,16 +79,6 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[] = []) {
       }
     },
     {
-      key: 'a',
-      ctrl: true,
-      description: 'Go to analytics',
-      category: 'Navigation',
-      action: () => {
-        router.push('/dashboard/analytics')
-        announceToScreenReader('Navigating to analytics')
-      }
-    },
-    {
       key: '/',
       description: 'Focus search',
       category: 'Navigation',

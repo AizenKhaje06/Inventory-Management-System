@@ -21,7 +21,6 @@ const routeLabels: Record<string, string> = {
   'out-of-stock': 'Out of Stock',
   pos: 'Point of Sale (POS)',
   sales: 'Sales',
-  analytics: 'Sales Analytics',
   insights: 'Business Insights',
   customers: 'Customers',
   reports: 'Reports',

@@ -10,7 +10,7 @@ function getSupabaseClient() {
 
 interface SearchResult {
   id: string
-  type: 'product' | 'order' | 'customer' | 'chat' | 'contact'
+  type: 'product' | 'order' | 'customer' | 'chat'
   title: string
   subtitle?: string
   description?: string
@@ -92,38 +92,12 @@ export async function GET(request: NextRequest) {
               title: `Order #${order.tracking_number || order.id.slice(0, 8)}`,
               subtitle: `${order.customer_name} • ${order.channel}`,
               description: `Status: ${order.status} • ₱${order.total_amount?.toFixed(2) || '0.00'}`,
-              link: `/dashboard/track-orders?order=${order.id}`
+              link: `/dashboard/sales?order=${order.id}`
             })
           })
         }
       } catch (error) {
         console.error('Error searching orders:', error)
-      }
-    }
-
-    // Search Business Contacts (always allowed for logged in users)
-    if (currentUser) {
-      try {
-        const { data: contacts, error: contactsError } = await supabase
-          .from('business_contacts')
-          .select('id, name, company, email, phone, type')
-          .or(`name.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
-          .limit(5)
-
-        if (!contactsError && contacts) {
-          contacts.forEach((contact: any) => {
-            results.push({
-              id: contact.id,
-              type: 'contact',
-              title: contact.name,
-              subtitle: `${contact.company} • ${contact.type}`,
-              description: `${contact.email} • ${contact.phone}`,
-              link: `/dashboard/business-contacts?contact=${contact.id}`
-            })
-          })
-        }
-      } catch (error) {
-        console.error('Error searching contacts:', error)
       }
     }
 

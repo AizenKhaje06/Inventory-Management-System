@@ -1,6 +1,6 @@
-// Role-based access control system
+// Role-based access control system - SIMPLIFIED TO 2 ROLES
 
-export type UserRole = 'admin' | 'operations' | 'packer' | 'tracker' | 'logistics-admin' | 'dept-manager'
+export type UserRole = 'admin' | 'logistics-admin'
 
 export interface User {
   username: string
@@ -8,121 +8,38 @@ export interface User {
   displayName: string
   email?: string
   phone?: string
-  assignedChannel?: string
   profileImage?: string | null
 }
 
-// Role definitions with better names
+// Role definitions - Only 2 roles
 export const ROLES = {
   admin: {
     id: 'admin' as const,
     name: 'Administrator',
-    description: 'Full system access - Analytics, Reports, Settings',
+    description: 'Full system access - All features',
     icon: '👔'
-  },
-  operations: {
-    id: 'operations' as const,
-    name: 'Operations Staff',
-    description: 'POS, Inventory, and Customer Management',
-    icon: '📦'
-  },
-  packer: {
-    id: 'packer' as const,
-    name: 'Packer',
-    description: 'Packing queue and order fulfillment',
-    icon: '📦'
-  },
-  tracker: {
-    id: 'tracker' as const,
-    name: 'Tracker',
-    description: 'Track orders and update parcel status',
-    icon: '🚚'
   },
   'logistics-admin': {
     id: 'logistics-admin' as const,
     name: 'Logistics Admin',
-    description: 'Logistics overview and monitoring',
-    icon: '📊'
-  },
-  'dept-manager': {
-    id: 'dept-manager' as const,
-    name: 'Dept. Head',
-    description: 'View all agents performance within their department',
-    icon: '👥'
+    description: 'Inventory management and reports',
+    icon: '📦'
   }
 } as const
 
-// Page permissions per role - supports wildcards for nested routes
+// Page permissions per role - SIMPLIFIED
 export const ROLE_PERMISSIONS = {
   admin: [
     '/dashboard',
-    '/dashboard/analytics',
-    '/dashboard/sales',
-    '/dashboard/sales-channels/**',
-    '/dashboard/customers',
-    '/dashboard/business-contacts',
-    '/dashboard/operations/transaction-history',
-    '/dashboard/track-orders',
-    '/dashboard/packing-queue',
-    '/dashboard/cancelled-orders',
-    '/dashboard/insights',
-    '/dashboard/inventory/**',
-    '/dashboard/pos',
-    '/dashboard/dispatch',
-    '/dashboard/internal-usage',
-    '/dashboard/settings',
-    '/dashboard/log',
-    '/dashboard/reports',
-    '/dashboard/chat'
-  ],
-  operations: [
-    '/dashboard/operations',
-    '/dashboard/pos',
-    '/dashboard/dispatch',
-    '/dashboard/packing-queue',
-    '/dashboard/operations/transaction-history',
-    '/dashboard/track-orders',
-    '/dashboard/inventory/**',
-    '/dashboard/customers',
-    '/dashboard/log',
-    '/dashboard/chat'
-  ],
-  packer: [
-    '/packer/dashboard',
-    '/dashboard/chat'
-  ],
-  tracker: [
-    '/tracker/dashboard',
-    '/dashboard/chat'
+    '/dashboard/**'  // Admin has access to everything
   ],
   'logistics-admin': [
-    '/logistics/dashboard',
-    '/logistics/products',
-    '/logistics/packing-queue',
-    '/logistics/track-orders',
-    '/logistics/business-contacts',
-    '/logistics/log',
+    '/dashboard',
     '/dashboard/inventory/**',
-    '/dashboard/log',
-    '/dashboard/track-orders',
-    '/dashboard/chat'
-  ],
-  'dept-manager': [
-    '/dashboard/operations',
+    '/dashboard/sales',
     '/dashboard/pos',
-    '/dashboard/dispatch',
-    '/dashboard/packing-queue',
-    '/dashboard/operations/transaction-history',
-    '/dashboard/track-orders',
-    '/dashboard/inventory/**',
-    '/dashboard/customers',
-    '/dashboard/log',
-    '/dashboard/agent-performance',
-    '/dashboard/internal-usage',
-    '/dept-manager/agents',
-    '/dept-manager/dashboard',
-    '/dept-manager/log',
-    '/dashboard/chat'
+    '/dashboard/log'
+    // NO Settings access for logistics-admin
   ]
 } as const
 
@@ -131,11 +48,7 @@ export const ROLE_PERMISSIONS = {
 // See: app/api/auth/unified-login/route.ts → validateCredentials()
 export const DEFAULT_PASSWORDS: Record<UserRole, string> = {
   admin: '',
-  operations: '',
-  packer: '',
-  tracker: '',
-  'logistics-admin': '',
-  'dept-manager': '',
+  'logistics-admin': ''
 }
 
 // Auth helpers
@@ -176,21 +89,7 @@ export function hasPermission(role: UserRole, path: string): boolean {
 }
 
 export function getDefaultRoute(role: UserRole): string {
-  if (role === 'operations') {
-    return '/dashboard/operations'
-  }
-  if (role === 'packer') {
-    return '/packer/dashboard'
-  }
-  if (role === 'tracker') {
-    return '/tracker/dashboard'
-  }
-  if (role === 'logistics-admin') {
-    return '/logistics/dashboard'
-  }
-  if (role === 'dept-manager') {
-    return '/dashboard/operations'
-  }
+  // Both roles go to main dashboard
   return '/dashboard'
 }
 
@@ -212,19 +111,18 @@ export function getCurrentUser(): User | null {
   }
   
   try {
-    // Check for admin/operations/packer session
+    // Check for admin/logistics-admin session
     const isLoggedIn = localStorage.getItem('isLoggedIn')
     const username = localStorage.getItem('username')
     const role = localStorage.getItem('userRole') as UserRole
     const displayName = localStorage.getItem('displayName')
-    const assignedChannel = localStorage.getItem('assignedChannel')
     
     if (isLoggedIn === 'true' && username && role) {
-      if (!['admin', 'operations', 'packer', 'tracker', 'logistics-admin', 'dept-manager'].includes(role)) {
+      if (!['admin', 'logistics-admin'].includes(role)) {
         clearCurrentUser()
         return null
       }
-      return { username, role, displayName: displayName || username, assignedChannel }
+      return { username, role, displayName: displayName || username }
     }
   } catch (error) {
     console.error('[Auth] Error reading user from localStorage:', error)
@@ -235,21 +133,11 @@ export function getCurrentUser(): User | null {
 }
 
 /**
- * Get the assigned channel/department for the current operations user
- * Returns null for admin (sees all data) and packer roles
+ * Get the assigned channel/department - NOT USED IN SIMPLIFIED VERSION
+ * Returns null (no channel assignments with 2 roles)
  */
 export function getUserDepartment(): string | null {
-  if (typeof window === 'undefined') return null
-  
-  try {
-    const user = getCurrentUser()
-    if (!user || user.role !== 'operations') return null
-    
-    return user.assignedChannel || null
-  } catch (error) {
-    console.error('[Auth] Error getting user department:', error)
-    return null
-  }
+  return null
 }
 
 export function setCurrentUser(user: User): void {
@@ -282,19 +170,10 @@ export function clearCurrentUser(): void {
 }
 
 /**
- * Check if current user can edit tracking/packing status
- * Only admins can edit
+ * Check if current user can edit content
+ * Admin can edit everything, logistics-admin can edit inventory only
  */
-export function canEditTracking(): boolean {
+export function canEdit(): boolean {
   const user = getCurrentUser()
-  return user?.role === 'admin'
-}
-
-/**
- * Check if current user can edit warehouse dispatch
- * Only admins can edit
- */
-export function canEditWarehouseDispatch(): boolean {
-  const user = getCurrentUser()
-  return user?.role === 'admin'
+  return user?.role === 'admin' || user?.role === 'logistics-admin'
 }

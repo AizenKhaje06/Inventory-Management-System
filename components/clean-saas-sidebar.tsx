@@ -33,10 +33,7 @@ const navigation: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Inventory", href: "/dashboard/inventory", icon: Package },
   { name: "Point of Sale (POS)", href: "/dashboard/pos", icon: ShoppingCart },
-  { name: "Sales Analytics", href: "/dashboard/sales", icon: TrendingUp },
-  { name: "Business Insights", href: "/dashboard/insights", icon: Lightbulb },
-  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { name: "Customers", href: "/dashboard/customers", icon: Users },
+  { name: "Sales", href: "/dashboard/sales", icon: TrendingUp },
   { name: "Activity Log", href: "/dashboard/log", icon: History },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]

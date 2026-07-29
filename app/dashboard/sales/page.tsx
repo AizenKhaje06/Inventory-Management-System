@@ -63,7 +63,7 @@ export default function SalesAnalyticsPage() {
       }
       
       const data = await apiGet<SalesData>(apiUrl);
-      console.log('Sales Analytics Data:', data); // Debug log
+      console.log('Sales Data:', data); // Debug log
       console.log('Total Orders:', data.totalOrders); // Debug log
       console.log('Total Revenue:', data.totalRevenue); // Debug log
       console.log('Daily Sales:', data.dailySales); // Debug log
@@ -120,7 +120,7 @@ export default function SalesAnalyticsPage() {
       <div className="min-h-screen w-full max-w-full overflow-x-hidden p-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold gradient-text mb-2">
-            Sales Analytics
+            Sales History
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-base">
             Track your sales performance and trends
@@ -171,7 +171,7 @@ export default function SalesAnalyticsPage() {
       <div className="min-h-screen w-full max-w-full overflow-x-hidden">
         <div className="mb-8 animate-in fade-in-0 slide-in-from-top-4 duration-700">
           <h1 className="text-4xl font-bold gradient-text mb-2">
-            Sales Analytics
+            Sales History
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-base">
             Track your sales performance and trends
@@ -218,7 +218,7 @@ export default function SalesAnalyticsPage() {
       <div className="mb-6 animate-in fade-in-0 slide-in-from-top-4 duration-700 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold gradient-text mb-2">
-            Sales Analytics
+            Sales History
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-base">
             Track your sales performance and trends

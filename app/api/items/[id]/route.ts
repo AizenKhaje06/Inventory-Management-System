@@ -31,7 +31,7 @@ export async function PUT(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireRole(request, ['admin', 'operations', 'logistics-admin', 'dept-manager'])
+  const authResult = requireRole(request, ['admin', 'logistics-admin'])
   if (authResult instanceof NextResponse) return authResult
   const { user } = authResult
 
@@ -90,7 +90,7 @@ export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireRole(request, ['admin', 'operations', 'logistics-admin', 'dept-manager'])
+  const authResult = requireRole(request, ['admin', 'logistics-admin'])
   if (authResult instanceof NextResponse) return authResult
   const { user } = authResult
 

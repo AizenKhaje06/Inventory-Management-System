@@ -60,7 +60,7 @@ export const GET = withAuth(async (request, { user }) => {
 })
 
 // POST - Requires admin, operations, or logistics-admin role
-export const POST = withRoles(['admin', 'operations', 'logistics-admin', 'dept-manager'], async (request, { user }) => {
+export const POST = withRoles(['admin', 'logistics-admin'], async (request, { user }) => {
   try {
     const body = await request.json()
     console.log('[Items API POST] body:', JSON.stringify(body))

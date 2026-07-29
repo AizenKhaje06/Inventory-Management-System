@@ -25,15 +25,10 @@ const SKIP_PREFIXES = [
 
 /**
  * Protected route prefixes → minimum required cookie presence.
- * These map to the role-specific app areas.
+ * SIMPLIFIED: Only dashboard routes (both roles use /dashboard)
  */
 const PROTECTED_PREFIXES = [
   '/dashboard',
-  '/packer',
-  '/tracker',
-  '/logistics',
-  '/dept-manager',
-  '/admin',
 ]
 
 export function middleware(request: NextRequest) {

@@ -54,8 +54,8 @@ export function getAuthUser(request: NextRequest): { username: string; role: Use
       return null
     }
 
-    // Validate role is one of the allowed roles
-    if (!['admin', 'operations', 'packer', 'logistics-admin', 'tracker', 'dept-manager'].includes(role)) {
+    // Validate role is one of the allowed roles (2 roles only: admin, logistics-admin)
+    if (!['admin', 'logistics-admin'].includes(role)) {
       console.warn('[API Auth] Invalid role:', role)
       return null
     }
