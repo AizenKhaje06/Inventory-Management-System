@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Pencil, Trash2, PackagePlus, Package, Filter, X, ArrowUpDown, AlertCircle, TrendingUp, Warehouse, Tag, LayoutGrid, LayoutList, Eye, ShoppingCart, Check, Building2, FileDown, FileSpreadsheet, ChevronDown, AlertTriangle } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, PackagePlus, Package, Filter, X, ArrowUpDown, AlertCircle, TrendingUp, Tag, LayoutGrid, LayoutList, Eye, ShoppingCart, Check, Building2, FileDown, FileSpreadsheet, ChevronDown, AlertTriangle } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -16,10 +16,8 @@ import * as XLSX from 'xlsx'
 import type { InventoryItem } from "@/lib/types"
 import { AddItemDialog } from "@/components/add-item-dialog"
 import { EditItemDialog } from "@/components/edit-item-dialog"
-import { CreateBundleDialog } from "@/components/create-bundle-dialog"
 import { formatNumber, formatCurrency, cn } from "@/lib/utils"
 import { showSuccess, showError } from "@/lib/toast-utils"
-import type { Store } from "@/lib/types"
 import { getCurrentUser } from "@/lib/auth"
 import { apiGet, apiDelete, apiPost, apiPut } from "@/lib/api-client"
 import { getCurrentUserRole } from '@/lib/role-utils'
@@ -40,7 +38,6 @@ export default function InventoryPage() {
   const debouncedSearch = useDebounce(search, 300) // Debounce search input
   const [salesChannelFilter, setSalesChannelFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
-  const [productTypeFilter, setProductTypeFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState<"all" | "good" | "bad">("all")
   const [sortBy, setSortBy] = useState("name-asc")
   const [loading, setLoading] = useState(true)
@@ -84,21 +81,16 @@ export default function InventoryPage() {
         setIsDepartment(true)
         setIsReadOnly(true)
         setUserDepartment(user.assignedChannel)
-        // Pre-fill sales channel for departments
-        setNewStore({ name: "", salesChannel: user.assignedChannel })
       } 
-      // Department Manager - read-only but restricted to assigned channel for stores
+      // Department Manager - read-only but restricted to assigned channel
       else if (role === 'dept-manager' && user?.assignedChannel) {
-        setIsDepartment(true) // Restrict to assigned channel for stores
-        setIsReadOnly(true) // No edit/delete on products
+        setIsDepartment(true)
+        setIsReadOnly(true)
         setUserDepartment(user.assignedChannel)
-        // Pre-fill sales channel for dept-manager
-        setNewStore({ name: "", salesChannel: user.assignedChannel })
       }
-      // Department Manager without assigned channel - full access to stores/bundles
+      // Department Manager without assigned channel
       else if (role === 'dept-manager') {
         setIsReadOnly(true)
-        // dept-manager has no assigned channel, full access to stores/bundles
       }
     }
     
@@ -113,14 +105,7 @@ export default function InventoryPage() {
   const [editCategoryValue, setEditCategoryValue] = useState("")
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null)
   
-  // Store Management (renamed from Warehouse Management)
-  const [storeDialogOpen, setStoreDialogOpen] = useState(false)
-  const [stores, setStores] = useState<Store[]>([])
-  const [newStore, setNewStore] = useState({ name: "", salesChannel: "" })
-  const [editingStore, setEditingStore] = useState<Store | null>(null)
-  const [editStoreValue, setEditStoreValue] = useState({ name: "", salesChannel: "" })
   const [submitting, setSubmitting] = useState(false)
-  const [deleteWarehouseId, setDeleteWarehouseId] = useState<string | null>(null)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set()) // Bulk selection
@@ -210,7 +195,6 @@ export default function InventoryPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<{id: string, name: string} | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [createBundleOpen, setCreateBundleOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -262,13 +246,11 @@ export default function InventoryPage() {
 
   useEffect(() => {
     fetchItems()
-    fetchStores()
     fetchCategories()
 
     // Refresh data when window regains focus (e.g., after switching tabs)
     const handleFocus = () => {
       fetchItems()
-      fetchStores()
       fetchCategories()
     }
 
@@ -295,13 +277,6 @@ export default function InventoryPage() {
     // Category filter
     if (categoryFilter !== "all") {
       filtered = filtered.filter((item) => item.category === categoryFilter)
-    }
-
-    // Product type filter (single vs bundle)
-    if (productTypeFilter === "single") {
-      filtered = filtered.filter((item) => (item as any).productType !== 'bundle' && (item as any).product_type !== 'bundle')
-    } else if (productTypeFilter === "bundle") {
-      filtered = filtered.filter((item) => (item as any).productType === 'bundle' || (item as any).product_type === 'bundle')
     }
 
     // Status filter (good vs bad items)
@@ -334,7 +309,7 @@ export default function InventoryPage() {
     }
 
     setFilteredItems(filtered)
-  }, [debouncedSearch, salesChannelFilter, categoryFilter, productTypeFilter, statusFilter, sortBy, items])
+  }, [debouncedSearch, salesChannelFilter, categoryFilter, statusFilter, sortBy, items])
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredItems.length / pageSize)
@@ -345,8 +320,6 @@ export default function InventoryPage() {
 
   async function fetchItems() {
     try {
-      // Fetch from inventory table only (NOT bundles)
-      // Bundles are virtual products - their items are already in inventory
       const data = await apiGet<InventoryItem[]>(`/api/items?t=${Date.now()}`)
       console.log('[Inventory] RAW API Response:', data)
       
@@ -380,15 +353,6 @@ export default function InventoryPage() {
     }
   }
 
-  async function fetchStores() {
-    try {
-      const data = await apiGet<Store[]>("/api/stores")
-      setStores(data)
-    } catch (error) {
-      console.error("Error fetching stores:", error)
-    }
-  }
-
   async function fetchCategories() {
     try {
       const data = await apiGet<any[]>("/api/categories")
@@ -402,9 +366,7 @@ export default function InventoryPage() {
     try {
       setIsDeleting(true)
       
-      // Check if it's a bundle (bundles have ID starting with "BUNDLE-")
-      const isBundle = id.startsWith('BUNDLE-')
-      const endpoint = isBundle ? `/api/bundles/${id}` : `/api/items/${id}`
+      const endpoint = `/api/items/${id}`
       
       // Add authentication headers
       const headers = new Headers({
@@ -447,75 +409,8 @@ export default function InventoryPage() {
   }
 
   async function handleEdit(item: InventoryItem) {
-    const isBundle = (item as any).productType === 'bundle' || (item as any).product_type === 'bundle'
-    
-    if (isBundle) {
-      // Bundle - Open CreateBundleDialog in edit mode
-      console.log('[Inventory] Opening bundle edit modal for:', item.id)
-      
-      try {
-        // Fetch full bundle details AND fresh items in parallel to ensure item data is available
-        const [bundleData, freshItems] = await Promise.all([
-          apiGet<any>(`/api/bundles/${item.id}`),
-          items.length === 0 ? apiGet<InventoryItem[]>(`/api/items?t=${Date.now()}`) : Promise.resolve(items)
-        ])
-        
-        // Use freshItems if current items state is empty
-        const itemsSource = items.length > 0 ? items : (freshItems as InventoryItem[])
-        
-        console.log('[Inventory] Bundle data loaded:', bundleData)
-        console.log('[Inventory] Items available for mapping:', itemsSource.length)
-        
-        // Transform bundle_components to bundleItems format
-        const bundleItems = bundleData.bundle_components?.map((comp: any) => {
-          // Find the item details from items list
-          const itemDetails = itemsSource.find((i: InventoryItem) => i.id === comp.item_id)
-          console.log('[Inventory] Mapping bundle component:', {
-            comp,
-            itemDetails: itemDetails ? { id: itemDetails.id, name: itemDetails.name } : null
-          })
-          
-          if (!itemDetails) {
-            console.warn('[Inventory] ⚠️ Item not found in inventory list:', comp.item_id)
-          }
-          
-          return {
-            itemId: comp.item_id,
-            itemName: itemDetails?.name || `Item ${comp.item_id.slice(-6)}`,
-            quantity: comp.quantity,
-            unitPrice: itemDetails?.sellingPrice || 0,
-            unitCost: itemDetails?.costPrice || 0
-          }
-        }) || []
-        
-        console.log('[Inventory] Transformed bundleItems:', bundleItems)
-        console.log('[Inventory] Setting selectedItem with bundle data')
-        
-        // Set selected item with ALL bundle data
-        const itemWithBundleData = {
-          ...item,
-          bundleId: item.id,
-          bundleItems,
-          bundleData
-        }
-        
-        console.log('[Inventory] Complete item data:', itemWithBundleData)
-        setSelectedItem(itemWithBundleData as any)
-        
-        // Small delay to ensure state is updated before opening modal
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-        console.log('[Inventory] Opening CreateBundleDialog')
-        setCreateBundleOpen(true)
-      } catch (error) {
-        console.error('[Inventory] Failed to load bundle data:', error)
-        toast.error('Failed to load bundle details')
-      }
-    } else {
-      // Regular item - Open EditItemDialog
-      setSelectedItem(item)
-      setEditDialogOpen(true)
-    }
+    setSelectedItem(item)
+    setEditDialogOpen(true)
   }
 
   function handleAdjustStock(item: InventoryItem, type: 'restock' | 'reduce' = 'restock') {
@@ -558,69 +453,6 @@ export default function InventoryPage() {
     } catch (error) {
       console.error("[Inventory] Error adjusting stock:", error)
       showError(`Failed to ${adjustmentType === 'restock' ? 'increase' : 'reduce'} stock`)
-    }
-  }
-
-  // Store Management Functions
-  async function handleAddStore() {
-    if (!newStore.name.trim() || !newStore.salesChannel) {
-      showError("Please enter store name and select sales channel")
-      return
-    }
-
-    try {
-      setSubmitting(true)
-      await apiPost("/api/stores", { 
-        store_name: newStore.name.trim(),
-        sales_channel: newStore.salesChannel 
-      })
-      showSuccess("Store added successfully")
-      setNewStore({ name: "", salesChannel: "" })
-      fetchStores()
-    } catch (error) {
-      console.error("Error adding store:", error)
-      showError("Failed to add store")
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function handleEditStore() {
-    if (!editingStore || !editStoreValue.name.trim() || !editStoreValue.salesChannel) {
-      showError("Please enter store name and select sales channel")
-      return
-    }
-
-    try {
-      setSubmitting(true)
-      await apiPut(`/api/stores/${editingStore.id}`, { 
-        store_name: editStoreValue.name.trim(),
-        sales_channel: editStoreValue.salesChannel 
-      })
-      showSuccess("Store updated successfully")
-      setEditingStore(null)
-      setEditStoreValue({ name: "", salesChannel: "" })
-      fetchStores()
-    } catch (error) {
-      console.error("Error updating store:", error)
-      showError("Failed to update store")
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function handleDeleteStore(id: string) {
-    try {
-      setSubmitting(true)
-      await apiDelete(`/api/stores/${id}`)
-      showSuccess("Store deleted successfully")
-      setDeleteWarehouseId(null)
-      fetchStores()
-    } catch (error) {
-      console.error("Error deleting warehouse:", error)
-      showError("Failed to delete warehouse")
-    } finally {
-      setSubmitting(false)
     }
   }
 
@@ -684,15 +516,14 @@ export default function InventoryPage() {
   // Export Functions
   const exportToExcel = async () => {
     try {
-      // Filter out bundles - only export regular items
-      const regularItems = filteredItems.filter(item => (item as any).product_type !== 'bundle')
+      const exportItems = filteredItems
       
       // Fetch restock data for all items
       const restockResponse = await fetch('/api/restocks')
       const allRestocks = restockResponse.ok ? await restockResponse.json() : []
       
       // Group items by product name + cost price + selling price
-      const groupedItems = regularItems.reduce((acc, item) => {
+      const groupedItems = exportItems.reduce((acc, item) => {
         // Create unique key based on name, cost, and selling price
         const key = `${item.name}-${item.costPrice}-${item.sellingPrice}`
         
@@ -770,8 +601,6 @@ export default function InventoryPage() {
         ['Low Stock Items:', `${lowStockCount} items`],
         ['Out of Stock Items:', `${outOfStockCount} items`],
         ['Filter Applied:', salesChannelFilter !== 'all' ? salesChannelFilter : 'All Channels'],
-        [''],
-        ['Note: Bundle items are excluded from this report'],
         [''],
         ['']
       ]
@@ -858,15 +687,14 @@ export default function InventoryPage() {
 
   const exportToPDF = async () => {
     try {
-      // Filter out bundles - only export regular items
-      const regularItems = filteredItems.filter(item => (item as any).product_type !== 'bundle')
+      const exportItems = filteredItems
       
       // Fetch restock data for all items
       const restockResponse = await fetch('/api/restocks')
       const allRestocks = restockResponse.ok ? await restockResponse.json() : []
       
       // Group items by product name + cost price + selling price
-      const groupedItems = regularItems.reduce((acc, item) => {
+      const groupedItems = exportItems.reduce((acc, item) => {
         // Create unique key based on name, cost, and selling price
         const key = `${item.name}-${item.costPrice}-${item.sellingPrice}`
         
@@ -1015,9 +843,6 @@ export default function InventoryPage() {
                 <span class="info-value">${salesChannelFilter !== 'all' ? salesChannelFilter : 'All Channels'}</span>
               </div>
             </div>
-            <p style="margin-top: 15px; color: #64748b; font-size: 12px; font-style: italic;">
-              Note: Bundle items are excluded from this report
-            </p>
           </div>
           
           <div class="summary">
@@ -1195,29 +1020,6 @@ export default function InventoryPage() {
                 <span className="sm:hidden">Category</span>
               </Button>
             )}
-
-            {/* Stores - Hidden for operations (agents) and logistics-admin */}
-            {userRole !== 'operations' && userRole !== 'logistics-admin' && (
-              <Button
-                onClick={() => setStoreDialogOpen(true)}
-                className="h-11 sm:h-9 px-3 sm:px-3 text-xs sm:text-sm bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-800 text-white rounded-lg sm:rounded-md shadow-sm transition-colors"
-              >
-                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
-                <span className="hidden sm:inline">Stores</span>
-                <span className="sm:hidden">Store</span>
-              </Button>
-            )}
-
-            {/* Bundle - Hidden for operations (agents) and logistics-admin */}
-            {userRole !== 'operations' && userRole !== 'logistics-admin' && (
-              <Button
-                onClick={() => setCreateBundleOpen(true)}
-                className="h-11 sm:h-9 px-3 sm:px-3 text-xs sm:text-sm bg-slate-500 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-700 text-white rounded-lg sm:rounded-md shadow-sm transition-colors"
-              >
-                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
-                Bundle
-              </Button>
-            )}
           </div>
         </div>
       </div>
@@ -1255,17 +1057,17 @@ export default function InventoryPage() {
                   </div>
                   <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wide">Total Items</p>
                   <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-indigo-600 to-indigo-700 bg-clip-text text-transparent tabular-nums mb-2">
-                    {formatNumber(Array.isArray(items) ? items.filter(item => item.productType !== 'bundle').length : 0)}
+                    {formatNumber(Array.isArray(items) ? items.length : 0)}
                   </p>
                   {(search || salesChannelFilter !== "all") && (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Filtered: {formatNumber(Array.isArray(filteredItems) ? filteredItems.filter(item => item.productType !== 'bundle').length : 0)}
+                      Filtered: {formatNumber(Array.isArray(filteredItems) ? filteredItems.length : 0)}
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Total Quantity - Blue Gradient (Excludes Bundles) */}
+              {/* Total Quantity - Blue Gradient */}
               <div className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 p-4 rounded-xl bg-white dark:bg-slate-900">
                 <div className="relative">
                   <div className="flex items-center justify-between mb-2">
@@ -1275,11 +1077,11 @@ export default function InventoryPage() {
                   </div>
                   <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wide">Total Quantity</p>
                   <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-blue-600 to-blue-700 bg-clip-text text-transparent tabular-nums mb-2">
-                    {formatNumber(Array.isArray(items) ? items.filter(item => item.productType !== 'bundle').reduce((sum, item) => sum + item.quantity, 0) : 0)}
+                    {formatNumber(Array.isArray(items) ? items.reduce((sum, item) => sum + item.quantity, 0) : 0)}
                   </p>
                   {(search || salesChannelFilter !== "all") && (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Filtered: {formatNumber(Array.isArray(filteredItems) ? filteredItems.filter(item => item.productType !== 'bundle').reduce((sum, item) => sum + item.quantity, 0) : 0)}
+                      Filtered: {formatNumber(Array.isArray(filteredItems) ? filteredItems.reduce((sum, item) => sum + item.quantity, 0) : 0)}
                     </p>
                   )}
                 </div>
@@ -1337,21 +1139,9 @@ export default function InventoryPage() {
                       </div>
                     </div>
                     <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wide">Total Bad Stock</p>
-                    <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-red-600 to-red-700 bg-clip-text text-transparent tabular-nums mb-2">
+                    <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-red-600 to-red-700 bg-clip-text text-transparent tabular-nums">
                       {formatNumber(Array.isArray(items) ? items.filter(item => item.item_status === 'bad').reduce((sum, item) => sum + (item.bad_item_quantity || 0), 0) : 0)} units
                     </p>
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                        COGS Lost: <span className="font-semibold text-red-600 dark:text-red-400">
-                          {formatCurrency(Array.isArray(items) ? items.filter(item => item.item_status === 'bad').reduce((sum, item) => sum + ((item.bad_item_quantity || 0) * item.costPrice), 0) : 0)}
-                        </span>
-                      </p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                        Revenue Lost: <span className="font-semibold text-red-600 dark:text-red-400">
-                          {formatCurrency(Array.isArray(items) ? items.filter(item => item.item_status === 'bad').reduce((sum, item) => sum + ((item.bad_item_quantity || 0) * item.sellingPrice), 0) : 0)}
-                        </span>
-                      </p>
-                    </div>
                   </div>
                 </div>
               )}
@@ -1395,16 +1185,6 @@ export default function InventoryPage() {
                       {category.name}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-              <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
-                <SelectTrigger className="w-full lg:w-[180px] h-7 text-xs border-slate-200 dark:border-slate-700">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="single">Single Product</SelectItem>
-                  <SelectItem value="bundle">Bundle</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={(value: "all" | "good" | "bad") => setStatusFilter(value)}>
@@ -1521,14 +1301,11 @@ export default function InventoryPage() {
                           <th className="py-2.5 px-3 text-center text-[10px] font-bold text-slate-300 uppercase tracking-wider border-r border-slate-700/50 w-[80px]">
                             Other
                           </th>
-                          <th className="py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 md:sticky md:right-[180px] bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[90px]">
+                          <th className="py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 md:sticky md:right-[90px] bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[90px]">
                             Total Bad
                           </th>
-                          <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 md:sticky md:right-[90px] bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[90px]">
-                            Cost
-                          </th>
                           <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider md:sticky md:right-0 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[90px]">
-                            COGS Lost
+                            Cost
                           </th>
                         </>
                       ) : (
@@ -1597,7 +1374,6 @@ export default function InventoryPage() {
                       const isOutOfStock = item.quantity === 0
                       const stockPercentage = Math.min((item.quantity / (item.reorderLevel * 2)) * 100, 100)
                       const isSelected = selectedRowId === item.id
-                      const isBundle = (item as any).productType === 'bundle' || (item as any).product_type === 'bundle'
                       
                       // Bad stock breakdown - Individual reason quantities
                       const breakdown = (item.bad_items_breakdown || {}) as Record<string, number>
@@ -1858,13 +1634,6 @@ export default function InventoryPage() {
                             <td className="py-2 px-3 md:sticky md:right-[90px] bg-white dark:bg-slate-900 md:z-10">
                               <div className="text-slate-700 dark:text-slate-300 font-medium">
                                 ₱{item.costPrice.toFixed(2)}
-                              </div>
-                            </td>
-                            
-                            {/* COGS Lost - No Sticky on Mobile, Sticky on Desktop (Bad Stocks) */}
-                            <td className="py-2 px-3 md:sticky md:right-0 bg-white dark:bg-slate-900 md:z-10">
-                              <div className="text-red-700 dark:text-red-300 font-bold">
-                                ₱{totalCost.toFixed(2)}
                               </div>
                             </td>
                           </tr>
@@ -2214,8 +1983,8 @@ export default function InventoryPage() {
                               <TooltipProvider>
                                 <div className="flex justify-start gap-0">
 
-                                  {/* Adjust Stock - only for non-bundles, non-read-only users */}
-                                  {!isReadOnly && !isBundle && (
+                                  {/* Adjust Stock - only for non-read-only users */}
+                                  {!isReadOnly && (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
@@ -2231,8 +2000,8 @@ export default function InventoryPage() {
                                     </Tooltip>
                                   )}
 
-                                  {/* Edit - for non-bundles: admins only; for bundles: everyone */}
-                                  {(!isBundle && !isReadOnly) || isBundle ? (
+                                  {/* Edit - admins only */}
+                                  {!isReadOnly && (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
@@ -2246,10 +2015,10 @@ export default function InventoryPage() {
                                       </TooltipTrigger>
                                       <TooltipContent><p>Edit</p></TooltipContent>
                                     </Tooltip>
-                                  ) : null}
+                                  )}
 
-                                  {/* Delete - for non-bundles: admins only; for bundles: everyone */}
-                                  {(!isBundle && !isReadOnly) || isBundle ? (
+                                  {/* Delete - admins only */}
+                                  {!isReadOnly && (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
@@ -2263,7 +2032,7 @@ export default function InventoryPage() {
                                       </TooltipTrigger>
                                       <TooltipContent><p>Delete</p></TooltipContent>
                                     </Tooltip>
-                                  ) : null}
+                                  )}
 
                                 </div>
                               </TooltipProvider>
@@ -2297,30 +2066,6 @@ export default function InventoryPage() {
       {/* Dialogs */}
 
       <AddItemDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} onSuccess={fetchItems} />
-
-      <CreateBundleDialog 
-        open={createBundleOpen} 
-        onOpenChange={(open) => {
-          setCreateBundleOpen(open)
-          // Clear selectedItem when closing modal to ensure fresh state for next open
-          if (!open) {
-            setSelectedItem(null)
-          }
-        }}
-        onSuccess={fetchItems}
-        editMode={!!(selectedItem as any)?.bundleId}
-        bundleId={(selectedItem as any)?.bundleId}
-        initialData={(selectedItem as any)?.bundleId ? {
-          name: selectedItem?.name || '',
-          description: (selectedItem as any)?.bundleData?.description || '',
-          bundlePrice: selectedItem?.sellingPrice || 0,
-          badge: (selectedItem as any)?.bundleData?.badge || '',
-          salesChannel: selectedItem?.salesChannel || 'Physical Store',
-          store: selectedItem?.store || 'Main Store',
-          imageUrl: selectedItem?.imageUrl || null,
-          bundleItems: (selectedItem as any)?.bundleItems || []
-        } : undefined}
-      />
 
       {selectedItem && (
         <EditItemDialog
@@ -2625,252 +2370,6 @@ export default function InventoryPage() {
             </div>
             )}
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Store Management Dialog */}
-      <Dialog open={storeDialogOpen} onOpenChange={setStoreDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] mx-4 sm:mx-auto flex flex-col p-0 gap-0 rounded-xl sm:rounded-2xl overflow-hidden">
-          {/* Professional Header with Dark Gradient - Mobile optimized */}
-          <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-600 flex-shrink-0">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-                  <Warehouse className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <span className="text-white">Store Management</span>
-              </DialogTitle>
-              <DialogDescription className="text-slate-200 text-xs sm:text-sm mt-1 sm:mt-2 font-medium">
-                Add and manage stores organized by sales channel
-              </DialogDescription>
-            </DialogHeader>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 px-4 sm:px-8 py-4 sm:py-6 min-h-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-600 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-500 [&::-webkit-scrollbar]:opacity-0 hover:[&::-webkit-scrollbar]:opacity-100 transition-opacity">
-            {/* Add New Store Section - Mobile optimized */}
-            <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-xl p-3 sm:p-4 space-y-2 sm:space-y-3">
-              <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-600" />
-                <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">Add New Store</h3>
-              </div>
-              
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 sm:mb-1.5 block">
-                    Sales Channel *
-                  </Label>
-                  <Select 
-                    value={newStore.salesChannel} 
-                    onValueChange={(value) => setNewStore({ ...newStore, salesChannel: value })}
-                    disabled={submitting || isDepartment}
-                  >
-                    <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800">
-                      <SelectValue placeholder={isDepartment ? userDepartment : "Choose a sales channel"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {isDepartment ? (
-                        <SelectItem value={userDepartment}>{userDepartment}</SelectItem>
-                      ) : (
-                        SALES_CHANNELS.map((channel) => (
-                          <SelectItem key={channel} value={channel}>
-                            {channel}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {isDepartment && (
-                    <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      You can only add stores for your department ({userDepartment})
-                    </p>
-                  )}
-                </div>
-                
-                <div>
-                  <Label className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 sm:mb-1.5 block">
-                    Store Name *
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Enter store name"
-                      value={newStore.name}
-                      onChange={(e) => setNewStore({ ...newStore, name: e.target.value })}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddStore()}
-                      disabled={submitting}
-                      className="h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-                    />
-                    <Button
-                      onClick={handleAddStore}
-                      disabled={!newStore.name.trim() || !newStore.salesChannel || submitting}
-                      className="h-9 sm:h-10 px-4 sm:px-6 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xs sm:text-sm font-semibold flex-shrink-0 shadow-sm"
-                    >
-                      {submitting ? (
-                        <CustomLoader size="sm" />
-                      ) : (
-                        <>
-                          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5" />
-                          <span className="hidden sm:inline">Add</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Existing Stores List */}
-            <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-2 sm:mb-3 px-1">
-                Existing Stores ({isDepartment ? stores.filter(s => s.sales_channel === userDepartment).length : stores.length})
-              </h3>
-
-            {/* Store List */}
-            {(isDepartment ? stores.filter(s => s.sales_channel === userDepartment) : stores).length === 0 ? (
-              <div className="text-center py-8 sm:py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
-                <Warehouse className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-slate-400 mb-2 sm:mb-3" />
-                <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">No stores yet</p>
-                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mt-1">Add your first store using the form above</p>
-              </div>
-            ) : (
-              <div className="space-y-3 sm:space-y-4">
-                {(isDepartment ? [userDepartment] : SALES_CHANNELS).map((channel) => {
-                  const channelStores = stores.filter(s => s.sales_channel === channel)
-                  if (channelStores.length === 0) return null
-                  
-                  return (
-                    <div key={channel} className="space-y-2">
-                      <div className="flex items-center gap-2 px-2">
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent" />
-                        <div className="text-[10px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
-                          {channel} ({channelStores.length})
-                        </div>
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent" />
-                      </div>
-                      {channelStores.map((store) => (
-                        <div
-                          key={store.id}
-                          className="flex items-center justify-between p-2 sm:p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-orange-300 dark:hover:border-orange-700 transition-colors"
-                        >
-                          {editingStore?.id === store.id ? (
-                            <div className="flex-1 space-y-2">
-                              <Select 
-                                value={editStoreValue.salesChannel} 
-                                onValueChange={(value) => setEditStoreValue({ ...editStoreValue, salesChannel: value })}
-                                disabled={submitting}
-                              >
-                                <SelectTrigger className="h-8 sm:h-9 text-[10px] sm:text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {SALES_CHANNELS.map((ch) => (
-                                    <SelectItem key={ch} value={ch}>{ch}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <div className="flex gap-1.5 sm:gap-2">
-                                <Input
-                                  value={editStoreValue.name}
-                                  onChange={(e) => setEditStoreValue({ ...editStoreValue, name: e.target.value })}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleEditStore()
-                                    if (e.key === "Escape") {
-                                      setEditingStore(null)
-                                      setEditStoreValue({ name: "", salesChannel: "" })
-                                    }
-                                  }}
-                                  disabled={submitting}
-                                  className="h-8 sm:h-9 text-[10px] sm:text-xs flex-1"
-                                  autoFocus
-                                />
-                                <Button
-                                  onClick={handleEditStore}
-                                  disabled={!editStoreValue.name.trim() || !editStoreValue.salesChannel || submitting}
-                                  size="sm"
-                                  className="h-8 sm:h-9 w-8 sm:w-9 p-0"
-                                >
-                                  {submitting ? <CustomLoader size="sm" /> : <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
-                                </Button>
-                                <Button
-                                  onClick={() => {
-                                    setEditingStore(null)
-                                    setEditStoreValue({ name: "", salesChannel: "" })
-                                  }}
-                                  disabled={submitting}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 sm:h-9 w-8 sm:w-9 p-0"
-                                >
-                                  <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              <span className="text-xs sm:text-sm font-medium text-slate-900 dark:text-white flex-1">
-                                {store.store_name}
-                              </span>
-                              <div className="flex gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingStore(store)
-                                    setEditStoreValue({ name: store.store_name, salesChannel: store.sales_channel })
-                                  }}
-                                  disabled={submitting}
-                                  className="h-7 sm:h-8 w-7 sm:w-8 p-0 text-slate-600 hover:text-orange-600 dark:text-slate-400 dark:hover:text-orange-400"
-                                >
-                                  <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setDeleteWarehouseId(store.id)}
-                                  disabled={submitting}
-                                  className="h-7 sm:h-8 w-7 sm:w-8 p-0 text-slate-600 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
-                                >
-                                  <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Store Confirmation */}
-      <Dialog open={!!deleteWarehouseId} onOpenChange={() => setDeleteWarehouseId(null)}>
-        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 max-w-[95vw] sm:max-w-md mx-4 sm:mx-auto rounded-xl sm:rounded-2xl">
-          <DialogHeader className="px-1">
-            <DialogTitle className="text-slate-900 dark:text-white text-base sm:text-lg">Delete Store</DialogTitle>
-            <DialogDescription className="text-slate-600 dark:text-slate-400 text-sm">
-              Are you sure you want to delete this store? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2 pt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setDeleteWarehouseId(null)}
-              className="h-9 sm:h-10 px-4 sm:px-6 text-sm"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => deleteWarehouseId && handleDeleteStore(deleteWarehouseId)}
-              disabled={submitting}
-              className="bg-red-600 hover:bg-red-700 text-white h-9 sm:h-10 px-4 sm:px-6 text-sm"
-            >
-              {submitting ? "Deleting..." : "Delete"}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

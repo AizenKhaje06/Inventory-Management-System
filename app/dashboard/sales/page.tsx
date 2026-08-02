@@ -3,10 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, BarChart3, TrendingUp, DollarSign, Package, Users, ShoppingCart } from 'lucide-react';
+import { Calendar, Download, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { apiGet } from '@/lib/api-client';
 import { TableSkeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/table-skeleton';
 import { EnterpriseDateRangePicker } from '@/components/ui/enterprise-date-range-picker';
@@ -32,7 +30,6 @@ interface SalesData {
 }
 
 export default function SalesAnalyticsPage() {
-  const [viewMode, setViewMode] = useState<'daily' | 'monthly'>('daily');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [salesData, setSalesData] = useState<SalesData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,14 +39,15 @@ export default function SalesAnalyticsPage() {
 
   useEffect(() => {
     fetchSalesData();
-  }, [startDate, endDate]); // Fetch when date filter changes
+  }, [startDate, endDate]);
 
   const fetchSalesData = async () => {
     try {
       setLoading(true);
-      // Build API URL with date filters if provided
-      let apiUrl = '/api/reports';
+      let apiUrl = '/api/dashboard';
       const params = new URLSearchParams();
+      
+      params.append('period', '1M');
       
       if (startDate) {
         params.append('startDate', startDate.toISOString());
@@ -62,90 +60,66 @@ export default function SalesAnalyticsPage() {
         apiUrl += `?${params.toString()}`;
       }
       
-      const data = await apiGet<SalesData>(apiUrl);
-      console.log('Sales Data:', data); // Debug log
-      console.log('Total Orders:', data.totalOrders); // Debug log
-      console.log('Total Revenue:', data.totalRevenue); // Debug log
-      console.log('Daily Sales:', data.dailySales); // Debug log
-      console.log('Monthly Sales:', data.monthlySales); // Debug log
-      setSalesData(data);
+      const data = await apiGet<any>(apiUrl);
+      
+      const transformedSalesOverTime = (data.salesOverTime || []).map((item: any) => {
+        const revenue = item.sales || 0;
+        const cost = (item.quantity || 0) * (data.totalCost / Math.max(data.totalTransactions, 1));
+        const profit = revenue - cost;
+        
+        let fullDate: string;
+        if (item.date.includes(':')) {
+          const today = new Date();
+          const [hours] = item.date.split(':');
+          today.setHours(parseInt(hours), 0, 0, 0);
+          fullDate = today.toISOString();
+        } else if (item.date.includes('-')) {
+          fullDate = new Date(item.date).toISOString();
+        } else {
+          const currentYear = new Date().getFullYear();
+          const [month, day] = item.date.split(' ');
+          const monthMap: { [key: string]: number } = {
+            'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+            'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+          };
+          const monthIndex = monthMap[month] || 0;
+          const date = new Date(currentYear, monthIndex, parseInt(day));
+          fullDate = date.toISOString();
+        }
+        
+        return {
+          date: fullDate,
+          revenue: revenue,
+          itemsSold: item.quantity || 0,
+          profit: profit
+        };
+      });
+      
+      const transformedData: SalesData = {
+        totalRevenue: data.totalRevenue || 0,
+        totalCost: data.totalCost || 0,
+        totalProfit: data.totalProfit || 0,
+        profitMargin: data.profitMargin || 0,
+        totalOrders: data.totalTransactions || 0,
+        dailySales: transformedSalesOverTime,
+        monthlySales: transformedSalesOverTime
+      };
+      
+      setSalesData(transformedData);
     } catch (err) {
+      console.error('[Sales Page] Error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentMonth(prev => {
-      const newDate = new Date(prev);
-      newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
-      return newDate;
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="max-w-[1400px] mx-auto py-5 space-y-6" aria-live="polite" aria-busy="true">
-        <div className="space-y-2">
-          <div className="h-8 w-64 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-        </div>
-        <StatCardSkeleton count={4} />
-        <div className="grid gap-5 grid-cols-1 lg:grid-cols-2">
-          <CardSkeleton lines={5} />
-          <CardSkeleton lines={5} />
-        </div>
-        <span className="sr-only">Loading, please wait...</span>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={fetchSalesData}>Try Again</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!salesData) {
-    return (
-      <div className="min-h-screen w-full max-w-full overflow-x-hidden p-6">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold gradient-text mb-2">
-            Sales History
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-base">
-            Track your sales performance and trends
-          </p>
-        </div>
-        <Card className="w-full max-w-2xl mx-auto">
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <Package className="h-16 w-16 mx-auto mb-4 text-slate-400" />
-              <h3 className="text-xl font-semibold mb-2">No Sales Data Available</h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-4">
-                Start making sales to see analytics and insights here.
-              </p>
-              <Button onClick={fetchSalesData}>Refresh Data</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', {
       style: 'currency',
       currency: 'PHP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
@@ -153,78 +127,79 @@ export default function SalesAnalyticsPage() {
     return `${(value * 100).toFixed(1)}%`;
   };
 
-  // Calculate profit margin to ensure accuracy
-  const calculatedProfitMargin = salesData.totalRevenue > 0 ? salesData.totalProfit / salesData.totalRevenue : 0;
-
-  // Check if there's any sales data - be more lenient
-  const hasNoSales = !salesData || (salesData.totalOrders === 0 && salesData.totalRevenue === 0 && (!salesData.dailySales || salesData.dailySales.length === 0));
-  
-  console.log('Sales Check:', {
-    totalOrders: salesData?.totalOrders,
-    totalRevenue: salesData?.totalRevenue,
-    dailySalesLength: salesData?.dailySales?.length,
-    hasNoSales
-  }); // Debug log
-
-  if (hasNoSales) {
+  if (loading) {
     return (
-      <div className="min-h-screen w-full max-w-full overflow-x-hidden">
-        <div className="mb-8 animate-in fade-in-0 slide-in-from-top-4 duration-700">
-          <h1 className="text-4xl font-bold gradient-text mb-2">
-            Sales History
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-base">
-            Track your sales performance and trends
-          </p>
-        </div>
-        
-        <Card className="w-full max-w-2xl mx-auto border-0 shadow-lg">
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <div className="bg-blue-100 dark:bg-blue-900/20 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-                <BarChart3 className="h-12 w-12 text-blue-600 dark:text-blue-400" />
-              </div>
-              <h3 className="text-2xl font-semibold mb-3 text-slate-900 dark:text-white">
-                No Sales Data Yet
-              </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
-                Start processing sales through the Warehouse Dispatch page to see analytics, trends, and insights here.
-              </p>
-              <div className="flex gap-3 justify-center">
-                <Button 
-                  onClick={() => window.location.href = '/dashboard/pos'}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Go to Warehouse Dispatch
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={fetchSalesData}
-                >
-                  Refresh Data
-                </Button>
-              </div>
-            </div>
+      <div className="p-6 max-w-[1600px] mx-auto space-y-6">
+        <div className="h-10 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+        <StatCardSkeleton count={4} />
+        <CardSkeleton lines={8} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="w-full max-w-md border-0 shadow-sm">
+          <CardContent className="pt-6 text-center">
+            <p className="text-slate-600 dark:text-slate-400 mb-4">{error}</p>
+            <Button onClick={fetchSalesData} variant="outline" size="sm">Retry</Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const calculatedProfitMargin = salesData?.totalRevenue && salesData.totalRevenue > 0 
+    ? salesData.totalProfit / salesData.totalRevenue 
+    : 0;
+
+  const hasNoSales = !salesData || (salesData.totalOrders === 0 && salesData.totalRevenue === 0);
+
+  if (hasNoSales) {
+    return (
+      <div className="p-6 max-w-[1600px] mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-1">Sales History</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Track revenue and performance</p>
+        </div>
+        
+        <Card className="border border-slate-200 dark:border-slate-800">
+          <CardContent className="py-16 text-center">
+            <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+              <Calendar className="h-6 w-6 text-slate-400" />
+            </div>
+            <h3 className="text-base font-medium text-slate-900 dark:text-white mb-2">
+              No sales data available
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              Sales transactions will appear here once recorded
+            </p>
+            <Button onClick={fetchSalesData} variant="outline" size="sm">Refresh</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Calculate first day of month offset
+  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  const startDayOfWeek = firstDayOfMonth.getDay();
+  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden pt-2">
-      {/* Page Header */}
-      <div className="mb-6 animate-in fade-in-0 slide-in-from-top-4 duration-700 flex items-start justify-between gap-4">
+    <div className="p-6 max-w-[1600px] mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold gradient-text mb-2">
+          <h1 className="text-3xl font-bold gradient-text mb-2">
             Sales History
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-base">
-            Track your sales performance and trends
+          <p className="text-base text-slate-600 dark:text-slate-400">
+            Track revenue, analyze performance, and monitor sales trends
           </p>
         </div>
-        <div className="flex-shrink-0">
+        <div className="flex items-center gap-3">
           <EnterpriseDateRangePicker
             startDate={startDate}
             endDate={endDate}
@@ -233,201 +208,247 @@ export default function SalesAnalyticsPage() {
               setEndDate(end)
             }}
           />
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div></div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button
-            variant={viewMode === 'daily' ? 'default' : 'outline'}
-            onClick={() => setViewMode('daily')}
-            className="flex items-center gap-2 flex-1 sm:flex-initial bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-          >
-            <Calendar className="h-4 w-4" />
-            Daily View
-          </Button>
-          <Button
-            variant={viewMode === 'monthly' ? 'default' : 'outline'}
-            onClick={() => setViewMode('monthly')}
-            className="flex items-center gap-2 flex-1 sm:flex-initial bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-          >
-            <BarChart3 className="h-4 w-4" />
-            Monthly View
+          <Button variant="outline" size="sm" className="h-9">
+            <Download className="h-4 w-4 mr-2" />
+            Export
           </Button>
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 animate-in fade-in-0 slide-in-from-bottom-4 duration-700 delay-100">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-50">Total Orders</CardTitle>
-            <Package className="h-5 w-5 text-white opacity-80" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{salesData.totalOrders}</div>
-          </CardContent>
+      {/* Key Metrics - Dashboard Style with colored backgrounds and shadows */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Revenue */}
+        <Card className="p-5 border-0 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-emerald-600 shadow-lg shadow-emerald-500/30 flex-shrink-0">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Total Revenue</p>
+              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 tabular-nums">
+                {formatCurrency(salesData.totalRevenue)}
+              </p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-500 flex items-center gap-1 mt-0.5">
+                {salesData.totalOrders} orders
+              </p>
+            </div>
+          </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 border-0 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-50">Total Revenue</CardTitle>
-            <DollarSign className="h-5 w-5 text-white opacity-80" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{formatCurrency(salesData.totalRevenue)}</div>
-          </CardContent>
+        {/* Total Cost */}
+        <Card className="p-5 border-0 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-slate-600 shadow-lg shadow-slate-500/30 flex-shrink-0">
+              <Minus className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Total Cost</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 tabular-nums">
+                {formatCurrency(salesData.totalCost)}
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                Total expenses
+              </p>
+            </div>
+          </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 border-0 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-50">Total Cost</CardTitle>
-            <Package className="h-5 w-5 text-white opacity-80" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{formatCurrency(salesData.totalCost)}</div>
-          </CardContent>
+        {/* Total Profit */}
+        <Card className="p-5 border-0 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl shadow-lg flex-shrink-0 ${
+              salesData.totalProfit > 0 
+                ? 'bg-blue-600 shadow-blue-500/30' 
+                : salesData.totalProfit < 0 
+                ? 'bg-red-600 shadow-red-500/30'
+                : 'bg-slate-600 shadow-slate-500/30'
+            }`}>
+              {salesData.totalProfit > 0 ? (
+                <TrendingUp className="h-5 w-5 text-white" />
+              ) : salesData.totalProfit < 0 ? (
+                <TrendingDown className="h-5 w-5 text-white" />
+              ) : (
+                <Minus className="h-5 w-5 text-white" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-[10px] font-bold uppercase tracking-wider ${
+                salesData.totalProfit > 0 
+                  ? 'text-blue-700 dark:text-blue-400' 
+                  : salesData.totalProfit < 0 
+                  ? 'text-red-700 dark:text-red-400'
+                  : 'text-slate-700 dark:text-slate-400'
+              }`}>Net Profit</p>
+              <p className={`text-2xl font-bold tabular-nums ${
+                salesData.totalProfit > 0 
+                  ? 'text-blue-900 dark:text-blue-100' 
+                  : salesData.totalProfit < 0 
+                  ? 'text-red-900 dark:text-red-100'
+                  : 'text-slate-900 dark:text-slate-100'
+              }`}>
+                {formatCurrency(salesData.totalProfit)}
+              </p>
+              <p className={`text-xs flex items-center gap-1 mt-0.5 ${
+                salesData.totalProfit > 0 
+                  ? 'text-blue-600 dark:text-blue-500' 
+                  : salesData.totalProfit < 0 
+                  ? 'text-red-600 dark:text-red-500'
+                  : 'text-slate-600 dark:text-slate-500'
+              }`}>
+                {salesData.totalProfit > 0 ? '✓ Profitable' : salesData.totalProfit < 0 ? '⚠ Loss' : 'Break-even'}
+              </p>
+            </div>
+          </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 border-0 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-50">Total Profit</CardTitle>
-            <TrendingUp className="h-5 w-5 text-white opacity-80" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{formatCurrency(salesData.totalProfit)}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-pink-500 to-pink-600 border-0 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-pink-50">Profit Margin</CardTitle>
-            <Users className="h-5 w-5 text-white opacity-80" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{formatPercentage(calculatedProfitMargin)}</div>
-          </CardContent>
+        {/* Profit Margin */}
+        <Card className="p-5 border-0 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-600 shadow-lg shadow-amber-500/30 flex-shrink-0">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Profit Margin</p>
+              <p className="text-2xl font-bold text-amber-900 dark:text-amber-100 tabular-nums">
+                {formatPercentage(calculatedProfitMargin)}
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1 mt-0.5">
+                {calculatedProfitMargin >= 0.3 ? '🏆 Excellent!' : calculatedProfitMargin >= 0.15 ? '✓ Good' : '⚠ Improve'}
+              </p>
+            </div>
+          </div>
         </Card>
       </div>
 
-      {/* Main Content */}
-      {viewMode === 'daily' ? (
-        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900 animate-in fade-in-0 slide-in-from-bottom-4 duration-700 delay-200">
-          <CardHeader>
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <CardTitle className="text-slate-900 dark:text-white">Daily Sales Calendar</CardTitle>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={String(currentMonth.getMonth())}
-                  onValueChange={(val) => {
-                    const newDate = new Date(currentMonth);
-                    newDate.setMonth(Number(val));
-                    setCurrentMonth(newDate);
-                  }}
-                >
-                  <SelectTrigger className="w-[130px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['January','February','March','April','May','June','July','August','September','October','November','December'].map((month, idx) => (
-                      <SelectItem key={idx} value={String(idx)}>{month}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={String(currentMonth.getFullYear())}
-                  onValueChange={(val) => {
-                    const newDate = new Date(currentMonth);
-                    newDate.setFullYear(Number(val));
-                    setCurrentMonth(newDate);
-                  }}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map((year) => (
-                      <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      {/* Sales Calendar - Dashboard Style */}
+      <Card className="overflow-hidden border-0 shadow-lg">
+        <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-1 bg-blue-500 rounded-full flex-shrink-0"></div>
+              <div>
+                <h3 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">Sales Calendar</h3>
+                <p className="text-xs mt-0.5 text-slate-600 dark:text-slate-400">Daily sales overview</p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-7 gap-2 mb-4">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
-                  {day}
-                </div>
-              ))}
+            <div className="flex items-center gap-2">
+              <Select
+                value={String(currentMonth.getMonth())}
+                onValueChange={(val) => {
+                  const newDate = new Date(currentMonth);
+                  newDate.setMonth(Number(val));
+                  setCurrentMonth(newDate);
+                }}
+              >
+                <SelectTrigger className="w-[130px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {['January','February','March','April','May','June','July','August','September','October','November','December'].map((month, idx) => (
+                    <SelectItem key={idx} value={String(idx)}>{month}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(currentMonth.getFullYear())}
+                onValueChange={(val) => {
+                  const newDate = new Date(currentMonth);
+                  newDate.setFullYear(Number(val));
+                  setCurrentMonth(newDate);
+                }}
+              >
+                <SelectTrigger className="w-[100px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map((year) => (
+                    <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentMonth(new Date())}
+                className="h-8 px-3 text-xs"
+              >
+                Today
+              </Button>
             </div>
-            <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 31 }, (_, i) => {
-                const day = i + 1;
-                const dayData = salesData.dailySales?.find(d => {
-                  const date = new Date(d.date);
-                  const matches = date.getDate() === day && date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
-                  
-                  // Debug logging for Feb 16
-                  if (day === 16 && currentMonth.getMonth() === 1 && currentMonth.getFullYear() === 2026) {
-                    console.log('Feb 16 Debug:', {
-                      day,
-                      currentMonth: currentMonth.getMonth(),
-                      currentYear: currentMonth.getFullYear(),
-                      dateString: d.date,
-                      parsedDate: date,
-                      parsedDay: date.getDate(),
-                      parsedMonth: date.getMonth(),
-                      parsedYear: date.getFullYear(),
-                      matches,
-                      revenue: d.revenue
-                    });
-                  }
-                  
-                  return matches;
-                });
+          </div>
+        </div>
+        <CardContent className="pt-4 pb-3">
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-2">
+            {/* Day headers */}
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <div key={day} className="text-center pb-2">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{day}</span>
+              </div>
+            ))}
+            
+            {/* Empty cells for offset */}
+            {Array.from({ length: startDayOfWeek }).map((_, i) => (
+              <div key={`empty-${i}`} className="aspect-square" />
+            ))}
+            
+            {/* Calendar days */}
+            {Array.from({ length: daysInMonth }, (_, i) => {
+              const day = i + 1;
+              const dayData = salesData.dailySales?.find(d => {
+                const date = new Date(d.date);
+                return date.getDate() === day && 
+                       date.getMonth() === currentMonth.getMonth() && 
+                       date.getFullYear() === currentMonth.getFullYear();
+              });
 
-                return (
-                  <div
-                    key={day}
-                    className="aspect-square border rounded-[5px] p-2 flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
-                  >
-                    <div className="text-sm font-medium text-slate-900 dark:text-white">{day}</div>
-                    {dayData ? (
-                      <>
-                        <div className="text-xs text-green-600 dark:text-green-400 font-medium">
-                          {formatCurrency(dayData.revenue)}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Sale
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-xs text-slate-400 dark:text-slate-600">
-                        No sales
-                      </div>
-                    )}
+              const isToday = new Date().getDate() === day && 
+                            new Date().getMonth() === currentMonth.getMonth() &&
+                            new Date().getFullYear() === currentMonth.getFullYear();
+
+              return (
+                <div
+                  key={day}
+                  className={`
+                    aspect-square rounded-lg p-2 flex flex-col items-center justify-center
+                    transition-all duration-150
+                    ${isToday 
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500' 
+                      : dayData 
+                      ? 'bg-slate-50 dark:bg-[#1a1a1a] hover:bg-slate-100 dark:hover:bg-[#222] border border-transparent hover:border-slate-200 dark:hover:border-emerald-500/15 cursor-pointer'
+                      : 'bg-white dark:bg-slate-900'
+                    }
+                  `}
+                >
+                  <div className={`text-sm font-bold mb-1 ${
+                    isToday 
+                      ? 'text-blue-600 dark:text-blue-400' 
+                      : 'text-slate-700 dark:text-slate-300'
+                  }`}>
+                    {day}
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900 animate-in fade-in-0 slide-in-from-bottom-4 duration-700 delay-200">
-          <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">Monthly Sales Revenue Trend</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="text-center py-20">
-              <BarChart3 className="h-16 w-16 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
-              <p className="text-slate-600 dark:text-slate-400">Chart will be recreated here</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  {dayData && dayData.revenue > 0 ? (
+                    <div className="text-center">
+                      <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        ₱{formatNumber(dayData.revenue)}
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {dayData.itemsSold} items
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-slate-400 dark:text-slate-600">—</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+const formatNumber = (value: number) => {
+  return new Intl.NumberFormat('en-US').format(value);
+};

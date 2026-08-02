@@ -385,7 +385,7 @@ export default function DashboardPage() {
 
         {/* Total Bad Stock */}
         <Card className="p-5 border-0 shadow-lg">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-red-600 shadow-lg shadow-red-500/30 flex-shrink-0">
               <AlertTriangle className="h-5 w-5 text-white" />
             </div>
@@ -394,157 +394,11 @@ export default function DashboardPage() {
               <p className="text-2xl font-bold text-red-900 dark:text-red-100 tabular-nums">
                 <AnimatedNumber value={totalBadQty} duration={1500} /> units
               </p>
+              <p className="text-xs text-red-600 dark:text-red-500 flex items-center gap-1 mt-0.5">
+                {totalBadQty > 0 ? "Damaged or unusable" : "No bad stock"}
+              </p>
             </div>
           </div>
-          {/* Split Display */}
-          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-red-200 dark:border-red-800">
-            <div className="text-center">
-              <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">COGS Lost</p>
-              <p className="text-lg font-bold text-red-900 dark:text-red-100 tabular-nums">
-                ₱<AnimatedNumber value={totalBadCOGS} duration={1500} />
-              </p>
-              <p className="text-[10px] text-red-500 dark:text-red-500">Cost value</p>
-            </div>
-            <div className="text-center border-l border-red-200 dark:border-red-800">
-              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mb-1">Revenue Lost</p>
-              <p className="text-lg font-bold text-orange-900 dark:text-orange-100 tabular-nums">
-                ₱<AnimatedNumber value={totalBadRevenueLost} duration={1500} />
-              </p>
-              <p className="text-[10px] text-orange-500 dark:text-orange-500">Selling value</p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Quick Actions & Alerts */}
-      <div className={cn(
-        "grid gap-5",
-        currentUser?.role === 'admin' ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"
-      )}>
-        {/* Quick Actions - Admin Only */}
-        {currentUser?.role === 'admin' && (
-          <Card className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Activity className="h-4 w-4 text-blue-600" />
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <Button variant="outline" size="sm" className="h-auto py-3 text-xs justify-start" asChild>
-                  <Link href="/dashboard/inventory/create">
-                    <Plus className="h-3.5 w-3.5 mr-2" />
-                    Add Product
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" className="h-auto py-3 text-xs justify-start" asChild>
-                  <Link href="/dashboard/pos">
-                    <ShoppingCart className="h-3.5 w-3.5 mr-2" />
-                    New Sale
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" className="h-auto py-3 text-xs justify-start" asChild>
-                  <Link href="/dashboard/inventory/low-stock">
-                    <Package className="h-3.5 w-3.5 mr-2" />
-                    Restock
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" className="h-auto py-3 text-xs justify-start" asChild>
-                  <Link href="/dashboard/sales">
-                    <FileText className="h-3.5 w-3.5 mr-2" />
-                    Sales
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Critical Alerts - Redesigned Compact */}
-        <Card className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              Inventory Alerts
-              {(outOfStockCount + lowStockCount) > 0 && (
-                <Badge variant="destructive" className="ml-auto text-xs px-2 py-0.5">
-                  {outOfStockCount + lowStockCount}
-                </Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(outOfStockCount > 0 || lowStockCount > 0) ? (
-              <div className="grid grid-cols-2 gap-2">
-                {/* Out of Stock Card */}
-                <Card className="rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div>
-                        <div className="text-xl font-bold text-red-600 dark:text-red-400">
-                          {outOfStockCount}
-                        </div>
-                        <div className="text-xs text-red-600 dark:text-red-400 font-medium">
-                          Out of Stock
-                        </div>
-                      </div>
-                      <PackageX className="h-6 w-6 text-red-400 dark:text-red-500" />
-                    </div>
-                    {outOfStockCount > 0 && (
-                      <Button 
-                        size="sm" 
-                        variant="link" 
-                        className="text-red-600 dark:text-red-400 h-auto p-0 text-xs font-medium" 
-                        asChild
-                      >
-                        <Link href="/dashboard/inventory/out-of-stock">
-                          View Items →
-                        </Link>
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Low Stock Card */}
-                <Card className="rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div>
-                        <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
-                          {lowStockCount}
-                        </div>
-                        <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                          Low Stock
-                        </div>
-                      </div>
-                      <PackageOpen className="h-6 w-6 text-amber-400 dark:text-amber-500" />
-                    </div>
-                    {lowStockCount > 0 && (
-                      <Button 
-                        size="sm" 
-                        variant="link" 
-                        className="text-amber-600 dark:text-amber-400 h-auto p-0 text-xs font-medium" 
-                        asChild
-                      >
-                        <Link href="/dashboard/inventory/low-stock">
-                          Restock Now →
-                        </Link>
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <div className="text-center py-5">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 mb-1.5">
-                  <Package className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">All inventory levels are healthy</p>
-                <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">No immediate action required</p>
-              </div>
-            )}
-          </CardContent>
         </Card>
       </div>
 
