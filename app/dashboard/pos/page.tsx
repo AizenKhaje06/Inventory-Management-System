@@ -403,18 +403,41 @@ export default function POSPage() {
           </p>
         </div>
         
-        {/* Floating Cart Button */}
+        {/* Professional Corporate Cart Button */}
         <button
           onClick={() => setCartModalOpen(true)}
-          className="relative inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+          className="relative group"
         >
-          <ShoppingCart className="h-5 w-5" />
-          <span>Cart</span>
-          {cart.length > 0 && (
-            <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center shadow-md">
-              {cart.length}
-            </span>
-          )}
+          {/* Main Button Container */}
+          <div className="relative inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-amber-500 shadow-md hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5">
+            {/* Cart Icon with Animated Background */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-blue-500 dark:bg-amber-500 opacity-10 rounded-lg group-hover:opacity-20 transition-opacity"></div>
+              <ShoppingCart className="h-5 w-5 text-blue-600 dark:text-amber-500 relative z-10" strokeWidth={2.5} />
+            </div>
+            
+            {/* Cart Text & Count */}
+            <div className="flex flex-col items-start">
+              <span className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                Shopping Cart
+              </span>
+              {cart.length > 0 && (
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  {cart.length} {cart.length === 1 ? 'item' : 'items'} • ₱{total.toFixed(2)}
+                </span>
+              )}
+            </div>
+
+            {/* Item Count Badge - Corporate Style */}
+            {cart.length > 0 && (
+              <div className="absolute -top-2 -right-2 min-w-[26px] h-[26px] px-1.5 rounded-full bg-gradient-to-br from-red-500 to-red-600 dark:from-red-500 dark:to-red-700 text-white text-xs font-bold flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-900 animate-pulse">
+                {cart.length > 99 ? '99+' : cart.length}
+              </div>
+            )}
+          </div>
+
+          {/* Hover Effect Border Glow */}
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 dark:from-amber-500/20 dark:to-amber-600/20 opacity-0 group-hover:opacity-100 blur-sm transition-opacity -z-10"></div>
         </button>
       </div>
 
