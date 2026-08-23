@@ -68,7 +68,6 @@ export default function LogPage() {
   // Filter states
   const [searchQuery, setSearchQuery] = useState("")
   const [operationFilter, setOperationFilter] = useState("all")
-  const [salesChannelFilter, setSalesChannelFilter] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
   const [currentPage, setCurrentPage] = useState(1)
   const [startDate, setStartDate] = useState<Date | null>(null)
@@ -172,15 +171,6 @@ export default function LogPage() {
       })
     }
 
-    // Sales Channel filter - Admin only (departments are auto-filtered above)
-    if (!isDepartment && salesChannelFilter !== "all") {
-      filtered = filtered.filter(log => {
-        const detailsLower = log.details?.toLowerCase() || ''
-        const channelLower = salesChannelFilter.toLowerCase()
-        return detailsLower.includes(channelLower)
-      })
-    }
-
     // Date filter
     if (startDate || endDate) {
       filtered = filtered.filter(log => {
@@ -199,7 +189,7 @@ export default function LogPage() {
     })
 
     return filtered
-  }, [logs, searchQuery, operationFilter, salesChannelFilter, sortBy, startDate, endDate])
+  }, [logs, searchQuery, operationFilter, sortBy, startDate, endDate])
 
   // Pagination
   const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE)
@@ -238,7 +228,6 @@ export default function LogPage() {
   const clearFilters = () => {
     setSearchQuery("")
     setOperationFilter("all")
-    setSalesChannelFilter("all")
     setSortBy("newest")
     setStartDate(null)
     setEndDate(null)
@@ -288,48 +277,7 @@ export default function LogPage() {
     )
   }
 
-  // Extract sales channel from details
-  const getSalesChannel = (details: string) => {
-    if (!details) return null
-    const detailsLower = details.toLowerCase()
-    
-    // Check for specific sales channels
-    if (detailsLower.includes('shopee')) return 'Shopee'
-    if (detailsLower.includes('lazada')) return 'Lazada'
-    if (detailsLower.includes('facebook')) return 'Facebook'
-    if (detailsLower.includes('tiktok')) return 'TikTok'
-    if (detailsLower.includes('office store')) return 'Office Store'
-    if (detailsLower.includes('physical store')) return 'Physical Store'
-    if (detailsLower.includes('warehouse')) return 'Warehouse'
-    
-    return null
-  }
-
-  // Get sales channel badge
-  const getSalesChannelBadge = (channel: string | null) => {
-    if (!channel) return null
-    
-    const channelConfig: Record<string, { color: string; icon: string }> = {
-      'Shopee': { color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: '🛍️' },
-      'Lazada': { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: '🛒' },
-      'Facebook': { color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400', icon: '📘' },
-      'TikTok': { color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400', icon: '🎵' },
-      'Office Store': { color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', icon: '🏢' },
-      'Physical Store': { color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: '🏪' },
-      'Warehouse': { color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300', icon: '🏭' },
-    }
-    
-    const config = channelConfig[channel]
-    if (!config) return null
-    
-    return (
-      <Badge className={`${config.color} font-medium px-2 py-0.5 text-xs w-fit`}>
-        {config.icon} {channel}
-      </Badge>
-    )
-  }
-
-  const hasActiveFilters = searchQuery || operationFilter !== "all" || salesChannelFilter !== "all" || sortBy !== "newest" || startDate || endDate
+  const hasActiveFilters = searchQuery || operationFilter !== "all" || sortBy !== "newest" || startDate || endDate
 
   if (loading) {
     return (
@@ -348,7 +296,8 @@ export default function LogPage() {
   const exportLogsToExcel = () => {
     try {
       const dataToExport = filteredLogs.map(log => ({
-        'Date & Time': new Date(log.timestamp).toLocaleString('en-US', {
+        'Date & Time': new Date(log.timestamp).toLocaleString('en-PH', {
+          timeZone: 'Asia/Manila',
           month: '2-digit', day: '2-digit', year: '2-digit',
           hour: '2-digit', minute: '2-digit', hour12: false
         }),
@@ -553,23 +502,6 @@ export default function LogPage() {
             </SelectContent>
           </Select>
 
-          {/* Sales Channel Filter - Admin Only */}
-          {!isDepartment && (
-            <Select value={salesChannelFilter} onValueChange={setSalesChannelFilter}>
-              <SelectTrigger className="h-10 flex-1 sm:w-[150px] md:w-[180px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                <SelectValue placeholder="All Channels" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Channels</SelectItem>
-                <SelectItem value="Shopee">Shopee</SelectItem>
-                <SelectItem value="Lazada">Lazada</SelectItem>
-                <SelectItem value="Facebook">Facebook</SelectItem>
-                <SelectItem value="TikTok">TikTok</SelectItem>
-                <SelectItem value="Office Store">Office Store</SelectItem>
-                <SelectItem value="Physical Store">Physical Store</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
           </div>
         </div>
       </div>
@@ -603,7 +535,6 @@ export default function LogPage() {
                     <tr className="bg-black dark:bg-black">
                       <th className="py-3 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[180px]">Date & Time</th>
                       <th className="py-3 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[140px]">Operation</th>
-                      <th className="py-3 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[140px]">Sales Channel</th>
                       <th className="py-3 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[220px]">Item</th>
                       <th className="py-3 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider">Details</th>
                     </tr>
@@ -617,13 +548,15 @@ export default function LogPage() {
                         <td className="py-3 px-3 text-xs font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5 text-slate-400" />
-                            {new Date(log.timestamp).toLocaleDateString('en-US', { 
+                            {new Date(log.timestamp).toLocaleDateString('en-PH', { 
+                              timeZone: 'Asia/Manila',
                               month: '2-digit', 
                               day: '2-digit', 
                               year: '2-digit'
                             })}
                             {' '}
-                            {new Date(log.timestamp).toLocaleTimeString('en-US', { 
+                            {new Date(log.timestamp).toLocaleTimeString('en-PH', { 
+                              timeZone: 'Asia/Manila',
                               hour: '2-digit', 
                               minute: '2-digit', 
                               hour12: false
@@ -632,9 +565,6 @@ export default function LogPage() {
                         </td>
                         <td className="py-3 px-3 whitespace-nowrap">
                           {getOperationBadge(log.operation, log.details)}
-                        </td>
-                        <td className="py-3 px-3 whitespace-nowrap">
-                          {getSalesChannelBadge(getSalesChannel(log.details))}
                         </td>
                         <td className="py-3 px-3 text-sm font-semibold text-slate-800 dark:text-slate-200">
                           <div className="truncate" title={(log.itemName || '-').replace(/\s*\(\d+\)\s*$/, '')}>

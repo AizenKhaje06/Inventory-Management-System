@@ -2,8 +2,6 @@ export interface InventoryItem {
   id: string
   name: string
   category: string
-  store: string // Changed from storageRoom
-  salesChannel?: string // NEW: Sales channel (Shopee, Lazada, Facebook, TikTok, Physical Store)
   quantity: number
   costPrice: number
   sellingPrice: number
@@ -11,18 +9,14 @@ export interface InventoryItem {
   lastUpdated: string
   totalCOGS: number
   sku?: string
-  discount?: number // Percentage discount
-  discountType?: 'percentage' | 'fixed'
-  discountEndDate?: string
-  minPrice?: number // Minimum selling price (for profit protection)
   images?: string[]
-  imageUrl?: string | null // Product image URL from Supabase Storage
-  productType?: 'regular' | 'bundle' // NEW: Identify if product is a bundle
+  imageUrl?: string | null
+  productType?: 'regular' | 'bundle'
   // Bad Item Tracking
-  item_status?: 'good' | 'bad' // Item condition: good (sellable) or bad (defective/damaged)
-  bad_item_reason?: string // Reason why item was marked as bad
-  bad_item_quantity?: number // Number of units that are defective (total bad stock)
-  bad_items_breakdown?: Record<string, number> // JSONB: Breakdown of bad items by reason {damage: 50, defect: 30}
+  item_status?: 'good' | 'bad'
+  bad_item_reason?: string
+  bad_item_quantity?: number
+  bad_items_breakdown?: Record<string, number>
 }
 
 export interface Transaction {
@@ -37,22 +31,9 @@ export interface Transaction {
   profit: number
   timestamp: string
   type: "sale" | "restock"
-  transactionType?: "sale" | "demo" | "internal" | "transfer" // Distinguishes sales from non-sales movements
-  department?: string
-  customerId?: string
-  customerName?: string
-  customerPhone?: string // NEW: Customer contact number
-  customerEmail?: string // NEW: Customer email
-  customerAddress?: string // NEW: Customer address
-  discount?: number
-  discountAmount?: number
   staffName?: string
   notes?: string
-  // Transaction status tracking
-  status?: "completed" | "cancelled" | "returned" | "pending"
-  cancellationReason?: string
-  cancelledBy?: string
-  cancelledAt?: string
+  waybillNumber?: string
 }
 
 export interface BusinessContact {
@@ -239,9 +220,3 @@ export interface InventoryTurnover {
   status: 'fast-moving' | 'normal' | 'slow-moving' | 'dead-stock'
 }
 
-export interface Store {
-  id: string
-  store_name: string // Changed from name to match database
-  sales_channel: string // NEW: Sales channel this store belongs to
-  created_at: string
-}

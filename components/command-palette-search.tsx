@@ -27,6 +27,7 @@ import {
   Search,
   ArrowRight,
   X,
+  ClipboardList,
 } from 'lucide-react'
 
 interface CommandItem {
@@ -67,6 +68,15 @@ const commandItems: CommandItem[] = [
     href: '/dashboard/pos',
     category: 'pages',
     keywords: ['pos', 'sales', 'checkout', 'transaction'],
+  },
+  {
+    id: 'orders',
+    title: 'Orders Management',
+    description: 'Track and manage dispatched orders',
+    icon: ClipboardList,
+    href: '/dashboard/orders',
+    category: 'pages',
+    keywords: ['orders', 'dispatch', 'cancel', 'waybill', 'tracking'],
   },
   {
     id: 'customers',

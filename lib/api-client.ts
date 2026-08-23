@@ -93,7 +93,9 @@ export async function apiPost<T = any>(url: string, data: any): Promise<T> {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error(error.error || error.details || `HTTP ${response.status}`)
+    const errorMsg = error.error || error.details || error.message || `HTTP ${response.status}`
+    console.error(`[API Client] POST ${url} failed:`, response.status, error)
+    throw new Error(errorMsg)
   }
 
   return response.json()

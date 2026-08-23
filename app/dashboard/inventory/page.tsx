@@ -1624,14 +1624,14 @@ export default function InventoryPage() {
                             </td>
                             
                             {/* Total Bad - No Sticky on Mobile, Sticky on Desktop (Bad Stocks) */}
-                            <td className="py-2 px-3 text-center md:sticky md:right-[180px] bg-white dark:bg-slate-900 md:z-10">
+                            <td className="py-2 px-3 text-center md:sticky md:right-[90px] bg-white dark:bg-slate-900 md:z-10">
                               <span className="inline-flex items-center justify-center min-w-[50px] px-2.5 py-1 rounded-lg font-bold text-sm bg-red-600 text-white">
                                 {totalBadQty}
                               </span>
                             </td>
                             
                             {/* Cost - No Sticky on Mobile, Sticky on Desktop (Bad Stocks) */}
-                            <td className="py-2 px-3 md:sticky md:right-[90px] bg-white dark:bg-slate-900 md:z-10">
+                            <td className="py-2 px-3 text-left md:sticky md:right-0 bg-white dark:bg-slate-900 md:z-10">
                               <div className="text-slate-700 dark:text-slate-300 font-medium">
                                 ₱{item.costPrice.toFixed(2)}
                               </div>

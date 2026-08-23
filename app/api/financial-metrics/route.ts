@@ -41,11 +41,7 @@ export async function GET(request: NextRequest) {
       .eq('status', 'Packed')
       .not('parcel_status', 'in', '(CANCELLED,RETURNED,DETAINED,PROBLEMATIC)')
 
-    // DEPARTMENT FILTERING: Operations users only see their department's orders
-    if (userRole === 'operations' && assignedChannel) {
-      query = query.eq('sales_channel', assignedChannel)
-    }
-    // Admin sees all orders
+    // DEPARTMENT FILTERING removed — admin sees all orders
 
     // Apply date filters if provided
     if (startDate) {

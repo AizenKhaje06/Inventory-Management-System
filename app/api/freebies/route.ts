@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { items, reason, dispatchedBy, dispatchedDate, givenWithSale, customerName, notes } = body
+    const { items, reason, dispatchedBy, dispatchedDate, givenWithSale } = body
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Items array is required' }, { status: 400 })
@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
 
     // Insert freebie records
     const freebieRecords = items.map((item: any) => ({
+      id: `FRB-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       item_id: item.itemId,
       item_name: item.itemName,
       quantity: item.quantity,
@@ -39,9 +40,7 @@ export async function POST(request: NextRequest) {
       given_with_sale_id: givenWithSale || null,
       reason: reason || 'Promotional giveaway',
       dispatched_by: dispatchedBy,
-      dispatched_date: dispatchedDate || new Date().toISOString().split('T')[0],
-      customer_name: customerName || null,
-      notes: notes || null
+      dispatched_date: dispatchedDate || new Date().toISOString().split('T')[0]
     }))
 
     const { data: insertedFreebies, error: insertError } = await supabase

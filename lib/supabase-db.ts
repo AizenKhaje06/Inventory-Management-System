@@ -6,7 +6,8 @@
  */
 
 import { supabaseAdmin } from './supabase'
-import type { InventoryItem, Transaction, Log, Restock, Store } from './types'
+import type { InventoryItem, Transaction, Log, Restock } from './types'
+import { getPhilippinesDateTime } from './timezone-utils'
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -47,21 +48,18 @@ export async function getInventoryItems(): Promise<InventoryItem[]> {
     id: item.id,
     name: item.name,
     category: item.category,
-    store: item.store,
-    salesChannel: item.salesChannel,
     quantity: item.quantity,
-    totalCOGS: item.quantity * item.costPrice, // Calculate from quantity * cost
-    costPrice: item.costPrice,
-    sellingPrice: item.sellingPrice,
-    reorderLevel: item.reorderLevel,
-    lastUpdated: item.lastUpdated,
-    imageUrl: item.imageUrl || null,  // FIXED: Use camelCase to match view alias
-    productType: item.productType,  // ADDED: Include productType to detect bundles
-    // Bad Item Tracking
+    totalCOGS: item.quantity * item.cost_price, // Fixed: use snake_case
+    costPrice: item.cost_price, // Fixed: map from snake_case
+    sellingPrice: item.selling_price, // Fixed: map from snake_case
+    reorderLevel: item.reorder_level, // Fixed: map from snake_case
+    lastUpdated: item.last_updated, // Fixed: map from snake_case
+    imageUrl: item.image_url || null, // Fixed: map from snake_case
+    productType: item.product_type, // Fixed: map from snake_case
     item_status: item.item_status || 'good',
     bad_item_reason: item.bad_item_reason || null,
     bad_item_quantity: item.bad_item_quantity || 0,
-    bad_items_breakdown: item.bad_items_breakdown || {},  // ADDED: Include breakdown for bad stock table
+    bad_items_breakdown: item.bad_items_breakdown || {},
   }))
 }
 
@@ -76,8 +74,6 @@ export async function addInventoryItem(item: Omit<InventoryItem, "id" | "lastUpd
       id,
       name: item.name,
       category: item.category,
-      store: item.store, // Changed from storage_room
-      sales_channel: item.salesChannel, // NEW
       quantity: item.quantity,
       total_cogs: totalCOGS,
       cost_price: item.costPrice,
@@ -106,8 +102,6 @@ export async function updateInventoryItem(id: string, updates: Partial<Inventory
 
   if (updates.name !== undefined) updateData.name = updates.name
   if (updates.category !== undefined) updateData.category = updates.category
-  if (updates.store !== undefined) updateData.store = updates.store // Changed from storageRoom
-  if (updates.salesChannel !== undefined) updateData.sales_channel = updates.salesChannel // NEW
   if (updates.quantity !== undefined) updateData.quantity = updates.quantity
   if (updates.costPrice !== undefined) updateData.cost_price = updates.costPrice
   if (updates.sellingPrice !== undefined) updateData.selling_price = updates.sellingPrice
@@ -169,7 +163,9 @@ export async function deleteInventoryItem(id: string): Promise<void> {
 
 export async function addTransaction(transaction: Omit<Transaction, "id" | "timestamp">): Promise<Transaction> {
   const id = generateId('TXN')
-  const timestamp = formatTimestamp()
+  const timestamp = getPhilippinesDateTime() // Use Philippines timezone
+
+  console.log('[addTransaction] Creating transaction with waybill:', transaction.waybillNumber)
 
   const { data, error } = await supabaseAdmin
     .from('transactions')
@@ -181,12 +177,13 @@ export async function addTransaction(transaction: Omit<Transaction, "id" | "time
       cost_price: transaction.costPrice,
       selling_price: transaction.sellingPrice,
       total_cost: transaction.totalCost,
+      total_revenue: transaction.totalRevenue,
       profit: transaction.profit,
       timestamp,
-      department: transaction.department || '',
+      type: transaction.type,
       staff_name: transaction.staffName || '',
       notes: transaction.notes || '',
-      transaction_type: transaction.transactionType || 'sale',
+      waybill_number: transaction.waybillNumber || null
     })
     .select()
     .single()
@@ -195,6 +192,8 @@ export async function addTransaction(transaction: Omit<Transaction, "id" | "time
     console.error('Error adding transaction:', error)
     throw new Error(`Failed to add transaction: ${error.message}`)
   }
+
+  console.log('[addTransaction] ✅ Transaction created, returned data:', data)
 
   return { ...transaction, id, timestamp }
 }
@@ -433,75 +432,6 @@ export interface StorageRoom {
   id: string
   name: string
   createdAt: string
-}
-
-// ==================== STORES ====================
-
-export async function getStores(): Promise<Store[]> {
-  const { data, error} = await supabaseAdmin
-    .from('stores')
-    .select('*')
-    .order('sales_channel', { ascending: true })
-    .order('store_name', { ascending: true })
-
-  if (error) {
-    console.error('Error fetching stores:', error)
-    throw new Error(`Failed to fetch stores: ${error.message}`)
-  }
-
-  return (data || []).map(row => ({
-    id: row.id,
-    store_name: row.store_name,
-    sales_channel: row.sales_channel,
-    created_at: row.created_at,
-  }))
-}
-
-export async function addStore(store_name: string, sales_channel: string): Promise<Store> {
-  const id = generateId('STORE')
-  const created_at = formatTimestamp()
-
-  const { data, error } = await supabaseAdmin
-    .from('stores')
-    .insert({
-      id,
-      store_name,
-      sales_channel,
-      created_at,
-    })
-    .select()
-    .single()
-
-  if (error) {
-    console.error('Error adding store:', error)
-    throw new Error(`Failed to add store: ${error.message}`)
-  }
-
-  return { id, store_name, sales_channel, created_at }
-}
-
-export async function updateStore(id: string, store_name: string, sales_channel: string): Promise<void> {
-  const { error } = await supabaseAdmin
-    .from('stores')
-    .update({ store_name, sales_channel })
-    .eq('id', id)
-
-  if (error) {
-    console.error('Error updating store:', error)
-    throw new Error(`Failed to update store: ${error.message}`)
-  }
-}
-
-export async function deleteStore(id: string): Promise<void> {
-  const { error } = await supabaseAdmin
-    .from('stores')
-    .delete()
-    .eq('id', id)
-
-  if (error) {
-    console.error('Error deleting store:', error)
-    throw new Error(`Failed to delete store: ${error.message}`)
-  }
 }
 
 // ==================== CATEGORIES ====================

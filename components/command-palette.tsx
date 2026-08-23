@@ -23,6 +23,7 @@ import {
   Brain,
   AlertTriangle,
   XCircle,
+  ClipboardList,
 } from "lucide-react"
 
 export function CommandPalette() {
@@ -103,6 +104,12 @@ export function CommandPalette() {
             <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground opacity-100">
               <span className="text-xs">⌘</span>P
             </kbd>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => runCommand(() => router.push('/dashboard/orders'))}
+          >
+            <ClipboardList className="mr-2 h-4 w-4" />
+            <span>Orders Management</span>
           </CommandItem>
         </CommandGroup>
 

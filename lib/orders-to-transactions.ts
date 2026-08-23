@@ -169,20 +169,3 @@ export function getOrdersSummary(orders: Order[]) {
     totalQuantity: activeOrders.reduce((sum, o) => sum + o.qty, 0)
   }
 }
-
-/**
- * Group orders by sales channel
- */
-export function groupOrdersBySalesChannel(orders: Order[]) {
-  const grouped = new Map<string, Order[]>()
-
-  orders.forEach(order => {
-    const channel = order.sales_channel || 'Unknown'
-    if (!grouped.has(channel)) {
-      grouped.set(channel, [])
-    }
-    grouped.get(channel)!.push(order)
-  })
-
-  return grouped
-}

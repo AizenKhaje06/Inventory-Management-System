@@ -18,13 +18,12 @@ export interface Order {
   id: string
   qty: number
   total: number
-  cogs?: number // ACTUAL cost of goods sold (not calculated)
-  product?: string // Product/item name
+  cogs?: number
+  product?: string
   parcel_status: string
   payment_status: string
-  sales_channel?: string
   date: string
-  created_at?: string // Timestamp when order was created
+  created_at?: string
 }
 
 export interface FinancialMetrics {
@@ -138,30 +137,6 @@ export function calculateStatusMetrics(
 ): FinancialMetrics {
   const statusOrders = orders.filter(o => o.parcel_status === status)
   return calculateFinancialMetrics(statusOrders)
-}
-
-/**
- * Calculate metrics grouped by sales channel
- */
-export function calculateBySalesChannel(
-  orders: Order[]
-): Record<string, FinancialMetrics> {
-  const grouped: Record<string, Order[]> = {}
-
-  orders.forEach(order => {
-    const channel = order.sales_channel || 'Unknown'
-    if (!grouped[channel]) {
-      grouped[channel] = []
-    }
-    grouped[channel].push(order)
-  })
-
-  const result: Record<string, FinancialMetrics> = {}
-  Object.keys(grouped).forEach(channel => {
-    result[channel] = calculateFinancialMetrics(grouped[channel])
-  })
-
-  return result
 }
 
 /**

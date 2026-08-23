@@ -62,8 +62,6 @@ export function CreateBundleDialog({ open, onOpenChange, onSuccess, editMode = f
     description: '',
     bundlePrice: 0,
     badge: '',
-    salesChannel: 'Physical Store', // Default value for universal bundles
-    store: 'Main Store', // Default value for universal bundles
   })
 
   // Close dropdown when clicking outside
@@ -100,8 +98,6 @@ export function CreateBundleDialog({ open, onOpenChange, onSuccess, editMode = f
           description: initialData.description || '',
           bundlePrice: initialData.bundlePrice || 0,
           badge: initialData.badge || '',
-          salesChannel: initialData.salesChannel || 'Physical Store',
-          store: initialData.store || 'Main Store',
         })
         setImageUrl(initialData.imageUrl || null)
         setBundleItems(initialData.bundleItems || [])
@@ -236,8 +232,6 @@ export function CreateBundleDialog({ open, onOpenChange, onSuccess, editMode = f
       const bundleData = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        store: formData.store,
-        salesChannel: formData.salesChannel || null,
         bundlePrice: formData.bundlePrice,
         quantity: virtualStock,
         items: bundleItems.map(bi => ({
@@ -298,8 +292,6 @@ export function CreateBundleDialog({ open, onOpenChange, onSuccess, editMode = f
       description: '',
       bundlePrice: 0,
       badge: '',
-      salesChannel: 'Physical Store',
-      store: 'Main Store',
     })
     setBundleItems([])
     setSearchValue('')

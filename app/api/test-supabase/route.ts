@@ -25,7 +25,7 @@ export async function GET() {
     console.log(`📦 Sample data:`, data)
 
     // Test all tables
-    const tables = ['inventory', 'transactions', 'logs', 'restocks', 'stores', 'categories', 'users']
+    const tables = ['inventory', 'transactions', 'logs', 'restocks', 'categories', 'users']
     const tableStatus: Record<string, any> = {}
 
     for (const table of tables) {

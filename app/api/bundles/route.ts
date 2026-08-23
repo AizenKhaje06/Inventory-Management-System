@@ -45,9 +45,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('[Bundles API] Creating bundle:', body.name)
     
-    const { name, description, store, salesChannel, bundlePrice, items, badge } = body
-    
-    if (!name || !store || !bundlePrice || !items?.length) {
+    const { name, description, bundlePrice, items, badge } = body
+
+    if (!name || !bundlePrice || !items?.length) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
     
@@ -84,18 +84,14 @@ export async function POST(request: NextRequest) {
     const bundleData: any = {
       id: bundleId,
       name: name.trim(),
-      store,
       bundle_price: bundlePrice,
       bundle_cost: bundleCost,
-      regular_price: regularPrice,
-      savings: regularPrice - bundlePrice,
       is_active: true,
-      quantity: 0, // Trigger will update this
+      quantity: 0,
       reorder_level: 5
     }
-    
+
     if (description?.trim()) bundleData.description = description.trim()
-    if (salesChannel) bundleData.sales_channel = salesChannel
     if (badge?.trim()) bundleData.badge = badge.trim()
     
     const { data: bundle, error: bundleError } = await supabase

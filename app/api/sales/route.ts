@@ -9,26 +9,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { items, department, staffName, notes, skipStockUpdate } = body
 
+    console.log('[Sales API] Received request:', { items, department, staffName, notes })
+
     // Get user from headers for department filtering
     const userRole = request.headers.get('x-user-role')
     const assignedChannel = request.headers.get('x-assigned-channel')
 
     if (!department) {
+      console.error('[Sales API] Department is missing')
       return NextResponse.json({ error: "Department is required" }, { status: 400 })
     }
 
-    // DEPARTMENT VALIDATION: Operations users can only create sales for their department
-    if (userRole === 'operations' && assignedChannel) {
-      // Extract sales channel from department string
-      // Handles both formats: "Facebook / Store 1" and "Facebook - Store 1"
-      const departmentChannel = department.split(/\s*[-/]\s*/)[0].trim()
-      if (departmentChannel !== assignedChannel) {
-        return NextResponse.json({ 
-          error: `You can only create sales for ${assignedChannel}` 
-        }, { status: 403 })
-      }
+    if (!items || items.length === 0) {
+      console.error('[Sales API] No items provided')
+      return NextResponse.json({ error: "Items are required" }, { status: 400 })
     }
-    // Admin can create sales for any department
+
+    // DEPARTMENT VALIDATION removed — only admin and logistics-admin exist
+    // Both roles can create sales for any department
 
     // Determine transaction type based on destination
     const transactionType = department.startsWith('Demo/Display') 
@@ -143,8 +141,7 @@ export async function POST(request: NextRequest) {
       if (transactionType === 'transfer' && destinationStorage) {
         // Find if item already exists in destination storage
         const destinationItem = allItems.find(
-          (item) => item.name === inventoryItem.name && 
-                    item.store === destinationStorage &&
+          (item) => item.name === inventoryItem.name &&
                     item.id !== inventoryItem.id
         )
 
@@ -164,7 +161,7 @@ export async function POST(request: NextRequest) {
               operation: 'warehouse',
               itemId: inventoryItem.id,
               itemName: inventoryItem.name,
-              details: `Transferred "${inventoryItem.name}" from ${inventoryItem.store} to ${destinationStorage} - Qty: ${saleItem.quantity}, Staff: ${staffName || 'N/A'}`
+              details: `Transferred "${inventoryItem.name}" - Qty: ${saleItem.quantity}, Staff: ${staffName || 'N/A'}`
             }),
             // Record transaction
             addTransaction({
@@ -180,7 +177,7 @@ export async function POST(request: NextRequest) {
               transactionType: 'transfer',
               department,
               staffName,
-              notes: `Transfer from ${inventoryItem.store} to ${destinationStorage}`,
+              notes: `Transfer to ${destinationStorage}`,
             })
           ])
         } else {
@@ -196,7 +193,6 @@ export async function POST(request: NextRequest) {
             addInventoryItem({
               name: inventoryItem.name,
               category: inventoryItem.category,
-              store: destinationStorage,
               quantity: saleItem.quantity,
               totalCOGS: totalCost,
               costPrice: inventoryItem.costPrice,
@@ -224,7 +220,7 @@ export async function POST(request: NextRequest) {
               transactionType: 'transfer',
               department,
               staffName,
-              notes: `Transfer from ${inventoryItem.store} to ${destinationStorage} (new entry)`,
+              notes: `Transfer (new entry)`,
             })
           ])
         }
@@ -275,8 +271,13 @@ export async function POST(request: NextRequest) {
     invalidateCachePattern('dashboard')
 
     return NextResponse.json({ transactions })
-  } catch (error) {
-    console.error("[API] Error processing sale:", error)
-    return NextResponse.json({ error: "Failed to process sale" }, { status: 500 })
+  } catch (error: any) {
+    console.error("[Sales API] Error processing sale:", error)
+    console.error("[Sales API] Error message:", error?.message)
+    console.error("[Sales API] Error stack:", error?.stack)
+    return NextResponse.json({ 
+      error: "Failed to process sale", 
+      details: error?.message || 'Unknown error'
+    }, { status: 500 })
   }
 }

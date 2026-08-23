@@ -89,7 +89,6 @@ export async function PUT(
     
     if (body.name !== undefined) updateData.name = body.name.trim()
     if (body.store !== undefined) updateData.store = body.store
-    if (body.salesChannel !== undefined) updateData.sales_channel = body.salesChannel
     // Removed: if (body.quantity !== undefined) - bundles auto-calculate quantity
     if (body.costPrice !== undefined) updateData.bundle_cost = body.costPrice
     if (body.bundlePrice !== undefined) updateData.bundle_price = body.bundlePrice

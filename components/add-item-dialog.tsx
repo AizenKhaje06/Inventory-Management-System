@@ -32,8 +32,6 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
     costPrice: 0,
     sellingPrice: 0,
     reorderLevel: 0,
-    salesChannel: "Physical Store",
-    store: "Main Store",
   })
 
   useEffect(() => {
@@ -77,8 +75,6 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
         costPrice: 0,
         sellingPrice: 0,
         reorderLevel: 0,
-        salesChannel: "Physical Store",
-        store: "Main Store",
       })
       setImageUrl(null)
     } catch (error: any) {

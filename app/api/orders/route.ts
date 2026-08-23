@@ -114,25 +114,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       date,
-      salesChannel,
-      store,
-      courier,
-      waybill,
       qty,
       cogs,
       total,
       product,
       dispatchedBy,
-      agentUsername,
-      customerName,
-      customerAddress,
-      customerContact,
-      notes,
       orderItems = []
     } = body
-    
+
     // Validate required fields
-    if (!date || !salesChannel || !store || !courier || !waybill || !qty || !cogs || !total || !product || !dispatchedBy) {
+    if (!date || !qty || !cogs || !total || !product || !dispatchedBy) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -167,25 +158,12 @@ export async function POST(request: NextRequest) {
       .insert({
         id: orderId,
         date,
-        sales_channel: salesChannel,
-        store,
-        courier,
-        waybill,
         qty,
         cogs,
         total,
         product,
-        status: 'Pending',
-        parcel_status: 'PENDING',
         dispatched_by: dispatchedBy,
-        agent_username: agentUsername || null,
-        customer_name: customerName || null,
-        customer_address: customerAddress || null,
-        customer_contact: customerContact || null,
-        dispatch_notes: notes || null,
-        confirmation_status: 'Unconfirmed', // NEW: Requires logistics/admin confirmation before packing
-        created_at: createdAt,
-        updated_at: createdAt
+        created_at: createdAt
       })
       .select()
       .single()
@@ -195,16 +173,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: orderError.message }, { status: 500 })
     }
     
-    // Log the dispatch action as "to-be-packed"
+    // Log the dispatch action
     try {
       const { addLog } = await import('@/lib/supabase-db')
       await addLog({
-        operation: 'to-be-packed',
+        operation: 'order-dispatched',
         itemName: product,
-        details: `Order dispatched to ${salesChannel} by ${dispatchedBy}. Waybill: ${waybill}, Qty: ${qty}, Total: ₱${total.toLocaleString()}. Awaiting packing.`
+        details: `Order dispatched by ${dispatchedBy}. Qty: ${qty}, Total: ₱${total.toLocaleString()}.`
       })
     } catch (logError) {
-      console.error('[API] Error logging to-be-packed:', logError)
+      console.error('[API] Error logging order:', logError)
       // Don't fail the request if logging fails
     }
     

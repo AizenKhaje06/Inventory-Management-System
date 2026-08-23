@@ -54,8 +54,6 @@ export interface Database {
           cost_price: number
           selling_price: number
           reorder_level: number
-          store: string // Changed from storage_room
-          sales_channel: string // NEW
           last_updated: string
         }
         Insert: Omit<Database['public']['Tables']['inventory']['Row'], 'id' | 'last_updated'>
@@ -109,8 +107,7 @@ export interface Database {
       stores: {
         Row: {
           id: string
-          store_name: string // Changed from name
-          sales_channel: string // NEW
+          store_name: string
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['stores']['Row'], 'id' | 'created_at'>

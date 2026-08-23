@@ -35,8 +35,8 @@ export default function POSPage() {
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [loading, setLoading] = useState(false)
-  const [stores, setStores] = useState<Array<{id: string, store_name: string, sales_channel: string}>>([])
   const [staffName, setStaffName] = useState('')
+  const [waybillNumber, setWaybillNumber] = useState('')
   const [staffProfileImage, setStaffProfileImage] = useState<string | null>(null)
   const [currentUserRole, setCurrentUserRole] = useState<string>('')
   const [assignedChannel, setAssignedChannel] = useState<string>('')
@@ -52,19 +52,6 @@ export default function POSPage() {
     const day = String(now.getDate()).padStart(2, '0')
     return `${year}-${month}-${day}`
   }
-  
-  // Order Form Modal States - SIMPLIFIED
-  const [orderFormOpen, setOrderFormOpen] = useState(false)
-  const [orderForm, setOrderForm] = useState({
-    date: getLocalDateString(),
-    qty: 0,
-    cogs: 0,
-    total: 0,
-    product: '',
-    dispatchedBy: '',
-    customerName: '', // Optional
-    notes: '' // Optional
-  })
 
   // Calculate total (exclude freebies from total)
   const total = useMemo(() => cart.reduce((sum, cartItem) => {
@@ -143,7 +130,6 @@ export default function POSPage() {
     }
     
     fetchItems()
-    fetchStorageRooms()
   }, [])
 
   async function fetchUserProfile(username: string) {
@@ -185,18 +171,6 @@ export default function POSPage() {
     }
   }
 
-  async function fetchStorageRooms() {
-    try {
-      // Add cache-busting timestamp to force fresh data
-      const data = await apiGet<Array<{id: string, store_name: string, sales_channel: string}>>(`/api/stores?t=${Date.now()}`)
-      console.log('[POS] Stores fetched:', data.length, 'stores')
-      console.log('[POS] Sales channels available:', Array.from(new Set(data.map(s => s.sales_channel))))
-      setStores(data)
-    } catch (error) {
-      console.error('Error fetching stores:', error)
-    }
-  }
-
   // Toggle freebie status
   function toggleFreebie(itemId: string) {
     setCart(cart.map(ci => 
@@ -204,39 +178,13 @@ export default function POSPage() {
     ))
   }
 
-  function handleOpenOrderForm() {
+  // Direct dispatch - no intermediate modal
+  async function handleDispatchOrder() {
     if (cart.length === 0) {
       toast.error('Please add items to cart first')
       return
     }
 
-    // Separate regular items and freebies
-    const regularItems = cart.filter(item => !item.isFreebie)
-    const freebieItems = cart.filter(item => item.isFreebie)
-    
-    // Auto-fill form data from cart
-    const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0)
-    const totalCOGS = regularItems.reduce((sum, item) => sum + (item.item.costPrice * item.quantity), 0)
-    const totalPrice = regularItems.reduce((sum, item) => sum + (item.item.sellingPrice * item.quantity), 0)
-    const productList = cart.map(item => 
-      `${item.item.name} (${item.quantity})${item.isFreebie ? ' 🎁 FREE' : ''}`
-    ).join(', ')
-    
-    setOrderForm({
-      date: getLocalDateString(),
-      qty: totalQty,
-      cogs: totalCOGS,
-      total: totalPrice,
-      product: productList,
-      dispatchedBy: staffName,
-      customerName: '',
-      notes: freebieItems.length > 0 ? `Includes ${freebieItems.length} freebie item(s)` : ''
-    })
-    
-    setOrderFormOpen(true)
-  }
-
-  async function handleSubmitOrder() {
     setLoading(true)
     try {
       // Separate regular items and freebies
@@ -246,30 +194,62 @@ export default function POSPage() {
       const currentUser = getCurrentUser()
       const saleId = `SALE-${Date.now()}`
       
-      // 1. Create SALE transaction (for regular items only)
+      // Calculate totals
+      const totalQty = regularItems.reduce((sum, item) => sum + item.quantity, 0)
+      const totalCOGS = regularItems.reduce((sum, item) => sum + (item.item.costPrice * item.quantity), 0)
+      const totalAmount = regularItems.reduce((sum, item) => sum + (item.item.sellingPrice * item.quantity), 0)
+      const productList = cart.map(item => 
+        `${item.item.name} (${item.quantity})${item.isFreebie ? ' 🎁' : ''}`
+      ).join(', ')
+      
+      // 1. Create SALE for regular items (using /api/sales - creates transactions)
       if (regularItems.length > 0) {
         const saleItems = regularItems.map((cartItem) => ({
           itemId: cartItem.item.id,
-          itemName: cartItem.item.name,
           quantity: cartItem.quantity,
-          costPrice: cartItem.item.costPrice,
-          sellingPrice: cartItem.item.sellingPrice,
         }))
 
-        await apiPost("/api/transactions", {
-          date: orderForm.date,
-          qty: regularItems.reduce((sum, item) => sum + item.quantity, 0),
-          cogs: regularItems.reduce((sum, item) => sum + (item.item.costPrice * item.quantity), 0),
-          total: orderForm.total,
-          product: regularItems.map(item => `${item.item.name} (${item.quantity})`).join(', '),
-          staff: orderForm.dispatchedBy,
-          customerName: orderForm.customerName || 'Walk-in Customer',
-          notes: orderForm.notes,
-          items: saleItems
+        await apiPost("/api/sales", {
+          items: saleItems,
+          department: 'POS - Walk-in',
+          staffName: staffName,
+          notes: freebieItems.length > 0 ? `Includes ${freebieItems.length} freebie item(s)` : ''
         })
       }
       
-      // 2. Create FREEBIE records (for freebie items)
+      // 2. Create ORDER record (for Dashboard and Sales page)
+      // POS sales are created directly as Packed & Delivered (walk-in sales)
+      if (regularItems.length > 0) {
+        console.log('[POS] Creating order with data:', {
+          qty: totalQty,
+          cogs: totalCOGS,
+          total: totalAmount,
+          product: productList,
+          dispatchedBy: staffName,
+          waybillNumber: waybillNumber
+        })
+        
+        const orderResponse = await apiPost("/api/pos/checkout", {
+          items: regularItems.map(cartItem => ({
+            id: cartItem.item.id,
+            name: cartItem.item.name,
+            quantity: cartItem.quantity,
+            costPrice: cartItem.item.costPrice,
+            sellingPrice: cartItem.item.sellingPrice
+          })),
+          qty: totalQty,
+          cogs: totalCOGS,
+          total: totalAmount,
+          product: productList,
+          dispatchedBy: staffName,
+          waybillNumber: waybillNumber.trim() || null
+        })
+        
+        console.log('[POS] Order created successfully:', orderResponse)
+        console.log('[POS] Order created successfully:', orderResponse)
+      }
+      
+      // 3. Create FREEBIE records (for freebie items)
       if (freebieItems.length > 0) {
         const freebieData = freebieItems.map((cartItem) => ({
           itemId: cartItem.item.id,
@@ -282,11 +262,9 @@ export default function POSPage() {
         await apiPost("/api/freebies", {
           items: freebieData,
           reason: regularItems.length > 0 ? 'With purchase' : 'Promotional giveaway',
-          dispatchedBy: orderForm.dispatchedBy,
-          dispatchedDate: orderForm.date,
-          givenWithSale: regularItems.length > 0 ? saleId : null,
-          customerName: orderForm.customerName || 'Walk-in Customer',
-          notes: orderForm.notes
+          dispatchedBy: staffName,
+          dispatchedDate: getLocalDateString(),
+          givenWithSale: regularItems.length > 0 ? saleId : null
         })
       }
 
@@ -301,37 +279,23 @@ export default function POSPage() {
         price: cartItem.isFreebie ? 0 : cartItem.item.sellingPrice * cartItem.quantity
       })))
       
+      // Clear cart
       setCart([])
+      setWaybillNumber('') // Clear waybill number
       localStorage.removeItem('pos_cart_draft')
-      fetchItems()
-      setOrderFormOpen(false)
-      setSuccessModalOpen(true)
-
-      // Reset form
-      setOrderForm({
-        date: getLocalDateString(),
-        qty: 0,
-        cogs: 0,
-        total: 0,
-        product: '',
-        dispatchedBy: staffName,
-        customerName: '',
-        notes: ''
-      })
-
-      const freebieCount = freebieItems.length
-      const regularCount = regularItems.length
       
-      if (regularCount > 0 && freebieCount > 0) {
-        toast.success(`Sale completed! ${regularCount} sold, ${freebieCount} given free.`)
-      } else if (regularCount > 0) {
-        toast.success('Sale completed successfully!')
-      } else {
-        toast.success('Freebies dispatched successfully!')
-      }
-    } catch (error) {
-      console.error("Error submitting order:", error)
-      toast.error("Failed to submit order. Please try again.")
+      // Refresh items
+      await fetchItems()
+      
+      // Show success modal
+      setSuccessModalOpen(true)
+      
+      toast.success('Order dispatched successfully!')
+    } catch (error: any) {
+      console.error('[POS] Error dispatching order:', error)
+      const errorMessage = error?.message || 'Failed to dispatch order'
+      console.error('[POS] Error details:', errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -788,10 +752,24 @@ export default function POSPage() {
                 </div>
               </div>
 
+              {/* Waybill Number Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Waybill Number (Optional)
+                </label>
+                <Input
+                  placeholder="Enter waybill/tracking number"
+                  value={waybillNumber}
+                  onChange={(e) => setWaybillNumber(e.target.value)}
+                  className="h-11"
+                />
+              </div>
+
               <Button
                 onClick={() => {
                   setCartModalOpen(false)
-                  handleOpenOrderForm()
+                  handleDispatchOrder()
                 }}
                 disabled={loading || cart.length === 0}
                 className="w-full h-12 text-base font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900"
@@ -808,129 +786,6 @@ export default function POSPage() {
               </Button>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Order Form Modal - SIMPLIFIED */}
-      <Dialog open={orderFormOpen} onOpenChange={setOrderFormOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold gradient-text flex items-center gap-2">
-              <ShoppingCart className="h-6 w-6" />
-              Complete Sale
-            </DialogTitle>
-            <DialogDescription>
-              Review and confirm this transaction
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Date */}
-            <div>
-              <Label className="text-sm font-medium">Date *</Label>
-              <Input
-                type="date"
-                value={orderForm.date}
-                onChange={(e) => setOrderForm({...orderForm, date: e.target.value})}
-                className="mt-1"
-              />
-            </div>
-
-            {/* Products (readonly) */}
-            <div>
-              <Label className="text-sm font-medium">Products</Label>
-              <textarea
-                value={orderForm.product}
-                readOnly
-                rows={3}
-                className="mt-1 w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm resize-none"
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                Total Quantity: {orderForm.qty} items • COGS: ₱{orderForm.cogs.toFixed(2)}
-              </p>
-            </div>
-
-            {/* Total Amount */}
-            <div>
-              <Label className="text-sm font-medium">Total Amount *</Label>
-              <Input
-                type="number"
-                value={orderForm.total}
-                onChange={(e) => setOrderForm({...orderForm, total: parseFloat(e.target.value) || 0})}
-                placeholder="Enter total amount"
-                className="mt-1 font-bold text-emerald-600 dark:text-emerald-400"
-                min="0"
-                step="0.01"
-              />
-              {cart.some(item => item.isFreebie) && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
-                  🎁 Includes {cart.filter(i => i.isFreebie).length} freebie item(s) • COGS: ₱{freebieCOGS.toFixed(2)}
-                </p>
-              )}
-            </div>
-
-            {/* Customer Name (optional) */}
-            <div>
-              <Label className="text-sm font-medium">Customer Name (Optional)</Label>
-              <Input
-                value={orderForm.customerName}
-                onChange={(e) => setOrderForm({...orderForm, customerName: e.target.value})}
-                placeholder="Walk-in Customer"
-                className="mt-1"
-              />
-            </div>
-
-            {/* Notes (optional) */}
-            <div>
-              <Label className="text-sm font-medium">Notes (Optional)</Label>
-              <textarea
-                value={orderForm.notes}
-                onChange={(e) => setOrderForm({...orderForm, notes: e.target.value})}
-                rows={2}
-                placeholder="Add any notes about this sale..."
-                className="mt-1 w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm resize-none"
-              />
-            </div>
-
-            {/* Dispatched By (readonly) */}
-            <div>
-              <Label className="text-sm font-medium">Dispatched By</Label>
-              <div className="mt-1 flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-                {staffProfileImage ? (
-                  <img 
-                    src={staffProfileImage} 
-                    alt={staffName}
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                    {staffName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{staffName}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Currently logged in</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setOrderFormOpen(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmitOrder}
-              disabled={loading}
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-            >
-              {loading ? "Processing..." : "Complete Sale"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

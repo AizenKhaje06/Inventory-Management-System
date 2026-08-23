@@ -43,10 +43,31 @@ export const GET = withAuth(async (request, { user }) => {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log('[Products API] Fetched products count:', data?.length)
-    console.log('[Products API] First 3 products:', data?.slice(0, 3))
+    // Map snake_case database columns to camelCase for frontend
+    const products = (data || []).map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      quantity: item.quantity,
+      costPrice: item.cost_price,
+      sellingPrice: item.selling_price,
+      reorderLevel: item.reorder_level,
+      totalCOGS: item.total_cogs,
+      sku: item.sku,
+      imageUrl: item.image_url,
+      productType: item.product_type,
+      itemStatus: item.item_status,
+      badItemReason: item.bad_item_reason,
+      badItemQuantity: item.bad_item_quantity,
+      badItemsBreakdown: item.bad_items_breakdown,
+      lastUpdated: item.last_updated,
+      createdAt: item.created_at
+    }))
 
-    return NextResponse.json(data || [])
+    console.log('[Products API] Fetched products count:', products.length)
+    console.log('[Products API] First 3 products:', products.slice(0, 3))
+
+    return NextResponse.json(products)
   } catch (error) {
     console.error('[Products API] Exception:', error)
     return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 })

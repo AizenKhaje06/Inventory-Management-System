@@ -64,7 +64,7 @@ export default function ClientLayout({
   })
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-[#121212]">
+    <div className="flex h-screen w-full overflow-hidden bg-transparent dark:bg-transparent">
       {/* Premium Sidebar */}
       <PremiumSidebar 
         mobileOpen={mobileMenuOpen}
@@ -88,7 +88,7 @@ export default function ClientLayout({
         {/* Main content - Protected by RouteGuard */}
         <main 
           id="main-content" 
-          className="flex-1 overflow-y-auto overflow-x-hidden mt-16 min-w-0 w-full"
+          className="flex-1 overflow-y-auto overflow-x-hidden mt-16 min-w-0 w-full bg-transparent"
           role="main"
         >
           <div className="w-full max-w-full min-w-0 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 py-5">

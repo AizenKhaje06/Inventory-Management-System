@@ -5,12 +5,7 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["sin1"],
-  "crons": [
-    {
-      "path": "/api/cron/send-reports",
-      "schedule": "0 8 * * *"
-    }
-  ],
+
   "headers": [
     {
       "source": "/api/(.*)",
