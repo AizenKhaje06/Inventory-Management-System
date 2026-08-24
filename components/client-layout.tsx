@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PremiumSidebar } from "@/components/premium-sidebar"
 import { PremiumNavbar } from "@/components/premium-navbar"
 import { OfflineIndicator } from "@/components/offline-indicator"
@@ -11,6 +11,7 @@ import { KeyboardShortcutsModal } from "@/components/keyboard-shortcuts-modal"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import { useSessionGuard } from "@/lib/use-session-guard"
 import { useSessionTimeout } from "@/hooks/use-session-timeout"
+import { getCurrentUserRole } from "@/lib/role-utils"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -21,6 +22,13 @@ export default function ClientLayout({
 }>) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [hideSidebar, setHideSidebar] = useState(false)
+
+  // Check if user is operations role (hide sidebar)
+  useEffect(() => {
+    const role = getCurrentUserRole()
+    setHideSidebar(role === 'operations')
+  }, [])
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts()
@@ -65,19 +73,20 @@ export default function ClientLayout({
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-transparent dark:bg-transparent">
-      {/* Premium Sidebar */}
-      <PremiumSidebar 
-        mobileOpen={mobileMenuOpen}
-        onMobileClose={() => setMobileMenuOpen(false)}
-        onCollapsedChange={setSidebarCollapsed}
-      />
+      {/* Premium Sidebar - Hidden for Operations role */}
+      {!hideSidebar && (
+        <PremiumSidebar 
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={() => setMobileMenuOpen(false)}
+          onCollapsedChange={setSidebarCollapsed}
+        />
+      )}
 
       {/* Main content area */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300",
-        "ml-0",
-        // Responsive margins: smaller on standard screens, larger on XL+
-        sidebarCollapsed ? "lg:ml-14 xl:lg:ml-16" : "lg:ml-48 xl:lg:ml-52"
+        // No margin when sidebar is hidden (operations role)
+        hideSidebar ? "ml-0" : sidebarCollapsed ? "lg:ml-14 xl:lg:ml-16 ml-0" : "lg:ml-48 xl:lg:ml-52 ml-0"
       )}>
         {/* Premium Navbar */}
         <PremiumNavbar 

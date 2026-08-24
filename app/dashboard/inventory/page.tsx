@@ -39,6 +39,7 @@ export default function InventoryPage() {
   const [salesChannelFilter, setSalesChannelFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState<"all" | "good" | "bad">("all")
+  const [stockLevelFilter, setStockLevelFilter] = useState<"all" | "low" | "out">("all")
   const [sortBy, setSortBy] = useState("name-asc")
   const [loading, setLoading] = useState(true)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
@@ -64,37 +65,20 @@ export default function InventoryPage() {
   const userRole = getCurrentUserRole()
   const isTeamLeader = false // Team leader role removed
   
-  // Department detection - Agent role for filtering and restrictions
-  const [isDepartment, setIsDepartment] = useState(false)
-  const [userDepartment, setUserDepartment] = useState<string>("")
-  
-  // Separate flag for read-only access (no edit/delete)
+  // Role detection for read-only access
   const [isReadOnly, setIsReadOnly] = useState(false)
   
   useEffect(() => {
-    const checkDepartment = () => {
-      const user = getCurrentUser()
+    const checkRole = () => {
       const role = getCurrentUserRole()
       
-      // Operations (agent) - restricted to assigned channel only
-      if (role === 'operations' && user?.assignedChannel) {
-        setIsDepartment(true)
-        setIsReadOnly(true)
-        setUserDepartment(user.assignedChannel)
-      } 
-      // Department Manager - read-only but restricted to assigned channel
-      else if (role === 'dept-manager' && user?.assignedChannel) {
-        setIsDepartment(true)
-        setIsReadOnly(true)
-        setUserDepartment(user.assignedChannel)
-      }
-      // Department Manager without assigned channel
-      else if (role === 'dept-manager') {
+      // Operations staff - read-only access to ALL products (no channel filtering)
+      if (role === 'operations') {
         setIsReadOnly(true)
       }
     }
     
-    checkDepartment()
+    checkRole()
   }, [])
   
   // Category Management
@@ -286,7 +270,14 @@ export default function InventoryPage() {
       filtered = filtered.filter((item) => item.item_status === 'bad')
     }
 
-    // Stock status filter
+    // Stock Level filter
+    if (stockLevelFilter === "low") {
+      filtered = filtered.filter((item) => item.quantity > 0 && item.quantity <= item.reorderLevel)
+    } else if (stockLevelFilter === "out") {
+      filtered = filtered.filter((item) => item.quantity === 0)
+    }
+
+    // Stock status filter (legacy - keeping for backwards compatibility)
     if (salesChannelFilter === "low-stock") {
       filtered = filtered.filter((item) => item.quantity > 0 && item.quantity <= item.reorderLevel)
     } else if (salesChannelFilter === "out-of-stock") {
@@ -309,7 +300,7 @@ export default function InventoryPage() {
     }
 
     setFilteredItems(filtered)
-  }, [debouncedSearch, salesChannelFilter, categoryFilter, statusFilter, sortBy, items])
+  }, [debouncedSearch, salesChannelFilter, categoryFilter, statusFilter, stockLevelFilter, sortBy, items])
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredItems.length / pageSize)
@@ -1197,6 +1188,16 @@ export default function InventoryPage() {
                   <SelectItem value="bad">Bad Stock</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={stockLevelFilter} onValueChange={(value: "all" | "low" | "out") => setStockLevelFilter(value)}>
+                <SelectTrigger className="w-full lg:w-[180px] h-7 text-xs border-slate-200 dark:border-slate-700">
+                  <SelectValue placeholder="Stock Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="low">Low Stocks</SelectItem>
+                  <SelectItem value="out">Out of Stocks</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -1207,19 +1208,36 @@ export default function InventoryPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4">
                 <Package className="h-8 w-8 text-slate-400 dark:text-slate-500" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No products found</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto">
-                {search || salesChannelFilter !== "all"
-                  ? "Try adjusting your filters or search terms"
-                  : "Get started by adding your first product"}
-              </p>
-              <Button
-                onClick={() => setAddDialogOpen(true)}
-                className="gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
-              >
-                <Plus className="h-4 w-4" />
-                Add Your First Product
-              </Button>
+              {stockLevelFilter === "low" ? (
+                <>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No low stock items</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">All products have sufficient stock levels</p>
+                </>
+              ) : stockLevelFilter === "out" ? (
+                <>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No out of stock items</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">All products are currently in stock</p>
+                </>
+              ) : statusFilter === "bad" ? (
+                <>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No bad stock items</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">All products are in good condition</p>
+                </>
+              ) : debouncedSearch || categoryFilter !== "all" ? (
+                <>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No products found</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Try adjusting your search or filters</p>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No products found</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Get started by adding your first product</p>
+                  <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Your First Product
+                  </Button>
+                </>
+              )}
             </div>
           ) : (
             /* Table View */

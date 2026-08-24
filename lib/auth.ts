@@ -1,6 +1,6 @@
-// Role-based access control system - SIMPLIFIED TO 2 ROLES
+// Role-based access control system
 
-export type UserRole = 'admin' | 'logistics-admin'
+export type UserRole = 'admin' | 'logistics-admin' | 'operations' | 'packer'
 
 export interface User {
   username: string
@@ -11,7 +11,7 @@ export interface User {
   profileImage?: string | null
 }
 
-// Role definitions - Only 2 roles
+// Role definitions
 export const ROLES = {
   admin: {
     id: 'admin' as const,
@@ -24,10 +24,22 @@ export const ROLES = {
     name: 'Logistics Admin',
     description: 'Inventory management and reports',
     icon: '📦'
+  },
+  operations: {
+    id: 'operations' as const,
+    name: 'Operations Staff',
+    description: 'View-only inventory access',
+    icon: '👤'
+  },
+  packer: {
+    id: 'packer' as const,
+    name: 'Packer',
+    description: 'Packing queue management',
+    icon: '📦'
   }
 } as const
 
-// Page permissions per role - SIMPLIFIED
+// Page permissions per role
 export const ROLE_PERMISSIONS = {
   admin: [
     '/dashboard',
@@ -35,11 +47,21 @@ export const ROLE_PERMISSIONS = {
   ],
   'logistics-admin': [
     '/dashboard',
+    '/dashboard/pos',
+    '/dashboard/inventory',
     '/dashboard/inventory/**',
     '/dashboard/sales',
-    '/dashboard/pos',
+    '/dashboard/orders',
+    '/dashboard/customers',
     '/dashboard/log'
-    // NO Settings access for logistics-admin
+    // NO /dashboard/settings - Settings page hidden from logistics-admin
+  ],
+  operations: [
+    '/dashboard/inventory'  // Only inventory page, read-only
+  ],
+  packer: [
+    '/dashboard',
+    '/dashboard/inventory'  // Packers can view inventory
   ]
 } as const
 
@@ -48,7 +70,9 @@ export const ROLE_PERMISSIONS = {
 // See: app/api/auth/unified-login/route.ts → validateCredentials()
 export const DEFAULT_PASSWORDS: Record<UserRole, string> = {
   admin: '',
-  'logistics-admin': ''
+  'logistics-admin': '',
+  operations: '',
+  packer: ''
 }
 
 // Auth helpers
@@ -66,30 +90,50 @@ export const DEFAULT_PASSWORDS: Record<UserRole, string> = {
  */
 export function hasPermission(role: UserRole, path: string): boolean {
   const permissions = ROLE_PERMISSIONS[role]
-  if (!permissions) return false
+  if (!permissions) {
+    console.log('[hasPermission] No permissions found for role:', role)
+    return false
+  }
   
   // Normalize path (remove trailing slash)
   const normalizedPath = path.replace(/\/$/, '')
   
-  return permissions.some(pattern => {
+  console.log('[hasPermission] Checking:', { role, path: normalizedPath, permissions })
+  
+  const result = permissions.some(pattern => {
     // Normalize pattern
     const normalizedPattern = pattern.replace(/\/$/, '')
     
     // Exact match
-    if (normalizedPattern === normalizedPath) return true
+    if (normalizedPattern === normalizedPath) {
+      console.log('[hasPermission] EXACT MATCH:', pattern)
+      return true
+    }
     
     // Wildcard match: /dashboard/inventory/** matches /dashboard/inventory/create
     if (normalizedPattern.endsWith('/**')) {
       const basePattern = normalizedPattern.slice(0, -3)
-      return normalizedPath === basePattern || normalizedPath.startsWith(basePattern + '/')
+      const matches = normalizedPath === basePattern || normalizedPath.startsWith(basePattern + '/')
+      if (matches) {
+        console.log('[hasPermission] WILDCARD MATCH:', pattern)
+      }
+      return matches
     }
     
     return false
   })
+  
+  console.log('[hasPermission] Result:', result)
+  return result
 }
 
 export function getDefaultRoute(role: UserRole): string {
-  // Both roles go to main dashboard
+  // Operations staff go directly to inventory (their only accessible page)
+  if (role === 'operations') {
+    return '/dashboard/inventory'
+  }
+  
+  // All other roles go to main dashboard
   return '/dashboard'
 }
 
@@ -118,7 +162,7 @@ export function getCurrentUser(): User | null {
     const displayName = localStorage.getItem('displayName')
     
     if (isLoggedIn === 'true' && username && role) {
-      if (!['admin', 'logistics-admin'].includes(role)) {
+      if (!['admin', 'logistics-admin', 'operations', 'packer'].includes(role)) {
         clearCurrentUser()
         return null
       }

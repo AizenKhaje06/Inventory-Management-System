@@ -139,7 +139,7 @@ export function LoginForm({
         return "warehouse operations"
       case "logistics":
         if (logisticsSubRole === "logistics-admin") return "logistics admin dashboard"
-        return logisticsSubRole === "tracker" ? "tracker dashboard" : "packer dashboard"
+        return "packer dashboard"
       default:
         return "dashboard"
     }
@@ -157,54 +157,7 @@ export function LoginForm({
         </p>
       </div>
 
-      {/* Operations Sales Channel Selector */}
-      {role === 'operations' && (
-        <div className="space-y-2">
-          <Label htmlFor="sales-channel" className="text-slate-200 font-medium">
-            Sales Channel
-          </Label>
-          <div className="relative group">
-            <Package className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
-            <Select value={selectedChannel} onValueChange={onChannelChange} disabled={loading || channelsLoading}>
-              <SelectTrigger className="pl-12 h-12 bg-slate-900/50 border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 text-white hover:border-slate-600 disabled:opacity-50">
-                <SelectValue placeholder={channelsLoading ? "Loading channels..." : "Select sales channel"} />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-900/95 backdrop-blur-xl border-slate-700/50 shadow-2xl">
-                <SelectItem value="Shopee" className="text-white hover:bg-white/10 focus:bg-white/10 data-[state=checked]:bg-white/10 cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <img src="/Shopee.png" alt="Shopee" className="w-5 h-5 object-contain" />
-                    <span>Shopee</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="Lazada" className="text-white hover:bg-white/10 focus:bg-white/10 data-[state=checked]:bg-white/10 cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <img src="/Lazada.png" alt="Lazada" className="w-5 h-5 object-contain" />
-                    <span>Lazada</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="TikTok" className="text-white hover:bg-white/10 focus:bg-white/10 data-[state=checked]:bg-white/10 cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <img src="/tiktok.png" alt="TikTok" className="w-5 h-5 object-contain" />
-                    <span>TikTok</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="Facebook" className="text-white hover:bg-white/10 focus:bg-white/10 data-[state=checked]:bg-white/10 cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <img src="/facebook.png" alt="Facebook" className="w-5 h-5 object-contain" />
-                    <span>Facebook</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="Physical Store" className="text-white hover:bg-white/10 focus:bg-white/10 data-[state=checked]:bg-white/10 cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <img src="/Physical Store.png" alt="Physical Store" className="w-5 h-5 object-contain" />
-                    <span>Physical Store</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      )}
+      {/* Operations role removed - no channel selector needed */}
 
       {/* Logistics Sub-Role Selector */}
       {role === 'logistics' && onLogisticsSubRoleChange && (
@@ -233,14 +186,6 @@ export function LoginForm({
                       <Package className="w-3 h-3 text-white" />
                     </div>
                     <span>Packer</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="tracker" className="text-white hover:bg-white/10 focus:bg-white/10 data-[state=checked]:bg-white/10 cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                      <Truck className="w-3 h-3 text-white" />
-                    </div>
-                    <span>Tracker</span>
                   </div>
                 </SelectItem>
               </SelectContent>

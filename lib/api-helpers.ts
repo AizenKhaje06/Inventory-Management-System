@@ -19,7 +19,7 @@ import { requireAuth, requireAdmin, requireRole, type UserRole } from './api-aut
 export function withAuth(
   handler: (
     request: NextRequest,
-    context: { user: { username: string; role: UserRole; displayName: string; assignedChannel?: string }, params?: any }
+    context: { user: { username: string; role: UserRole; displayName: string }, params?: any }
   ) => Promise<NextResponse>
 ) {
   return async (request: NextRequest, routeContext?: { params: any }) => {
@@ -45,7 +45,7 @@ export function withAuth(
 export function withAdmin(
   handler: (
     request: NextRequest,
-    context: { user: { username: string; role: UserRole; displayName: string; assignedChannel?: string }, params?: any }
+    context: { user: { username: string; role: UserRole; displayName: string }, params?: any }
   ) => Promise<NextResponse>
 ) {
   return async (request: NextRequest, routeContext?: { params: any }) => {
@@ -73,7 +73,7 @@ export function withRoles(
   handler: (
     request: NextRequest,
     context: { 
-      user: { username: string; role: UserRole; displayName: string; assignedChannel?: string };
+      user: { username: string; role: UserRole; displayName: string };
       params?: any  // Added for dynamic routes with params
     }
   ) => Promise<NextResponse>

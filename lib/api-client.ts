@@ -1,13 +1,12 @@
 /**
- * API Client - UPDATED WITH DEPARTMENT FILTERING
+ * API Client - Updated for Simplified System
  * 
  * Client-side wrapper for making authenticated API requests
- * Automatically adds authentication headers INCLUDING assignedChannel
+ * Automatically adds authentication headers
  */
 
 /**
  * Add authentication headers to fetch requests
- * INCLUDES assignedChannel for department filtering
  */
 function getAuthHeaders(): HeadersInit {
   if (typeof window === 'undefined') return {}
@@ -15,25 +14,24 @@ function getAuthHeaders(): HeadersInit {
   try {
     const headers: Record<string, string> = {}
 
-    // Get ALL user authentication from localStorage
+    // Get user authentication from localStorage
     const username = localStorage.getItem('username')
     const role = localStorage.getItem('userRole')
     const displayName = localStorage.getItem('displayName')
-    const assignedChannel = localStorage.getItem('assignedChannel')
+    // assignedChannel removed - no longer used
 
     // DEBUG: Log what we're reading from localStorage
     console.log('[API Client] Reading from localStorage:', {
       username,
       role,
-      displayName,
-      assignedChannel
+      displayName
     })
 
     // Add headers
     if (username) headers['x-user-username'] = username
     if (role) headers['x-user-role'] = role
     if (displayName) headers['x-user-display-name'] = displayName
-    if (assignedChannel) headers['x-assigned-channel'] = assignedChannel
+    // assignedChannel header removed
 
     // DEBUG: Log final headers
     console.log('[API Client] Final headers:', headers)
@@ -43,6 +41,7 @@ function getAuthHeaders(): HeadersInit {
     console.error('[API Client] Error reading auth from localStorage:', error)
     return {}
   }
+
 }
 
 /**

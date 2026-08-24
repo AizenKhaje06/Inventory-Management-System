@@ -61,7 +61,7 @@ interface Account {
   id: string
   username: string
   password: string
-  role: 'admin' | 'operations' | 'packer' | 'tracker' | 'logistics-admin' | 'dept-manager'
+  role: 'admin' | 'operations' | 'packer' | 'logistics-admin'
   assignedChannel?: string // Legacy field, no longer used
   displayName: string
   profileImage?: string // Profile image URL
@@ -111,8 +111,7 @@ export default function SettingsPage() {
     username: '',
     password: '',
     displayName: '',
-    role: 'operations' as 'admin' | 'operations' | 'packer' | 'tracker' | 'logistics-admin',
-    assignedChannel: '', // Legacy field, no longer used
+    role: 'operations' as 'admin' | 'operations' | 'packer' | 'logistics-admin',
     profileImage: '' // Profile image URL
   })
 
@@ -122,8 +121,7 @@ export default function SettingsPage() {
     username: '',
     originalUsername: '', // Store original username for comparison
     displayName: '',
-    role: 'operations' as 'admin' | 'operations' | 'packer' | 'tracker' | 'logistics-admin',
-    assignedChannel: '', // Legacy field, no longer used
+    role: 'operations' as 'admin' | 'operations' | 'packer' | 'logistics-admin',
     newPassword: '',
     confirmPassword: '',
     profileImage: '' // Profile image URL
@@ -408,11 +406,8 @@ export default function SettingsPage() {
       return
     }
 
-    // Validate that Operations Staff has an assigned channel
-    if ((newUserForm.role === 'operations' || newUserForm.role === 'dept-manager') && !newUserForm.assignedChannel) {
-      toast.error('Please select a sales channel for Operations Staff')
-      return
-    }
+    // Operations staff no longer requires channel assignment
+    // They have view-only access to all products
 
     if (newUserForm.password.length < 6) {
       toast.error('Password must be at least 6 characters')
@@ -425,7 +420,7 @@ export default function SettingsPage() {
         ...newUserForm
       })
       toast.success('User created successfully')
-      setNewUserForm({ username: '', password: '', displayName: '', role: 'operations', assignedChannel: '', profileImage: '' })
+      setNewUserForm({ username: '', password: '', displayName: '', role: 'operations', profileImage: '' })
       setShowNewUserForm(false)
       fetchAccounts()
     } catch (error: any) {
@@ -440,7 +435,6 @@ export default function SettingsPage() {
       originalUsername: account.username, // Store original
       displayName: account.displayName,
       role: account.role,
-      assignedChannel: account.assignedChannel || '',
       newPassword: '',
       confirmPassword: '',
       profileImage: account.profileImage || ''
@@ -484,12 +478,11 @@ export default function SettingsPage() {
         })
       }
 
-      // Update display name, assigned channel, and profile image (use new username if changed)
+      // Update display name and profile image (use new username if changed)
       await apiPut('/api/accounts', {
         action: 'updateDisplayName',
         username: editUserForm.username,
         displayName: editUserForm.displayName,
-        assignedChannel: editUserForm.assignedChannel || null,
         profileImage: editUserForm.profileImage || null
       })
 
@@ -527,7 +520,6 @@ export default function SettingsPage() {
       originalUsername: '',
       displayName: '',
       role: 'operations',
-      assignedChannel: '',
       newPassword: '',
       confirmPassword: '',
       profileImage: ''
@@ -1379,69 +1371,7 @@ export default function SettingsPage() {
                       </CardContent>
                     </Card>
 
-                    {/* Dept. Heads Card */}
-                    <Card className="border-0 shadow-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                      <CardHeader className="p-4 pb-3 border-b border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1.5 rounded-lg bg-purple-600">
-                              <Users className="h-3.5 w-3.5 text-white" />
-                            </div>
-                            <span className="text-sm font-semibold text-slate-900 dark:text-white">Dept. Heads</span>
-                          </div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                            {accounts.filter(a => a.role === 'dept-manager').length} users
-                          </span>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-3 space-y-2">
-                        {accounts.filter(a => a.role === 'dept-manager').length === 0 ? (
-                          <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-3">No dept. heads</p>
-                        ) : (
-                          accounts.filter(a => a.role === 'dept-manager').map((account) => (
-                            <div key={account.id} className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
-                              <div className="min-w-0 flex-1 flex items-center gap-2">
-                                <div className="flex-shrink-0">
-                                  {account.profileImage ? (
-                                    <img src={account.profileImage} alt={account.displayName} className="h-8 w-8 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700" />
-                                  ) : (
-                                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                                      <User className="h-4 w-4 text-white" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{account.displayName}</p>
-                                    {account.assignedChannel && (
-                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-400 flex-shrink-0">
-                                        {account.assignedChannel}
-                                      </Badge>
-                                    )}
-                                    <Badge className="text-[10px] px-1.5 py-0 h-4 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-0 flex-shrink-0">
-                                      Manager
-                                    </Badge>
-                                  </div>
-                                  <p className="text-[10px] text-slate-500 dark:text-slate-400">@{account.username}</p>
-                                </div>
-                              </div>
-                              {account.username !== currentUser?.username && (
-                                <div className="flex gap-1 flex-shrink-0">
-                                  <Button variant="ghost" size="sm" onClick={() => handleEditUser(account)} className="h-6 w-6 p-0 hover:bg-slate-100 dark:hover:bg-slate-800">
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                  <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(account.username)} className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          ))
-                        )}
-                      </CardContent>
-                    </Card>
-
-                    {/* Logistics (Packer + Tracker + Logistics-Admin) Card */}
+                    {/* Logistics (Packer + Logistics-Admin) Card */}
                     <Card className="border-0 shadow-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
                       <CardHeader className="p-4 pb-3 border-b border-slate-200 dark:border-slate-700">
                         <div className="flex items-center justify-between">
@@ -1452,15 +1382,15 @@ export default function SettingsPage() {
                             <span className="text-sm font-semibold text-slate-900 dark:text-white">Logistics</span>
                           </div>
                           <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                            {accounts.filter(a => ['packer', 'tracker', 'logistics-admin'].includes(a.role)).length} users
+                            {accounts.filter(a => ['packer', 'logistics-admin'].includes(a.role)).length} users
                           </span>
                         </div>
                       </CardHeader>
                       <CardContent className="p-3 space-y-2">
-                        {accounts.filter(a => ['packer', 'tracker', 'logistics-admin'].includes(a.role)).length === 0 ? (
+                        {accounts.filter(a => ['packer', 'logistics-admin'].includes(a.role)).length === 0 ? (
                           <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-3">No logistics users</p>
                         ) : (
-                          accounts.filter(a => ['packer', 'tracker', 'logistics-admin'].includes(a.role)).map((account) => (
+                          accounts.filter(a => ['packer', 'logistics-admin'].includes(a.role)).map((account) => (
                             <div key={account.id}>
                               {editingUser === account.id ? (
                                 <div className="space-y-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -2178,39 +2108,18 @@ export default function SettingsPage() {
                 <select
                   id="modalRole"
                   value={newUserForm.role}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as any, assignedChannel: '' })}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as any })}
                   className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-background px-3 py-2 text-sm"
                 >
                   <option value="admin">Administrator</option>
                   <option value="operations">Operations Staff (Agent)</option>
-                  <option value="dept-manager">Dept. Head</option>
                   <option value="packer">Packer</option>
-                  <option value="tracker">Tracker</option>
                   <option value="logistics-admin">Logistics Admin</option>
                 </select>
               </div>
             </div>
 
-            {/* Sales Channel Dropdown - Show for Operations and Dept Manager */}
-            {(newUserForm.role === 'operations' || newUserForm.role === 'dept-manager') && (
-              <div className="space-y-2">
-                <Label htmlFor="modalChannel" className="text-sm font-medium">Assigned Department *</Label>
-                <select
-                  id="modalChannel"
-                  value={newUserForm.assignedChannel}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, assignedChannel: e.target.value })}
-                  className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Select department...</option>
-                  <option value="Shopee">Shopee</option>
-                  <option value="Lazada">Lazada</option>
-                  <option value="TikTok">TikTok</option>
-                  <option value="Facebook">Facebook</option>
-                  <option value="Physical Store">Physical Store</option>
-                </select>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Required for Operations Staff and Dept. Heads</p>
-              </div>
-            )}
+            {/* Operations role no longer requires channel assignment - removed */}
 
             {/* Profile Image Upload */}
             <div className="space-y-2">
@@ -2232,7 +2141,7 @@ export default function SettingsPage() {
               variant="outline" 
               onClick={() => {
                 setShowNewUserForm(false)
-                setNewUserForm({ username: '', password: '', displayName: '', role: 'operations', assignedChannel: '', profileImage: '' })
+                setNewUserForm({ username: '', password: '', displayName: '', role: 'operations', profileImage: '' })
               }}
               className="h-10"
             >
@@ -2515,7 +2424,7 @@ const MANUAL_DATA: Record<string, { label: string; icon: string; pages: Record<s
           'Add dispatch notes and confirm.',
         ],
         guide: [
-          'Notes are visible to the tracker and in reports.',
+          'Notes are visible in reports.',
         ],
       },
       customers: {
@@ -2579,44 +2488,6 @@ const MANUAL_DATA: Record<string, { label: string; icon: string; pages: Record<s
           'Filter by date, operation, or user.',
         ],
         guide: ['Logs are read-only.'],
-      },
-    },
-  },
-
-  tracker: {
-    label: 'Tracker',
-    icon: '🚚',
-    pages: {
-      'tracker-dashboard': {
-        title: 'Tracker Dashboard',
-        description: 'Dedicated page for updating parcel status on packed orders. Optimized for logistics tracking with Excel export.',
-        workflow: [
-          'Log in as Tracker.',
-          'View all orders currently in transit or pending.',
-          'Use filters: Status, Sales Channel, Payment Status, Date Range.',
-          'Use search to find orders by waybill, customer name, or product.',
-          'Click an order to open its details.',
-          'Update parcel status: PENDING → IN TRANSIT → ON DELIVERY → PICKUP → DELIVERED.',
-          'Mark RETURNED if customer rejects delivery.',
-          'Add dispatch notes when needed.',
-          'Click "Export to Excel" button to download currently displayed orders.',
-        ],
-        guide: [
-          'DELIVERED = order completed, counted in Total Delivered.',
-          'RETURNED = order failed, counted in Total Returns.',
-          '"Return to Queue" moves a returned order back to Packing Queue.',
-          'Inventory is restored when an order is returned to queue.',
-          'Cannot create new orders — tracking only.',
-          'Excel export includes only the CURRENT PAGE of orders (respects pagination).',
-          'Export filename includes page number and date for easy identification.',
-          'Exported data respects all active filters and search results.',
-        ],
-        notes: [
-          'Status changes are logged automatically.',
-          'Tracker cannot access inventory or POS.',
-          'Export is limited to displayed rows to prevent overwhelming Excel files.',
-          'Use pagination controls to navigate and export specific pages.',
-        ],
       },
     },
   },
@@ -3524,7 +3395,7 @@ function ManualTab() {
           <CardContent className="flex flex-col items-center justify-center py-16 gap-3">
             <BookOpen className="h-12 w-12 text-slate-300 dark:text-slate-600" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">Select an account type to get started</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">Choose from Admin, Departments, Logistics Admin, Tracker, or Packer</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">Choose from Admin, Departments, Logistics Admin, or Packer</p>
           </CardContent>
         </Card>
       )}

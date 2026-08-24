@@ -72,7 +72,7 @@ setInterval(() => {
 
 /**
  * Unified Login API - Auto-detects user role and authenticates
- * Supports: Admin, Operations, Logistics (Admin/Packer/Tracker), Dept-Manager
+ * Supports: Admin, Operations, Logistics (Admin/Packer)
  *
  * Security:
  * - Rate limiting: 5 failed attempts per IP per 60s → lockout for remainder of window
@@ -127,8 +127,13 @@ export async function POST(request: NextRequest) {
     
     const userRole = account.role
     
-    // Determine redirect path based on role (2 roles only: admin, logistics-admin)
+    // Determine redirect path based on role
     let redirectPath = '/dashboard'
+    
+    // Operations staff go directly to inventory (their only page)
+    if (userRole === 'operations') {
+      redirectPath = '/dashboard/inventory'
+    }
 
     console.log('[Unified Login] Login successful, redirecting to:', redirectPath)
 
@@ -141,8 +146,8 @@ export async function POST(request: NextRequest) {
         displayName: account.displayName || account.username,
         profileImage: account.profileImage || null,
         email: account.email || '',
-        phone: account.phone || '',
-        assignedChannel: account.assignedChannel || null
+        phone: account.phone || ''
+        // assignedChannel removed - no longer used in simplified system
       },
       redirectPath,
       rememberDevice

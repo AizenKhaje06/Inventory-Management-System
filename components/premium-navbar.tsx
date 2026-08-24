@@ -85,8 +85,6 @@ export function PremiumNavbar({ sidebarCollapsed, onMenuClick, onMobileMenuToggl
               setUserRole("Dept. Head")
             } else if (storedRole === "operations") {
               setUserRole("Agent")  // Changed from channel name to "Agent"
-            } else if (storedRole === "tracker") {
-              setUserRole("Tracker")
             } else if (storedRole === "packer") {
               setUserRole("Packer")
             } else if (storedRole === "logistics") {
@@ -198,45 +196,28 @@ export function PremiumNavbar({ sidebarCollapsed, onMenuClick, onMobileMenuToggl
             <Menu className="h-5 w-5" />
           </button>
 
-          {/* User Info with Welcome Back */}
-          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0">
-            {/* Department Logo - For Operations AND Dept. Head */}
-            {((currentUser?.role === 'operations' || currentUser?.role === 'dept-manager') && currentUser?.assignedChannel) && (
-              <div className="flex-shrink-0 hidden lg:block">
-                {currentUser.assignedChannel === 'Shopee' && (
-                  <img src="/Shopee.png" alt="Shopee" className="h-6 w-auto object-contain" />
-                )}
-                {currentUser.assignedChannel === 'Lazada' && (
-                  <img src="/Lazada.png" alt="Lazada" className="h-6 w-auto object-contain" />
-                )}
-                {currentUser.assignedChannel === 'Facebook' && (
-                  <img src="/facebook.png" alt="Facebook" className="h-6 w-auto object-contain" />
-                )}
-                {currentUser.assignedChannel === 'TikTok' && (
-                  <img src="/tiktok.png" alt="TikTok" className="h-6 w-auto object-contain" />
-                )}
-                {currentUser.assignedChannel === 'Physical Store' && (
-                  <img src="/Physical Store.png" alt="Physical Store" className="h-6 w-auto object-contain" />
-                )}
-              </div>
-            )}
-            
-            {/* Welcome Back + User Name + Role Badge - Hidden on mobile */}
-            <div className="hidden sm:flex flex-col min-w-0">
-              <span className="text-[10px] text-slate-500 dark:text-amber-400/60 font-medium leading-none">Welcome back</span>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-sm font-semibold text-slate-900 dark:text-white leading-tight truncate">{username}</span>
-                <span className={cn(
-                  "text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0",
-                  userRole === "Administrator" 
-                    ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" 
-                    : userRole.includes("Dept") || userRole === "Dept. Head"
-                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
-                    : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                )}>{userRole}</span>
+          {/* User Info with Welcome Back - Hidden for Operations Staff */}
+          {currentUser?.role !== 'operations' && (
+            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0">
+              {/* Department Logo - Removed (no longer used in simplified system) */}
+              
+              {/* Welcome Back + User Name + Role Badge - Hidden on mobile */}
+              <div className="hidden sm:flex flex-col min-w-0">
+                <span className="text-[10px] text-slate-500 dark:text-amber-400/60 font-medium leading-none">Welcome back</span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white leading-tight truncate">{username}</span>
+                  <span className={cn(
+                    "text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0",
+                    userRole === "Administrator" 
+                      ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" 
+                      : userRole.includes("Dept") || userRole === "Dept. Head"
+                      ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
+                      : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                  )}>{userRole}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right: Date/Time + Actions - Better Spacing */}

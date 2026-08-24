@@ -226,81 +226,86 @@ export default function OrdersPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-slate-800/50">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase">Total Orders</p>
-                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
-                  <p className="text-xs text-slate-500">All time</p>
-                </div>
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
-                  <ShoppingCart className="h-7 w-7 text-blue-600 dark:text-blue-400" />
-                </div>
+        {/* Stats Cards - Enterprise Grade */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+          {/* Total Orders */}
+          <Card className="p-5 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-600 shadow-lg shadow-blue-500/30 flex-shrink-0">
+                <ShoppingCart className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
-            </CardContent>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Total Orders</p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 tabular-nums">{stats.total}</p>
+                <p className="text-xs text-blue-600 dark:text-blue-500 mt-0.5">All time</p>
+              </div>
+            </div>
           </Card>
 
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-slate-800/50">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase">Active</p>
-                  <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{stats.active}</p>
-                  <p className="text-xs text-emerald-600">Processing</p>
-                </div>
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 flex items-center justify-center">
-                  <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
-                </div>
+          {/* Active Orders */}
+          <Card className="p-5 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-600 shadow-lg shadow-emerald-500/30 flex-shrink-0">
+                <CheckCircle className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
-            </CardContent>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Active</p>
+                <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 tabular-nums">{stats.active}</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-0.5">In transit</p>
+              </div>
+            </div>
           </Card>
 
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-slate-800/50">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase">Cancelled</p>
-                  <p className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.cancelled}</p>
-                  <p className="text-xs text-red-600">Refunded</p>
-                </div>
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 flex items-center justify-center">
-                  <XCircle className="h-7 w-7 text-red-600 dark:text-red-400" />
-                </div>
+          {/* Cancelled Orders */}
+          <Card className="p-5 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-red-600 shadow-lg shadow-red-500/30 flex-shrink-0">
+                <XCircle className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
-            </CardContent>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Cancelled</p>
+                <p className="text-2xl font-bold text-red-900 dark:text-red-100 tabular-nums">{stats.cancelled}</p>
+                <p className="text-xs text-red-600 dark:text-red-500 mt-0.5">
+                  {stats.cancelled > 0 ? (
+                    <><AlertCircle className="h-3 w-3 inline mr-0.5" />Restocked</>
+                  ) : 'No cancellations'}
+                </p>
+              </div>
+            </div>
           </Card>
 
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-slate-800/50">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase">Today</p>
-                  <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.todayCount}</p>
-                  <p className="text-xs text-purple-600">This day</p>
-                </div>
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 flex items-center justify-center">
-                  <Calendar className="h-7 w-7 text-purple-600 dark:text-purple-400" />
-                </div>
+          {/* Today's Orders */}
+          <Card className="p-5 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-purple-600 shadow-lg shadow-purple-500/30 flex-shrink-0">
+                <Calendar className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
-            </CardContent>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Today</p>
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 tabular-nums">{stats.todayCount}</p>
+                <p className="text-xs text-purple-600 dark:text-purple-500 mt-0.5">
+                  {stats.todayCount > 0 ? 'Orders dispatched' : 'No orders yet'}
+                </p>
+              </div>
+            </div>
           </Card>
 
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-amber-700 dark:text-amber-400 uppercase">Revenue</p>
-                  <p className="text-2xl font-bold text-amber-900 dark:text-amber-300">{formatCurrency(stats.totalRevenue)}</p>
-                  <p className="text-xs text-amber-700">Total earnings</p>
-                </div>
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-                  <DollarSign className="h-7 w-7 text-white" strokeWidth={2.5} />
-                </div>
+          {/* Total Revenue */}
+          <Card className="p-5 border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/40 flex-shrink-0">
+                <DollarSign className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
-            </CardContent>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Revenue</p>
+                <p className="text-xl font-bold text-amber-900 dark:text-amber-100 tabular-nums">{formatCurrency(stats.totalRevenue)}</p>
+                <p className="text-xs text-amber-700 dark:text-amber-600 mt-0.5">
+                  {stats.totalRevenue > 0 ? (
+                    <><TrendingUp className="h-3 w-3 inline mr-0.5" />Total earnings</>
+                  ) : 'No revenue yet'}
+                </p>
+              </div>
+            </div>
           </Card>
         </div>
 

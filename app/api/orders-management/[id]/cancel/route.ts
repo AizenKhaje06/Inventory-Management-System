@@ -8,12 +8,14 @@ import { getPhilippinesDateTime } from '@/lib/timezone-utils'
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { reason, cancelledBy } = body
+
+    console.log('[Cancel Order API] Request:', { id, reason, cancelledBy })
 
     if (!reason || !cancelledBy) {
       return NextResponse.json(
@@ -29,7 +31,10 @@ export async function POST(
       .eq('id', id)
       .single()
 
+    console.log('[Cancel Order API] Order fetch result:', { order, orderError })
+
     if (orderError || !order) {
+      console.error('[Cancel Order API] Order not found:', orderError)
       return NextResponse.json(
         { error: 'Order not found' },
         { status: 404 }
@@ -44,20 +49,24 @@ export async function POST(
     }
 
     // 2. Mark order as cancelled
+    const cancelData = {
+      is_cancelled: true,
+      cancelled_at: getPhilippinesDateTime(),
+      cancelled_by: cancelledBy,
+      cancellation_reason: reason
+    }
+    
+    console.log('[Cancel Order API] Updating order with:', cancelData)
+
     const { error: updateError } = await supabaseAdmin
       .from('orders')
-      .update({
-        is_cancelled: true,
-        cancelled_at: getPhilippinesDateTime(),
-        cancelled_by: cancelledBy,
-        cancellation_reason: reason
-      })
+      .update(cancelData)
       .eq('id', id)
 
     if (updateError) {
       console.error('[Cancel Order API] Error updating order:', updateError)
       return NextResponse.json(
-        { error: 'Failed to cancel order' },
+        { error: `Failed to cancel order: ${updateError.message}` },
         { status: 500 }
       )
     }

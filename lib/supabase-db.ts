@@ -512,11 +512,11 @@ export interface Account {
   id: string
   username: string
   password: string
-  role: 'admin' | 'operations' | 'packer' | 'logistics-admin' | 'tracker'
+  role: 'admin' | 'operations' | 'packer' | 'logistics-admin'
   displayName: string
   email?: string
   phone?: string
-  assignedChannel?: string
+  // assignedChannel removed - no longer used in simplified system
   profileImage?: string | null  // Added for profile image feature
   createdAt: string
 }
@@ -536,11 +536,10 @@ export async function getAccounts(): Promise<Account[]> {
     id: row.id,
     username: row.username,
     password: row.password,
-    role: row.role as 'admin' | 'operations' | 'packer' | 'logistics-admin' | 'tracker',
+    role: row.role as 'admin' | 'operations' | 'packer' | 'logistics-admin',
     displayName: row.display_name,
     email: row.email,
     phone: row.phone,
-    assignedChannel: row.assigned_channel,
     profileImage: row.profile_image || null,
     createdAt: row.created_at,
   }))
@@ -576,11 +575,10 @@ export async function getAccountByUsername(username: string): Promise<Account | 
       id: data.id,
       username: data.username,
       password: data.password,
-      role: data.role as 'admin' | 'operations' | 'packer' | 'logistics-admin' | 'tracker',
+      role: data.role as 'admin' | 'operations' | 'packer' | 'logistics-admin',
       displayName: data.display_name,
       email: data.email,
       phone: data.phone,
-      assignedChannel: data.assigned_channel,
       profileImage: data.profile_image || null,
       createdAt: data.created_at,
     }
@@ -618,7 +616,7 @@ export async function validateCredentials(username: string, password: string): P
   }
 }
 
-export async function updateAccount(username: string, updates: { password?: string; displayName?: string; email?: string; phone?: string; assignedChannel?: string; profileImage?: string }): Promise<void> {
+export async function updateAccount(username: string, updates: { password?: string; displayName?: string; email?: string; phone?: string; profileImage?: string }): Promise<void> {
   const updateData: any = {}
   
   // Hash password if being updated
@@ -630,8 +628,8 @@ export async function updateAccount(username: string, updates: { password?: stri
   if (updates.displayName !== undefined) updateData.display_name = updates.displayName
   if (updates.email !== undefined) updateData.email = updates.email
   if (updates.phone !== undefined) updateData.phone = updates.phone
-  if (updates.assignedChannel !== undefined) updateData.assigned_channel = updates.assignedChannel || null
   if (updates.profileImage !== undefined) updateData.profile_image = updates.profileImage || null
+  // assignedChannel removed - no longer used
 
   console.log('[updateAccount] Updating user:', {
     username,
@@ -692,8 +690,7 @@ export async function addAccount(account: Omit<Account, "id" | "createdAt">): Pr
       password: hashedPassword,
       role: account.role,
       display_name: account.displayName,
-      assigned_channel: account.assignedChannel || null, // Add assigned_channel field
-      profile_image: account.profileImage || null, // Add profile_image field
+      profile_image: account.profileImage || null,
       created_at: createdAt,
     })
     .select()
@@ -709,7 +706,6 @@ export async function addAccount(account: Omit<Account, "id" | "createdAt">): Pr
     username: account.username,
     password: hashedPassword,
     role: account.role,
-    assignedChannel: account.assignedChannel,
     displayName: account.displayName,
     profileImage: account.profileImage,
     createdAt,

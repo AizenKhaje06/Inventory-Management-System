@@ -12,14 +12,6 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
   const [redirectCount, setRedirectCount] = useState(0)
 
   useEffect(() => {
-    // Prevent infinite redirect loops
-    if (redirectCount > 3) {
-      console.error('[RouteGuard] Too many redirects, stopping')
-      setIsChecking(false)
-      setIsAuthorized(false)
-      return
-    }
-
     // Check auth on mount and when pathname changes
     const checkAuth = () => {
       console.log('[RouteGuard] Starting auth check for:', pathname)
@@ -29,7 +21,6 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
         console.log('[RouteGuard] Login page - allowing access')
         setIsAuthorized(true)
         setIsChecking(false)
-        setRedirectCount(0) // Reset counter on login page
         return
       }
 
@@ -42,7 +33,6 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
           console.log('[RouteGuard] LOGOUT DETECTED - forcing redirect to login')
           setIsAuthorized(false)
           setIsChecking(false)
-          setRedirectCount(prev => prev + 1)
           router.replace('/')
           return
         }
@@ -56,8 +46,17 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
         console.log('[RouteGuard] No user found, redirecting to login')
         setIsAuthorized(false)
         setIsChecking(false)
-        setRedirectCount(prev => prev + 1)
         router.replace('/')
+        return
+      }
+
+      // SPECIAL CASE: Operations staff trying to access /dashboard root
+      // Redirect them directly to inventory (their only allowed page)
+      if (user.role === 'operations' && pathname === '/dashboard') {
+        console.log('[RouteGuard] Operations staff on /dashboard - redirecting to inventory')
+        setIsAuthorized(false)
+        setIsChecking(false)
+        router.replace('/dashboard/inventory')
         return
       }
 
@@ -72,9 +71,17 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       if (!hasAccess) {
         const defaultRoute = getDefaultRoute(user.role)
         console.log('[RouteGuard] NO PERMISSION! Redirecting to:', defaultRoute)
+        
+        // Prevent redirect loop - if we're already at the default route, just deny access
+        if (pathname === defaultRoute) {
+          console.error('[RouteGuard] Already at default route but no permission - stopping')
+          setIsAuthorized(false)
+          setIsChecking(false)
+          return
+        }
+        
         setIsAuthorized(false)
         setIsChecking(false)
-        setRedirectCount(prev => prev + 1)
         router.replace(defaultRoute)
         return
       }
@@ -82,7 +89,6 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       console.log('[RouteGuard] Access granted!')
       setIsAuthorized(true)
       setIsChecking(false)
-      setRedirectCount(0) // Reset counter on successful auth
     }
 
     // Reset state when pathname changes
@@ -93,7 +99,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       checkAuth()
     }
-  }, [pathname, router, redirectCount])
+  }, [pathname, router])
 
   // Show loading spinner while checking (prevents 404)
   if (isChecking) {

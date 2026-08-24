@@ -112,9 +112,7 @@ export default function MinimalistLoginPage() {
         if (user.profileImage) {
           localStorage.setItem("profileImage", user.profileImage)
         }
-        if (user.assignedChannel) {
-          localStorage.setItem("assignedChannel", user.assignedChannel)
-        }
+        // assignedChannel removed - no longer used in simplified system
 
         localStorage.setItem("currentUser", JSON.stringify(user))
 
