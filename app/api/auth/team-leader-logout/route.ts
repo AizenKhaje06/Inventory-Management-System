@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { destroySession } from '@/lib/session-manager'
+import { invalidateSession } from '@/lib/session-manager'
 
 /**
  * POST /api/auth/team-leader-logout
@@ -16,7 +16,7 @@ export const POST = async (request: NextRequest) => {
     // Destroy session if username provided
     if (username) {
       console.log('[Team Leader Logout] Destroying session for:', username)
-      await destroySession(username)
+      await invalidateSession(username)
     }
 
     // Clear session by returning success response

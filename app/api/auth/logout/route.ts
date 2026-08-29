@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { destroySession } from '@/lib/session-manager'
+import { invalidateSession } from '@/lib/session-manager'
 
 /**
  * Logout API Endpoint
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     // Destroy session if username provided
     if (username) {
       console.log('[Logout API] Destroying session for:', username)
-      await destroySession(username)
+      await invalidateSession(username)
     }
 
     // Create response with success message
