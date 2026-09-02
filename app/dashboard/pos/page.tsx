@@ -43,6 +43,7 @@ export default function POSPage() {
   const [dispatchId, setDispatchId] = useState('')
   const [dispatchedItems, setDispatchedItems] = useState<Array<{name: string, quantity: number, price: number}>>([])
   const [successModalOpen, setSuccessModalOpen] = useState(false)
+  const [confirmDispatchOpen, setConfirmDispatchOpen] = useState(false) // NEW: Confirmation dialog state
   
   // Helper function to get local date in YYYY-MM-DD format
   const getLocalDateString = () => {
@@ -573,8 +574,8 @@ export default function POSPage() {
       <Dialog open={cartModalOpen} onOpenChange={setCartModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
           {/* Clean Header */}
-          <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-            <div className="flex items-start justify-between">
+          <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 pr-16">
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <DialogTitle className="text-2xl font-bold text-slate-900 dark:text-white">
                   Cart Summary
@@ -617,70 +618,62 @@ export default function POSPage() {
               </div>
             ) : (
               cart.map((cartItem) => {
-                const sellableQty = getSellableQuantity(cartItem.item)
-                const itemTotal = cartItem.isFreebie ? 0 : cartItem.item.sellingPrice * cartItem.quantity
+                // Get fresh item data from items array (not cached cart data)
+                const freshItem = items.find(i => i.id === cartItem.item.id) || cartItem.item
+                const sellableQty = getSellableQuantity(freshItem)
+                const itemTotal = cartItem.isFreebie ? 0 : freshItem.sellingPrice * cartItem.quantity
                 
                 return (
                   <div
                     key={cartItem.item.id}
                     className={cn(
-                      "rounded-lg border transition-all bg-white dark:bg-slate-900",
+                      "rounded-xl border transition-all p-3",
                       cartItem.isFreebie 
-                        ? "border-slate-300 dark:border-slate-600" 
-                        : "border-slate-200 dark:border-slate-700"
+                        ? "bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-700" 
+                        : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700"
                     )}
                   >
-                    {/* Freebie Toggle - With Color When Active */}
-                    <button
-                      onClick={() => toggleFreebie(cartItem.item.id)}
-                      className={cn(
-                        "w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors border-b",
-                        cartItem.isFreebie
-                          ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-600"
-                          : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                      )}
-                    >
-                      🎁 {cartItem.isFreebie ? 'Remove Freebie Status' : 'Mark as Freebie'}
-                    </button>
-
-                    {/* Product Info */}
-                    <div className="p-4">
-                      <div className="flex items-start gap-3 mb-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-base text-slate-900 dark:text-white">
-                              {toDisplayName(cartItem.item.name)}
-                            </h4>
-                            {cartItem.isFreebie && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                                FREE
-                              </span>
-                            )}
+                    {/* Enterprise-Grade Balanced Layout - Proportional Spacing */}
+                    <div className="flex items-center gap-4">
+                      
+                      {/* Product Image - Refined Size */}
+                      <div className="w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        {freshItem.imageUrl ? (
+                          <img 
+                            src={freshItem.imageUrl} 
+                            alt={freshItem.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="h-6 w-6 text-slate-300 dark:text-slate-600" />
                           </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {cartItem.isFreebie ? (
-                              <>Cost: ₱{cartItem.item.costPrice.toFixed(2)} × {cartItem.quantity}</>
-                            ) : (
-                              <>Price: ₱{cartItem.item.sellingPrice.toFixed(2)} × {cartItem.quantity}</>
-                            )}
-                          </p>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => removeFromCart(cartItem.item.id)} 
-                          className="h-9 w-9 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 flex-shrink-0"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        )}
                       </div>
 
-                      {/* Quantity + Total */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
-                            Quantity
-                          </Label>
+                      {/* Product Info - Compact & Balanced */}
+                      <div className="flex-1 min-w-0 max-w-[180px]">
+                        <h4 className="font-semibold text-[10px] text-slate-900 dark:text-white mb-0.5 truncate leading-tight">
+                          {toDisplayName(freshItem.name)}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Cost: ₱{freshItem.costPrice.toFixed(2)}
+                        </p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Stock: {sellableQty}
+                        </p>
+                      </div>
+
+                      {/* Quantity Section - Stepper with Maintained Width */}
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Qty</span>
+                        <div className="flex items-center bg-white dark:bg-slate-800 rounded-md border border-slate-300 dark:border-slate-600">
+                          <button
+                            onClick={() => updateQuantity(freshItem.id, cartItem.quantity - 1)}
+                            className="h-7 w-7 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-base transition-colors rounded-l-md"
+                          >
+                            −
+                          </button>
                           <Input
                             type="number"
                             min="1"
@@ -691,27 +684,72 @@ export default function POSPage() {
                               if (value === '') return
                               const numValue = parseInt(value, 10)
                               if (!isNaN(numValue) && numValue >= 1) {
-                                updateQuantity(cartItem.item.id, numValue)
+                                if (numValue > sellableQty) {
+                                  toast.warning(`Maximum available stock is ${sellableQty} units`, {
+                                    duration: 2000,
+                                    icon: '⚠️',
+                                  })
+                                }
+                                updateQuantity(freshItem.id, numValue)
                               }
                             }}
-                            className="h-10 text-center font-semibold"
+                            className="h-7 w-14 text-center font-semibold text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none px-1"
                           />
-                        </div>
-                        <div className="text-right">
-                          <Label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
-                            Subtotal
-                          </Label>
-                          <div className={cn(
-                            "text-2xl font-bold tabular-nums pt-1.5",
-                            cartItem.isFreebie 
-                              ? "text-slate-400 dark:text-slate-500 line-through" 
-                              : "text-slate-900 dark:text-white"
-                          )}>
-                            ₱{itemTotal.toFixed(2)}
-                          </div>
+                          <button
+                            onClick={() => updateQuantity(freshItem.id, cartItem.quantity + 1)}
+                            className="h-7 w-7 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-base transition-colors rounded-r-md"
+                          >
+                            +
+                          </button>
                         </div>
                       </div>
+
+                      {/* Subtotal Section - Refined Size */}
+                      <div className="flex flex-col items-end gap-0.5 min-w-[90px]">
+                        <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Subtotal</span>
+                        <div className="text-base font-bold text-slate-900 dark:text-white">
+                          {cartItem.isFreebie ? (
+                            <span className="text-orange-600 dark:text-orange-400">FREE</span>
+                          ) : (
+                            `₱${itemTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Icons - Compact & Balanced */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {/* Gift Icon - Toggle Freebie */}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => toggleFreebie(cartItem.item.id)} 
+                          className={cn(
+                            "h-8 w-8 p-0 transition-colors rounded-md",
+                            cartItem.isFreebie
+                              ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50"
+                              : "text-slate-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-600 dark:hover:text-orange-400"
+                          )}
+                          title={cartItem.isFreebie ? "Remove freebie status" : "Mark as freebie"}
+                        >
+                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+                          </svg>
+                        </Button>
+                        
+                        {/* Delete Icon */}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => removeFromCart(freshItem.id)} 
+                          className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-600 rounded-md transition-colors"
+                          title="Remove from cart"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+
                     </div>
+
                   </div>
                 )
               })
@@ -721,6 +759,22 @@ export default function POSPage() {
           {/* Clean Dispatch Section */}
           {cart.length > 0 && (
             <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-5 space-y-4">
+              
+              {/* Waybill Number Input - MOVED TO TOP */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Waybill Number (Optional)
+                </label>
+                <Input
+                  placeholder="Enter waybill/tracking number"
+                  value={waybillNumber}
+                  onChange={(e) => setWaybillNumber(e.target.value)}
+                  className="h-11"
+                />
+              </div>
+
+              {/* Dispatched By - MOVED TO BOTTOM */}
               <div>
                 <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 block">
                   Dispatched By
@@ -752,25 +806,8 @@ export default function POSPage() {
                 </div>
               </div>
 
-              {/* Waybill Number Input */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  Waybill Number (Optional)
-                </label>
-                <Input
-                  placeholder="Enter waybill/tracking number"
-                  value={waybillNumber}
-                  onChange={(e) => setWaybillNumber(e.target.value)}
-                  className="h-11"
-                />
-              </div>
-
               <Button
-                onClick={() => {
-                  setCartModalOpen(false)
-                  handleDispatchOrder()
-                }}
+                onClick={() => setConfirmDispatchOpen(true)}
                 disabled={loading || cart.length === 0}
                 className="w-full h-12 text-base font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900"
                 size="lg"
@@ -786,6 +823,71 @@ export default function POSPage() {
               </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog - NEW */}
+      <Dialog open={confirmDispatchOpen} onOpenChange={setConfirmDispatchOpen}>
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 dark:text-white text-xl font-semibold flex items-center gap-2">
+              <Truck className="h-6 w-6 text-blue-500" />
+              Confirm Order Dispatch
+            </DialogTitle>
+            <DialogDescription className="text-slate-600 dark:text-slate-400">
+              Are you sure you want to dispatch this order?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            {/* Order Summary */}
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600 dark:text-slate-400">Total Items:</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{cart.length}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600 dark:text-slate-400">Total Amount:</span>
+                <span className="font-bold text-lg text-slate-900 dark:text-white">
+                  ₱{total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              {freebieCOGS > 0 && (
+                <div className="flex justify-between text-sm pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <span className="text-orange-600 dark:text-orange-400">Freebies:</span>
+                  <span className="font-semibold text-orange-600 dark:text-orange-400">
+                    {cart.filter(item => item.isFreebie).length} item(s)
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              This action will update inventory and create a sale record. This cannot be undone.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDispatchOpen(false)}
+              className="flex-1"
+              disabled={loading}
+            >
+              No, Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                setConfirmDispatchOpen(false)
+                setCartModalOpen(false)
+                await handleDispatchOrder()
+              }}
+              disabled={loading}
+              className="flex-1 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900"
+            >
+              Yes, Dispatch
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

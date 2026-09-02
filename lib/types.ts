@@ -220,3 +220,77 @@ export interface InventoryTurnover {
   status: 'fast-moving' | 'normal' | 'slow-moving' | 'dead-stock'
 }
 
+// ============================================
+// API & Route Types
+// ============================================
+
+/**
+ * Type-safe route context for Next.js API handlers
+ * Replaces generic 'any' params
+ */
+export interface RouteContext {
+  params: Record<string, string>
+}
+
+/**
+ * User context passed to authenticated API routes
+ */
+export interface AuthenticatedUser {
+  username: string
+  role: 'admin' | 'logistics-admin'
+  displayName: string
+}
+
+/**
+ * API error type for better error handling
+ */
+export interface ApiError {
+  message: string
+  code?: string
+  statusCode?: number
+  details?: unknown
+}
+
+/**
+ * Standard API success response
+ */
+export interface ApiSuccessResponse<T = unknown> {
+  success: true
+  data: T
+  message?: string
+}
+
+/**
+ * Standard API error response
+ */
+export interface ApiErrorResponse {
+  success: false
+  error: string
+  code?: string
+  details?: unknown
+}
+
+/**
+ * Generic API response union type
+ */
+export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse
+
+/**
+ * Order type from database (for analytics)
+ */
+export interface Order {
+  id: string
+  date: string
+  qty: number
+  cogs: number
+  total: number
+  product: string
+  dispatched_by?: string
+  waybill_number?: string
+  is_cancelled: boolean
+  cancelled_at?: string
+  cancelled_by?: string
+  cancellation_reason?: string
+  created_at: string
+}
+

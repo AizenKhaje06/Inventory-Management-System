@@ -1,5 +1,10 @@
 // Role-based access control system
 
+/**
+ * Current Active Roles (Simplified System - 2 Roles)
+ * - admin: Full system access
+ * - logistics-admin: Inventory management and reports
+ */
 export type UserRole = 'admin' | 'logistics-admin' | 'operations' | 'packer'
 
 export interface User {
@@ -11,7 +16,13 @@ export interface User {
   profileImage?: string | null
 }
 
-// Role definitions
+/**
+ * Role definitions
+ * 
+ * @deprecated Roles 'operations', 'packer' are legacy roles from the old 7-role system.
+ * The system has been simplified to 2 roles: 'admin' and 'logistics-admin'.
+ * These legacy definitions are kept for backward compatibility with existing database records.
+ */
 export const ROLES = {
   admin: {
     id: 'admin' as const,
@@ -25,12 +36,18 @@ export const ROLES = {
     description: 'Inventory management and reports',
     icon: '📦'
   },
+  /**
+   * @deprecated Legacy role - No longer actively used. Kept for backward compatibility.
+   */
   operations: {
     id: 'operations' as const,
     name: 'Operations Staff',
     description: 'View-only inventory access',
     icon: '👤'
   },
+  /**
+   * @deprecated Legacy role - No longer actively used. Kept for backward compatibility.
+   */
   packer: {
     id: 'packer' as const,
     name: 'Packer',
@@ -40,6 +57,11 @@ export const ROLES = {
 } as const
 
 // Page permissions per role
+/**
+ * @deprecated Some routes reference legacy roles (operations, packer).
+ * The simplified system uses only 'admin' and 'logistics-admin'.
+ * Legacy permissions kept for backward compatibility.
+ */
 export const ROLE_PERMISSIONS = {
   admin: [
     '/dashboard',
@@ -56,12 +78,15 @@ export const ROLE_PERMISSIONS = {
     '/dashboard/log'
     // NO /dashboard/settings - Settings page hidden from logistics-admin
   ],
+  /** @deprecated Legacy role - permissions kept for compatibility */
   operations: [
     '/dashboard/inventory'  // Only inventory page, read-only
   ],
+  /** @deprecated Legacy role - permissions kept for compatibility */
   packer: [
-    '/dashboard',
-    '/dashboard/inventory'  // Packers can view inventory
+    '/dashboard/inventory',  // Products page (read-only with COGS)
+    '/dashboard/pos',        // POS page for dispatch/checkout
+    '/dashboard/log'         // Activity Logs page
   ]
 } as const
 
@@ -130,6 +155,11 @@ export function hasPermission(role: UserRole, path: string): boolean {
 export function getDefaultRoute(role: UserRole): string {
   // Operations staff go directly to inventory (their only accessible page)
   if (role === 'operations') {
+    return '/dashboard/inventory'
+  }
+  
+  // Packer (Dispatcher) goes to Products page
+  if (role === 'packer') {
     return '/dashboard/inventory'
   }
   

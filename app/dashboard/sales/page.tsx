@@ -17,6 +17,7 @@ interface SalesData {
   totalProfit: number;
   profitMargin: number;
   totalOrders: number;
+  totalFreebiesCOGS?: number; // NEW: Total COGS for freebies
   dailySales: Array<{
     date: string;
     revenue: number;
@@ -94,6 +95,10 @@ export default function SalesAnalyticsPage() {
       
       const data = await apiGet<any>(apiUrl);
       
+      // Calculate total freebies COGS
+      const totalFreebiesCOGS = data.recentFreebies?.reduce((sum: number, freebie: any) => 
+        sum + (freebie.totalCOGS || 0), 0) || 0;
+      
       const transformedSalesOverTime = (data.salesOverTime || []).map((item: any) => {
         const revenue = item.sales || 0;
         const cost = (item.quantity || 0) * (data.totalCost / Math.max(data.totalTransactions, 1));
@@ -133,6 +138,7 @@ export default function SalesAnalyticsPage() {
         totalProfit: data.totalProfit || 0,
         profitMargin: data.profitMargin || 0,
         totalOrders: data.totalTransactions || 0,
+        totalFreebiesCOGS: totalFreebiesCOGS, // NEW: Add freebies COGS
         dailySales: transformedSalesOverTime,
         monthlySales: transformedSalesOverTime,
         topProducts: data.topProducts || [],
@@ -391,7 +397,7 @@ export default function SalesAnalyticsPage() {
       </div>
 
       {/* Key Metrics - Dashboard Style with colored backgrounds and shadows */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Total Revenue */}
         <Card className="p-5 border-0 shadow-lg">
           <div className="flex items-center gap-3">
@@ -489,6 +495,26 @@ export default function SalesAnalyticsPage() {
               </p>
               <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1 mt-0.5">
                 {calculatedProfitMargin >= 0.3 ? '🏆 Excellent!' : calculatedProfitMargin >= 0.15 ? '✓ Good' : '⚠ Improve'}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Freebies - NEW */}
+        <Card className="p-5 border-0 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-orange-600 shadow-lg shadow-orange-500/30 flex-shrink-0">
+              <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Freebies</p>
+              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 tabular-nums">
+                {formatCurrency(salesData.totalFreebiesCOGS || 0)}
+              </p>
+              <p className="text-xs text-orange-600 dark:text-orange-500 flex items-center gap-1 mt-0.5">
+                Total COGS
               </p>
             </div>
           </div>

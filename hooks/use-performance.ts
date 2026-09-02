@@ -26,8 +26,9 @@ export function useDebounce<T>(value: T, delay: number): T {
 
 /**
  * Hook for throttled callback
+ * @template T - Function type to throttle
  */
-export function useThrottle<T extends (...args: any[]) => any>(
+export function useThrottle<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number
 ): T {
@@ -105,8 +106,9 @@ export function useRenderTime(componentName: string) {
 
 /**
  * Hook for idle callback
+ * @param deps - Dependency array for effect
  */
-export function useIdleCallback(callback: () => void, deps: any[] = []) {
+export function useIdleCallback(callback: () => void, deps: unknown[] = []) {
   useEffect(() => {
     if ('requestIdleCallback' in window) {
       const id = window.requestIdleCallback(callback)

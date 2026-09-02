@@ -9,13 +9,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/IconWIHI.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/IconWIHI.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -25,13 +25,13 @@
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Packer Dashboard",
-      "short_name": "Packer",
-      "description": "Open packer dashboard",
-      "url": "/packer/dashboard",
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Open main dashboard",
+      "url": "/dashboard",
       "icons": [
         {
-          "src": "/icon-192.png",
+          "src": "/IconWIHI.png",
           "sizes": "192x192"
         }
       ]

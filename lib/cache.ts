@@ -8,7 +8,7 @@ interface CacheEntry<T> {
   timestamp: number
 }
 
-const cache = new Map<string, CacheEntry<any>>()
+const cache = new Map<string, CacheEntry<unknown>>()
 const CACHE_TTL = 2 * 60 * 1000 // 2 minutes
 
 /**

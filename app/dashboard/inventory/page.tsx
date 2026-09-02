@@ -72,8 +72,8 @@ export default function InventoryPage() {
     const checkRole = () => {
       const role = getCurrentUserRole()
       
-      // Operations staff - read-only access to ALL products (no channel filtering)
-      if (role === 'operations') {
+      // Operations staff and Packer (Dispatcher) - read-only access to ALL products (no channel filtering)
+      if (role === 'operations' || role === 'packer') {
         setIsReadOnly(true)
       }
     }
@@ -265,9 +265,15 @@ export default function InventoryPage() {
 
     // Status filter (good vs bad items)
     if (statusFilter === "good") {
-      filtered = filtered.filter((item) => item.item_status !== 'bad')
+      // Show items that have sellable (good) stock available
+      filtered = filtered.filter((item) => {
+        const badQty = item.bad_item_quantity || 0
+        const goodQty = item.quantity - badQty
+        return goodQty > 0
+      })
     } else if (statusFilter === "bad") {
-      filtered = filtered.filter((item) => item.item_status === 'bad')
+      // Show items that have bad stock
+      filtered = filtered.filter((item) => (item.bad_item_quantity || 0) > 0)
     }
 
     // Stock Level filter
@@ -1354,10 +1360,16 @@ export default function InventoryPage() {
                           </th>
                           <th className={cn(
                             "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
-                            !isReadOnly ? "w-[11%]" : "w-[15%]"
+                            !isReadOnly ? "w-[11%]" : "w-[13%]"
                           )}>
                             Stock
                           </th>
+                          {/* COGS column - Show only for department agents (operations role) */}
+                          {isReadOnly && (
+                            <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[12%]">
+                              COGS
+                            </th>
+                          )}
                           {/* Hide Cost column for department agents (operations role) */}
                           {!isReadOnly && (
                             <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[10%]">
@@ -1883,6 +1895,25 @@ export default function InventoryPage() {
                               const goodPercent = item.quantity > 0 ? (goodQty / item.quantity) * 100 : 0
                               const badPercent = item.quantity > 0 ? (badQty / item.quantity) * 100 : 0
                               
+                              // If filtered to "Good Stock", show only green bar
+                              if (statusFilter === "good") {
+                                return (
+                                  <div className="flex flex-col gap-1 items-start">
+                                    <div className="flex items-center gap-2 w-full max-w-[160px]">
+                                      <span className="text-[10px] font-semibold text-green-700 dark:text-green-400 min-w-[35px] text-left tabular-nums">
+                                        {formatNumber(goodQty)}
+                                      </span>
+                                      <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                        <div 
+                                          className="h-full bg-green-500 transition-all" 
+                                          style={{ width: '100%' }}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              }
+                              
                               return (
                                 <div className="flex flex-col gap-1 items-start">
                                   {hasBadItems ? (
@@ -1936,9 +1967,11 @@ export default function InventoryPage() {
                           <td className="py-2 px-3">
                             <div className="flex items-center justify-center">
                               {(() => {
+                                const badQty = item.bad_item_quantity || 0
+                                const goodQty = item.quantity - badQty
+                                
                                 // If filtered to "Bad Stock", show only bad count
                                 if (statusFilter === "bad") {
-                                  const badQty = item.bad_item_quantity || 0
                                   return (
                                     <span className={cn(
                                       "text-lg font-bold tabular-nums",
@@ -1947,6 +1980,20 @@ export default function InventoryPage() {
                                         : "text-red-700 dark:text-red-400"
                                     )}>
                                       {formatNumber(badQty)}
+                                    </span>
+                                  )
+                                }
+                                
+                                // If filtered to "Good Stock", show only good count
+                                if (statusFilter === "good") {
+                                  return (
+                                    <span className={cn(
+                                      "text-lg font-bold tabular-nums",
+                                      isSelected 
+                                        ? "text-green-900 dark:text-green-100" 
+                                        : "text-green-700 dark:text-green-400"
+                                    )}>
+                                      {formatNumber(goodQty)}
                                     </span>
                                   )
                                 }
@@ -1965,6 +2012,15 @@ export default function InventoryPage() {
                               })()}
                             </div>
                           </td>
+
+                          {/* COGS column - Show only for department agents (operations role) */}
+                          {isReadOnly && (
+                            <td className="py-2 px-3">
+                              <span className="text-xs font-medium text-slate-800 dark:text-slate-200 tabular-nums">
+                                {formatCurrency(item.costPrice)}
+                              </span>
+                            </td>
+                          )}
 
                           {/* Cost - Hidden for department agents (operations role) */}
                           {!isReadOnly && (

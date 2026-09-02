@@ -86,7 +86,7 @@ export function PremiumNavbar({ sidebarCollapsed, onMenuClick, onMobileMenuToggl
             } else if (storedRole === "operations") {
               setUserRole("Agent")  // Changed from channel name to "Agent"
             } else if (storedRole === "packer") {
-              setUserRole("Packer")
+              setUserRole("Dispatcher")
             } else if (storedRole === "logistics") {
               setUserRole("Logistics")
             } else {
@@ -243,11 +243,6 @@ export function PremiumNavbar({ sidebarCollapsed, onMenuClick, onMobileMenuToggl
           
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            {/* Global Search - Removed */}
-            
-            {/* Notification System */}
-            <NotificationSystem />
-            
             <button 
               onClick={() => window.location.reload()}
               className="h-9 w-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-amber-400/70 hover:text-slate-900 dark:hover:text-amber-300 hover:bg-slate-100 dark:hover:bg-amber-500/10 transition-all"

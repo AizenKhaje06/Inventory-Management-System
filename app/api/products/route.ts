@@ -56,10 +56,10 @@ export const GET = withAuth(async (request, { user }) => {
       sku: item.sku,
       imageUrl: item.image_url,
       productType: item.product_type,
-      itemStatus: item.item_status,
-      badItemReason: item.bad_item_reason,
-      badItemQuantity: item.bad_item_quantity,
-      badItemsBreakdown: item.bad_items_breakdown,
+      item_status: item.item_status,
+      bad_item_reason: item.bad_item_reason,
+      bad_item_quantity: item.bad_item_quantity,
+      bad_items_breakdown: item.bad_items_breakdown,
       lastUpdated: item.last_updated,
       createdAt: item.created_at
     }))

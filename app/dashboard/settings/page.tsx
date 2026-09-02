@@ -2113,7 +2113,7 @@ export default function SettingsPage() {
                 >
                   <option value="admin">Administrator</option>
                   <option value="operations">Operations Staff (Agent)</option>
-                  <option value="packer">Packer</option>
+                  <option value="packer">Dispatcher</option>
                   <option value="logistics-admin">Logistics Admin</option>
                 </select>
               </div>
