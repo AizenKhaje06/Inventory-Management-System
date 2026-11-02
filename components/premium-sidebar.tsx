@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Package,
+  PackageOpen,
   AlertTriangle,
   XCircle,
   TrendingUp,
@@ -75,6 +76,7 @@ const getNavigation = (lowStockCount: number = 0, outOfStockCount: number = 0): 
     section: "Inventory",
     items: [
       { name: "Products", href: "/dashboard/inventory", icon: Package },
+      { name: "Internal Usage", href: "/dashboard/internal-usage", icon: PackageOpen },
       { 
         name: "Low Stocks", 
         href: "/dashboard/inventory/low-stock", 

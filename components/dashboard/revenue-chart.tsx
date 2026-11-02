@@ -265,16 +265,18 @@ export function RevenueChart({
   
   // Calculate interval for X-axis based on screen size and period
   const getXAxisInterval = () => {
+    const dataLength = chartData.length
+    
     if (isMobile) {
-      // Mobile: Show fewer labels to prevent crowding
-      if (timePeriod === '1M') return 6  // Show ~5 labels for month (every 6th day)
+      // Mobile: Show very few labels to prevent crowding
+      if (timePeriod === '1M') return Math.floor(dataLength / 4)  // Show only 4-5 labels
       if (timePeriod === '1W') return 1  // Show every other day (3-4 labels)
-      return 2  // Day view: Show every 3rd hour (8 labels instead of 24)
+      return Math.floor(dataLength / 4)  // Day view: Show only 4-5 labels
     } else {
-      // Desktop: Show more labels for better detail
-      if (timePeriod === '1M') return 4  // Show ~7 labels for month
-      if (timePeriod === '1W') return 0  // Show all days
-      return 0  // Show all hours for day view
+      // Desktop: Show fewer labels to prevent overlap
+      if (timePeriod === '1M') return Math.floor(dataLength / 6)  // Show ~6-7 labels
+      if (timePeriod === '1W') return 0  // Show all 7 days
+      return Math.floor(dataLength / 6)  // Day view: Show ~6 labels
     }
   }
 
@@ -426,10 +428,7 @@ export function RevenueChart({
           <ResponsiveContainer width="100%" height={CHART_CONFIG.height}>
             <AreaChart 
               data={chartData} 
-              margin={isMobile 
-                ? { top: 10, bottom: 55, left: 0, right: 5 }  // Extra bottom space for angled labels
-                : CHART_CONFIG.margins
-              }
+              margin={{ top: 10, bottom: 60, left: 0, right: 5 }}
             >
               {/* Gradient Definitions */}
               <defs>
@@ -451,15 +450,15 @@ export function RevenueChart({
               <XAxis 
                 dataKey="date" 
                 className="fill-slate-400 dark:fill-slate-500" 
-                fontSize={isMobile ? 9 : 10}
+                fontSize={8}
                 tickLine={false}
                 axisLine={false}
                 interval={getXAxisInterval()}
-                angle={isMobile ? -45 : 0}
-                textAnchor={isMobile ? "end" : "middle"}
-                height={isMobile ? 65 : 30}
-                dy={isMobile ? 3 : 10}
-                dx={isMobile ? -5 : 0}
+                angle={-45}
+                textAnchor="end"
+                height={70}
+                dy={5}
+                dx={-3}
               />
 
               {/* Y Axis */}

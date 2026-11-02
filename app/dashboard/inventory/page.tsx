@@ -973,14 +973,14 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto py-4 px-4 sm:px-6 space-y-5 sm:space-y-6">
+    <div className="max-w-[1600px] mx-auto py-4 px-6 space-y-5 sm:space-y-6">
       {/* Page Header - Professional & Mobile-Optimized */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg sm:text-2xl md:text-3xl font-bold gradient-text mb-1.5 leading-tight">
+          <h2 className="text-2xl sm:text-3xl font-semibold gradient-text">
             Inventory Overview
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Comprehensive product inventory control and management
           </p>
         </div>
@@ -1251,9 +1251,9 @@ export default function InventoryPage() {
                 </p>
               </div>
 
-              <div className="overflow-x-auto">
-                <div className="min-w-[1100px]">
-                  <table className="w-full text-sm">
+              <div className="overflow-hidden">
+                <div className="w-full">
+                  <table className="w-full text-sm table-fixed">
                   <thead className="sticky top-0 z-10">
                     <tr className="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black">
                       {statusFilter === "bad" ? (
@@ -1330,54 +1330,54 @@ export default function InventoryPage() {
                         /* Normal Table Headers - No Sticky on Mobile and Desktop */
                         <>
                           {/* Image Column - Regular (No Sticky) */}
-                          <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black w-[90px]">
+                          <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black w-[7%]">
                             Image
                           </th>
                           {/* Product Name - Regular (No Sticky) */}
                           <th className={cn(
                             "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black",
-                            !isReadOnly ? "w-[20%]" : "w-[25%]"
+                            !isReadOnly ? "w-[20%]" : "w-[24%]"
                           )}>
                             Product
                           </th>
                           <th className={cn(
                             "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
-                            !isReadOnly ? "w-[12%]" : "w-[13%]"
+                            !isReadOnly ? "w-[12%]" : "w-[14%]"
                           )}>
                             Category
                           </th>
                           <th className={cn(
                             "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
-                            !isReadOnly ? "w-[12%]" : "w-[13%]"
+                            !isReadOnly ? "w-[12%]" : "w-[14%]"
                           )}>
                             Status
                           </th>
                           <th className={cn(
                             "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
-                            !isReadOnly ? "w-[11%]" : "w-[15%]"
+                            !isReadOnly ? "w-[11%]" : "w-[14%]"
                           )}>
                             Stock
                           </th>
                           {/* Hide Cost column for department agents (operations role) */}
                           {!isReadOnly && (
-                            <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[10%]">
+                            <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[11%]">
                               Cost
                             </th>
                           )}
                           <th className={cn(
                             "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
-                            !isReadOnly ? "w-[10%]" : "w-[12%]"
+                            !isReadOnly ? "w-[11%]" : "w-[12%]"
                           )}>
                             Price
                           </th>
                           <th className={cn(
                             "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
-                            isReadOnly ? "w-[12%]" : "w-[8%]"
+                            isReadOnly ? "w-[12%]" : "w-[10%]"
                           )}>
                             Margin
                           </th>
                           {!isReadOnly && (
-                            <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider md:sticky md:right-0 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[140px]">
+                            <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider md:sticky md:right-0 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[13%]">
                               Actions
                             </th>
                           )}

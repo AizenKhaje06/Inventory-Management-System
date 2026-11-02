@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Download, TrendingUp, TrendingDown, Minus, Package, ShoppingCart, DollarSign, Award, FileText, Printer } from 'lucide-react';
+import { Calendar, Download, TrendingUp, TrendingDown, Minus, Package, ShoppingCart, DollarSign, Award, FileText } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiGet } from '@/lib/api-client';
 import { TableSkeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/table-skeleton';
@@ -17,6 +17,7 @@ interface SalesData {
   totalProfit: number;
   profitMargin: number;
   totalOrders: number;
+  totalSales: number; // Total items sold (from API)
   dailySales: Array<{
     date: string;
     revenue: number;
@@ -61,6 +62,7 @@ export default function SalesAnalyticsPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [salesData, setSalesData] = useState<SalesData | null>(null);
   const [previousMonthData, setPreviousMonthData] = useState<SalesData | null>(null);
+  const [calendarData, setCalendarData] = useState<any>(null); // NEW: Separate calendar data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -73,26 +75,92 @@ export default function SalesAnalyticsPage() {
     fetchPreviousMonthData();
   }, [startDate, endDate]);
 
+  // NEW: Fetch calendar data separately when month changes
+  useEffect(() => {
+    fetchCalendarData();
+  }, [currentMonth]);
+
+  // NEW: Clean calendar data fetching
+  const fetchCalendarData = async () => {
+    try {
+      const month = currentMonth.getMonth() // 0-11
+      const year = currentMonth.getFullYear()
+      
+      console.log('🗓️ Fetching calendar data for:', { month, year })
+      
+      const response = await apiGet<any>(`/api/sales-calendar?month=${month}&year=${year}`)
+      
+      console.log('✅ Calendar data received:', response)
+      setCalendarData(response)
+    } catch (err) {
+      console.error('❌ Error fetching calendar data:', err)
+    }
+  }
+
   const fetchSalesData = async () => {
     try {
       setLoading(true);
       let apiUrl = '/api/dashboard';
       const params = new URLSearchParams();
       
-      params.append('period', '1M');
+      // If date range picker has values, use those
+      // Otherwise, use the calendar's selected month
+      let effectiveStartDate = startDate;
+      let effectiveEndDate = endDate;
       
-      if (startDate) {
-        params.append('startDate', startDate.toISOString());
+      if (!startDate && !endDate && currentMonth) {
+        // Use calendar's selected month as filter
+        effectiveStartDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+        effectiveEndDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+        effectiveEndDate.setHours(23, 59, 59, 999);
       }
-      if (endDate) {
-        params.append('endDate', endDate.toISOString());
+      
+      if (effectiveStartDate) {
+        params.append('startDate', effectiveStartDate.toISOString());
+      }
+      if (effectiveEndDate) {
+        params.append('endDate', effectiveEndDate.toISOString());
       }
       
       if (params.toString()) {
         apiUrl += `?${params.toString()}`;
       }
       
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🔍 SALES PAGE - API REQUEST');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('API URL:', apiUrl);
+      console.log('Calendar Month Selected:', currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
+      console.log('Start Date:', effectiveStartDate ? effectiveStartDate.toISOString() : 'NOT SET');
+      console.log('End Date:', effectiveEndDate ? effectiveEndDate.toISOString() : 'NOT SET');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('');
+      
       const data = await apiGet<any>(apiUrl);
+      
+      console.log('[Sales Page] Raw API response:', {
+        totalRevenue: data.totalRevenue,
+        totalCost: data.totalCost,
+        totalProfit: data.totalProfit,
+        totalTransactions: data.totalTransactions,
+        totalSales: data.totalSales, // This is the TOTAL ITEMS SOLD
+        salesOverTimeLength: data.salesOverTime?.length,
+        salesOverTimeFirstFew: data.salesOverTime?.slice(0, 5),
+        topProducts: data.topProducts
+      });
+      
+      console.log('[Sales Page] ⚠️ CHECKING 3 REMAINING CARDS:');
+      console.log('Expected for August:');
+      console.log('  - Avg Order Value: ₱1,592 ÷ 8 = ₱199');
+      console.log('  - Avg Daily Revenue: ₱1,592 ÷ 31 days = ₱51');
+      console.log('  - Best Sales Day: Aug 23 with ₱1,493');
+      console.log('');
+      console.log('API Response shows:');
+      console.log('  - totalRevenue:', data.totalRevenue);
+      console.log('  - totalTransactions:', data.totalTransactions);
+      console.log('  - Avg Order Value calc:', data.totalRevenue / data.totalTransactions);
+      console.log('  - salesOverTime array length:', data.salesOverTime?.length);
+      console.log('');
       
       const transformedSalesOverTime = (data.salesOverTime || []).map((item: any) => {
         const revenue = item.sales || 0;
@@ -133,11 +201,27 @@ export default function SalesAnalyticsPage() {
         totalProfit: data.totalProfit || 0,
         profitMargin: data.profitMargin || 0,
         totalOrders: data.totalTransactions || 0,
+        totalSales: data.totalSales || 0, // Total items sold from API
         dailySales: transformedSalesOverTime,
         monthlySales: transformedSalesOverTime,
         topProducts: data.topProducts || [],
         recentTransactions: data.recentTransactions || []
       };
+      
+      console.log('[Sales Page] Transformed sales data:', {
+        totalRevenue: transformedData.totalRevenue,
+        totalOrders: transformedData.totalOrders,
+        totalSales: transformedData.totalSales,
+        dailySalesLength: transformedData.dailySales.length,
+        dailySalesWithRevenue: transformedData.dailySales.filter(d => d.revenue > 0),
+        firstFewDailySales: transformedData.dailySales.slice(0, 5)
+      });
+      
+      console.log('[Sales Page] 📅 CALENDAR DATA CHECK:');
+      console.log('  Total days in dailySales:', transformedData.dailySales.length);
+      console.log('  Days with sales:', transformedData.dailySales.filter(d => d.revenue > 0).length);
+      console.log('  Expected: Aug 23 and Aug 24 should have data');
+      console.log('');
       
       setSalesData(transformedData);
     } catch (err) {
@@ -150,13 +234,26 @@ export default function SalesAnalyticsPage() {
 
   const fetchPreviousMonthData = async () => {
     try {
-      const prevMonth = new Date();
-      prevMonth.setMonth(prevMonth.getMonth() - 1);
-      const prevMonthStart = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
-      const prevMonthEnd = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
+      // Calculate previous period based on current filter
+      let prevMonthStart: Date;
+      let prevMonthEnd: Date;
+      
+      if (startDate && endDate) {
+        // If date filter is active, calculate previous period with same duration
+        const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+        prevMonthEnd = new Date(startDate);
+        prevMonthEnd.setDate(prevMonthEnd.getDate() - 1); // Day before start date
+        prevMonthStart = new Date(prevMonthEnd);
+        prevMonthStart.setDate(prevMonthStart.getDate() - daysDiff + 1); // Same duration back
+      } else {
+        // No filter - use last month
+        const prevMonth = new Date();
+        prevMonth.setMonth(prevMonth.getMonth() - 1);
+        prevMonthStart = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
+        prevMonthEnd = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
+      }
       
       const params = new URLSearchParams();
-      params.append('period', '1M');
       params.append('startDate', prevMonthStart.toISOString());
       params.append('endDate', prevMonthEnd.toISOString());
       
@@ -315,6 +412,59 @@ export default function SalesAnalyticsPage() {
     ? salesData.totalProfit / salesData.totalRevenue 
     : 0;
 
+  // Calculate values for the 4 performance cards
+  const avgOrderValue = salesData.totalOrders > 0 
+    ? salesData.totalRevenue / salesData.totalOrders 
+    : 0;
+  
+  // Use totalSales directly from API (same as Dashboard Page)
+  const totalItemsSold = salesData.totalSales || 0;
+  
+  const avgDailyRevenue = salesData.totalRevenue > 0 && salesData.dailySales.length > 0
+    ? salesData.dailySales.reduce((sum, day) => sum + day.revenue, 0) / salesData.dailySales.length
+    : 0;
+  
+  const bestSalesDay = salesData.totalRevenue > 0 && salesData.dailySales.length > 0
+    ? Math.max(...salesData.dailySales.map(d => d.revenue))
+    : 0;
+  
+  const bestSalesDayDate = salesData.totalRevenue > 0 && salesData.dailySales.length > 0
+    ? new Date(
+        salesData.dailySales.reduce((max, day) => 
+          day.revenue > max.revenue ? day : max
+        ).date
+      ).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : 'No sales';
+
+  // Console log for debugging the 4 performance cards
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📊 SALES PAGE - 4 PERFORMANCE CARDS DEBUG');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('1️⃣  AVG ORDER VALUE:');
+  console.log('   Formula: totalRevenue ÷ totalOrders');
+  console.log('   Calculation:', salesData.totalRevenue, '÷', salesData.totalOrders, '=', avgOrderValue);
+  console.log('   Display: ₱' + Math.round(avgOrderValue).toLocaleString());
+  console.log('');
+  console.log('2️⃣  TOTAL ITEMS SOLD:');
+  console.log('   Source: API totalSales (same as Dashboard)');
+  console.log('   Value from API:', salesData.totalSales);
+  console.log('   Display:', totalItemsSold.toLocaleString());
+  console.log('');
+  console.log('3️⃣  AVG DAILY REVENUE:');
+  console.log('   Formula: sum of dailySales.revenue ÷ number of days');
+  console.log('   Total Revenue from Daily:', salesData.dailySales.reduce((sum, day) => sum + day.revenue, 0));
+  console.log('   Number of Days:', salesData.dailySales.length);
+  console.log('   Average:', avgDailyRevenue);
+  console.log('   Display: ₱' + Math.round(avgDailyRevenue).toLocaleString());
+  console.log('');
+  console.log('4️⃣  BEST SALES DAY:');
+  console.log('   Formula: max revenue from dailySales');
+  console.log('   Best Day Amount:', bestSalesDay);
+  console.log('   Best Day Date:', bestSalesDayDate);
+  console.log('   Display: ₱' + Math.round(bestSalesDay).toLocaleString(), bestSalesDayDate);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('');
+
   const hasNoSales = !salesData || (salesData.totalOrders === 0 && salesData.totalRevenue === 0);
 
   if (hasNoSales) {
@@ -353,10 +503,10 @@ export default function SalesAnalyticsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold gradient-text mb-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold gradient-text">
             Sales History
           </h1>
-          <p className="text-base text-slate-600 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Track revenue, analyze performance, and monitor sales trends
           </p>
         </div>
@@ -370,22 +520,13 @@ export default function SalesAnalyticsPage() {
             }}
           />
           <Button 
-            variant="outline" 
+            variant="default"
             size="sm" 
-            className="h-9"
+            className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/40 transition-all"
             onClick={handleExportExcel}
           >
             <Download className="h-4 w-4 mr-2" />
             Export Excel
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-9"
-            onClick={handleExportPDF}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Print
           </Button>
         </div>
       </div>
@@ -504,20 +645,26 @@ export default function SalesAnalyticsPage() {
               <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 Revenue Change
               </p>
-              {salesData.totalRevenue >= previousMonthData.totalRevenue ? (
+              {previousMonthData.totalRevenue === 0 ? (
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
+              ) : salesData.totalRevenue >= previousMonthData.totalRevenue ? (
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-600" />
               )}
             </div>
             <p className={`text-2xl font-bold tabular-nums ${
-              salesData.totalRevenue >= previousMonthData.totalRevenue 
+              previousMonthData.totalRevenue === 0 
+                ? 'text-emerald-600'
+                : salesData.totalRevenue >= previousMonthData.totalRevenue 
                 ? 'text-emerald-600' 
                 : 'text-red-600'
             }`}>
               {previousMonthData.totalRevenue > 0
                 ? `${((salesData.totalRevenue - previousMonthData.totalRevenue) / previousMonthData.totalRevenue * 100).toFixed(1)}%`
-                : 'N/A'}
+                : salesData.totalRevenue > 0
+                ? '+100%'
+                : '0.0%'}
             </p>
             <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
               vs last month: {formatCurrency(previousMonthData.totalRevenue)}
@@ -530,20 +677,26 @@ export default function SalesAnalyticsPage() {
               <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 Cost Change
               </p>
-              {salesData.totalCost <= previousMonthData.totalCost ? (
+              {previousMonthData.totalCost === 0 ? (
+                <TrendingUp className="h-4 w-4 text-red-600" />
+              ) : salesData.totalCost <= previousMonthData.totalCost ? (
                 <TrendingDown className="h-4 w-4 text-emerald-600" />
               ) : (
                 <TrendingUp className="h-4 w-4 text-red-600" />
               )}
             </div>
             <p className={`text-2xl font-bold tabular-nums ${
-              salesData.totalCost <= previousMonthData.totalCost 
+              previousMonthData.totalCost === 0 
+                ? 'text-red-600'
+                : salesData.totalCost <= previousMonthData.totalCost 
                 ? 'text-emerald-600' 
                 : 'text-red-600'
             }`}>
               {previousMonthData.totalCost > 0
                 ? `${((salesData.totalCost - previousMonthData.totalCost) / previousMonthData.totalCost * 100).toFixed(1)}%`
-                : 'N/A'}
+                : salesData.totalCost > 0
+                ? '+100%'
+                : '0.0%'}
             </p>
             <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
               vs last month: {formatCurrency(previousMonthData.totalCost)}
@@ -556,20 +709,32 @@ export default function SalesAnalyticsPage() {
               <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 Profit Change
               </p>
-              {salesData.totalProfit >= previousMonthData.totalProfit ? (
+              {previousMonthData.totalProfit === 0 && salesData.totalProfit > 0 ? (
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
+              ) : previousMonthData.totalProfit === 0 && salesData.totalProfit < 0 ? (
+                <TrendingDown className="h-4 w-4 text-red-600" />
+              ) : salesData.totalProfit >= previousMonthData.totalProfit ? (
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-600" />
               )}
             </div>
             <p className={`text-2xl font-bold tabular-nums ${
-              salesData.totalProfit >= previousMonthData.totalProfit 
+              previousMonthData.totalProfit === 0 && salesData.totalProfit > 0
+                ? 'text-emerald-600'
+                : previousMonthData.totalProfit === 0 && salesData.totalProfit < 0
+                ? 'text-red-600'
+                : salesData.totalProfit >= previousMonthData.totalProfit 
                 ? 'text-emerald-600' 
                 : 'text-red-600'
             }`}>
               {previousMonthData.totalProfit !== 0
                 ? `${((salesData.totalProfit - previousMonthData.totalProfit) / Math.abs(previousMonthData.totalProfit) * 100).toFixed(1)}%`
-                : 'N/A'}
+                : salesData.totalProfit > 0
+                ? '+100%'
+                : salesData.totalProfit < 0
+                ? '-100%'
+                : '0.0%'}
             </p>
             <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
               vs last month: {formatCurrency(previousMonthData.totalProfit)}
@@ -582,20 +747,26 @@ export default function SalesAnalyticsPage() {
               <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 Orders Change
               </p>
-              {salesData.totalOrders >= previousMonthData.totalOrders ? (
+              {previousMonthData.totalOrders === 0 ? (
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
+              ) : salesData.totalOrders >= previousMonthData.totalOrders ? (
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-600" />
               )}
             </div>
             <p className={`text-2xl font-bold tabular-nums ${
-              salesData.totalOrders >= previousMonthData.totalOrders 
+              previousMonthData.totalOrders === 0 
+                ? 'text-emerald-600'
+                : salesData.totalOrders >= previousMonthData.totalOrders 
                 ? 'text-emerald-600' 
                 : 'text-red-600'
             }`}>
               {previousMonthData.totalOrders > 0
                 ? `${((salesData.totalOrders - previousMonthData.totalOrders) / previousMonthData.totalOrders * 100).toFixed(1)}%`
-                : 'N/A'}
+                : salesData.totalOrders > 0
+                ? '+100%'
+                : '0.0%'}
             </p>
             <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
               vs last month: {previousMonthData.totalOrders} orders
@@ -720,7 +891,7 @@ export default function SalesAnalyticsPage() {
                 Total Items Sold
               </p>
               <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100 tabular-nums">
-                {salesData.dailySales.reduce((sum, day) => sum + day.itemsSold, 0).toLocaleString()}
+                {totalItemsSold.toLocaleString()}
               </p>
               <p className="text-xs text-indigo-600 dark:text-indigo-500 mt-0.5">
                 Units moved
@@ -740,7 +911,7 @@ export default function SalesAnalyticsPage() {
                 Avg Daily Revenue
               </p>
               <p className="text-2xl font-bold text-teal-900 dark:text-teal-100 tabular-nums">
-                {salesData.dailySales.length > 0
+                {salesData.totalRevenue > 0 && salesData.dailySales.length > 0
                   ? formatCurrency(
                       salesData.dailySales.reduce((sum, day) => sum + day.revenue, 0) / 
                       salesData.dailySales.length
@@ -765,18 +936,18 @@ export default function SalesAnalyticsPage() {
                 Best Sales Day
               </p>
               <p className="text-2xl font-bold text-rose-900 dark:text-rose-100 tabular-nums">
-                {salesData.dailySales.length > 0
+                {salesData.totalRevenue > 0 && salesData.dailySales.length > 0
                   ? formatCurrency(Math.max(...salesData.dailySales.map(d => d.revenue)))
                   : formatCurrency(0)}
               </p>
               <p className="text-xs text-rose-600 dark:text-rose-500 mt-0.5">
-                {salesData.dailySales.length > 0
+                {salesData.totalRevenue > 0 && salesData.dailySales.length > 0
                   ? new Date(
                       salesData.dailySales.reduce((max, day) => 
                         day.revenue > max.revenue ? day : max
                       ).date
                     ).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : 'N/A'}
+                  : 'No sales'}
               </p>
             </div>
           </div>
@@ -785,55 +956,60 @@ export default function SalesAnalyticsPage() {
 
       {/* Sales Calendar - Dashboard Style */}
       <Card className="overflow-hidden border-0 shadow-lg">
-        <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+        <div className="px-6 py-4 bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-slate-800 dark:to-slate-800/50 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-5 w-1 bg-blue-500 rounded-full flex-shrink-0"></div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-600 shadow-md shadow-blue-500/30">
+                <Calendar className="h-4 w-4 text-white" />
+              </div>
               <div>
-                <h3 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">Sales Calendar</h3>
+                <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Sales Calendar</h3>
                 <p className="text-xs mt-0.5 text-slate-600 dark:text-slate-400">Daily sales overview</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Select
-                value={String(currentMonth.getMonth())}
-                onValueChange={(val) => {
-                  const newDate = new Date(currentMonth);
-                  newDate.setMonth(Number(val));
-                  setCurrentMonth(newDate);
-                }}
-              >
-                <SelectTrigger className="w-[130px] h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {['January','February','March','April','May','June','July','August','September','October','November','December'].map((month, idx) => (
-                    <SelectItem key={idx} value={String(idx)}>{month}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={String(currentMonth.getFullYear())}
-                onValueChange={(val) => {
-                  const newDate = new Date(currentMonth);
-                  newDate.setFullYear(Number(val));
-                  setCurrentMonth(newDate);
-                }}
-              >
-                <SelectTrigger className="w-[100px] h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map((year) => (
-                    <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+                <Select
+                  value={String(currentMonth.getMonth())}
+                  onValueChange={(val) => {
+                    const newDate = new Date(currentMonth);
+                    newDate.setMonth(Number(val));
+                    setCurrentMonth(newDate);
+                  }}
+                >
+                  <SelectTrigger className="w-[130px] h-7 border-0 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 focus:ring-0 focus:ring-offset-0 text-sm font-medium">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['January','February','March','April','May','June','July','August','September','October','November','December'].map((month, idx) => (
+                      <SelectItem key={idx} value={String(idx)}>{month}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+                <Select
+                  value={String(currentMonth.getFullYear())}
+                  onValueChange={(val) => {
+                    const newDate = new Date(currentMonth);
+                    newDate.setFullYear(Number(val));
+                    setCurrentMonth(newDate);
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] h-7 border-0 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 focus:ring-0 focus:ring-offset-0 text-sm font-medium">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map((year) => (
+                      <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentMonth(new Date())}
-                className="h-8 px-3 text-xs"
+                className="h-8 px-4 text-xs font-medium bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
               >
                 Today
               </Button>
@@ -842,28 +1018,25 @@ export default function SalesAnalyticsPage() {
         </div>
         <CardContent className="pt-4 pb-3">
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1.5">
             {/* Day headers */}
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="text-center pb-2">
+              <div key={day} className="text-center pb-1.5">
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{day}</span>
               </div>
             ))}
             
             {/* Empty cells for offset */}
             {Array.from({ length: startDayOfWeek }).map((_, i) => (
-              <div key={`empty-${i}`} className="aspect-square" />
+              <div key={`empty-${i}`} className="h-[70px]" />
             ))}
             
             {/* Calendar days */}
             {Array.from({ length: daysInMonth }, (_, i) => {
               const day = i + 1;
-              const dayData = salesData.dailySales?.find(d => {
-                const date = new Date(d.date);
-                return date.getDate() === day && 
-                       date.getMonth() === currentMonth.getMonth() && 
-                       date.getFullYear() === currentMonth.getFullYear();
-              });
+              
+              // NEW: Use clean calendar data - simple day matching
+              const dayData = calendarData?.days?.find((d: any) => d.day === day);
 
               const isToday = new Date().getDate() === day && 
                             new Date().getMonth() === currentMonth.getMonth() &&
@@ -874,7 +1047,7 @@ export default function SalesAnalyticsPage() {
                   key={day}
                   onClick={() => dayData && dayData.revenue > 0 && handleDayClick(day)}
                   className={`
-                    aspect-square rounded-lg p-2 flex flex-col items-center justify-center
+                    h-[70px] rounded-lg p-1.5 flex flex-col items-center justify-center
                     transition-all duration-150
                     ${isToday 
                       ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500' 
@@ -884,7 +1057,7 @@ export default function SalesAnalyticsPage() {
                     }
                   `}
                 >
-                  <div className={`text-sm font-bold mb-1 ${
+                  <div className={`text-xs font-bold mb-0.5 ${
                     isToday 
                       ? 'text-blue-600 dark:text-blue-400' 
                       : 'text-slate-700 dark:text-slate-300'
@@ -893,11 +1066,11 @@ export default function SalesAnalyticsPage() {
                   </div>
                   {dayData && dayData.revenue > 0 ? (
                     <div className="text-center">
-                      <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 leading-tight">
                         ₱{formatNumber(dayData.revenue)}
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        {dayData.itemsSold} items
+                      <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
+                        {dayData.items} items
                       </div>
                     </div>
                   ) : (

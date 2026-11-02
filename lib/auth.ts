@@ -50,6 +50,7 @@ export const ROLE_PERMISSIONS = {
     '/dashboard/pos',
     '/dashboard/inventory',
     '/dashboard/inventory/**',
+    '/dashboard/internal-usage',
     '/dashboard/sales',
     '/dashboard/orders',
     '/dashboard/customers',

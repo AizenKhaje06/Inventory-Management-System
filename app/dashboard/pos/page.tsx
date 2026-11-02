@@ -361,7 +361,7 @@ export default function POSPage() {
       {/* Page Header with Floating Cart Button */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Point of Sale</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold gradient-text">Point of Sale</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Select products to add to cart
           </p>

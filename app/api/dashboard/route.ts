@@ -13,10 +13,10 @@ import {
 /**
  * Dashboard API - Complete Sales Data
  * 
- * Data Source: transactions table (complete transaction records)
- * Shows all sales with individual item details
+ * Data Source: orders table (primary sales records)
+ * Shows all sales orders with accurate financial data
  * 
- * This ensures all financial metrics are accurate and detailed.
+ * This ensures all financial metrics match the orders table.
  */
 
 function emptyDashboardStats(): DashboardStats {
@@ -75,6 +75,15 @@ export async function GET(request: Request) {
     const startDateParam = searchParams.get('startDate')
     const endDateParam = searchParams.get('endDate')
 
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🔧 DASHBOARD API - REQUEST RECEIVED');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('Period:', period);
+    console.log('Start Date Param:', startDateParam);
+    console.log('End Date Param:', endDateParam);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('');
+
     // Get user from headers for department filtering
     const userRole = request.headers.get('x-user-role')
     const assignedChannel = request.headers.get('x-assigned-channel')
@@ -110,25 +119,45 @@ export async function GET(request: Request) {
       return NextResponse.json(emptyDashboardStats())
     }
 
-    // Fetch transactions from transactions table (more complete data)
-    // Use supabaseAdmin to bypass RLS and get all transactions
-    let transactionsQuery = supabaseAdmin
-      .from('transactions')
+    // Fetch transactions from ORDERS table (primary sales data source)
+    // Use supabaseAdmin to bypass RLS and get all orders
+    let ordersQuery = supabaseAdmin
+      .from('orders')
       .select('*')
-      .eq('type', 'sale') // Only get sales, not restocks
+      .eq('is_cancelled', false) // Only non-cancelled orders
 
-    const { data: allTransactions, error: transactionsError } = await transactionsQuery
+    const { data: allOrders, error: ordersError } = await ordersQuery
 
-    console.log('[Dashboard API] ===== TRANSACTIONS FETCH DEBUG =====')
-    console.log('[Dashboard API] Transactions fetched:', allTransactions?.length || 0)
-    console.log('[Dashboard API] First 3 transactions:', allTransactions?.slice(0, 3))
-    console.log('[Dashboard API] Transactions error:', transactionsError)
+    console.log('[Dashboard API] ===== ORDERS FETCH DEBUG =====')
+    console.log('[Dashboard API] Orders fetched:', allOrders?.length || 0)
+    console.log('[Dashboard API] First 3 orders:', JSON.stringify(allOrders?.slice(0, 3), null, 2))
+    console.log('[Dashboard API] Date filter:', { startDate, endDate })
+    console.log('[Dashboard API] Orders error:', ordersError)
     console.log('[Dashboard API] ===== END DEBUG =====')
 
-    if (transactionsError) {
-      console.error("[Dashboard API] Error fetching transactions:", transactionsError)
+    if (ordersError) {
+      console.error("[Dashboard API] Error fetching orders:", ordersError)
       return NextResponse.json(emptyDashboardStats())
     }
+
+    // Transform orders to transaction format for compatibility
+    const allTransactions = (allOrders || []).map(order => ({
+      id: order.id,
+      item_id: null, // Orders don't have item_id
+      item_name: order.product,
+      quantity: order.qty,
+      cost_price: order.cogs,
+      selling_price: order.total / order.qty, // Calculate selling price
+      total_cost: order.cogs * order.qty,
+      total_revenue: order.total,
+      profit: order.total - (order.cogs * order.qty),
+      timestamp: order.date || order.created_at, // Use date first (timestamptz column), fallback to created_at
+      type: 'sale',
+      staff_name: order.dispatched_by,
+      notes: order.notes || ''
+    }))
+    
+    console.log('[Dashboard API] Sample transformed transaction:', allTransactions[0]);
 
     // Apply date filters ONLY for KPI cards (not for chart data)
     // Chart data is controlled by period tabs (Day/Week/Month)
@@ -291,10 +320,47 @@ export async function GET(request: Request) {
     const lastMonthSales = lastMonthTransactions.reduce((sum, tx) => sum + tx.totalRevenue, 0)
     const lastMonthQuantity = lastMonthTransactions.reduce((sum, tx) => sum + tx.quantity, 0)
 
-    // Sales over time based on period
+    // Sales over time based on period OR date filter
     let salesOverTime: { date: string; purchases: number; sales: number; quantity: number }[] = []
 
-    if (period === 'ID') {
+    // If date filter is active, use filtered date range for chart
+    if (startDate && endDate) {
+      const start = new Date(startDate)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999)
+      
+      const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      
+      salesOverTime = Array.from({ length: daysDiff }, (_, i) => {
+        const day = new Date(start.getTime()) // Clone from timestamp
+        day.setDate(day.getDate() + i) // Add days properly
+        day.setHours(0, 0, 0, 0)
+        const nextDay = new Date(day)
+        nextDay.setDate(nextDay.getDate() + 1)
+
+        const dayStr = day.toISOString()
+
+        const dayTransactions = activeTransactionsKPI.filter(tx => {
+          const txDate = new Date(tx.timestamp)
+          return txDate >= day && txDate < nextDay
+        })
+
+        const sales = dayTransactions.reduce((sum, tx) => sum + tx.totalRevenue, 0)
+        const quantity = dayTransactions.reduce((sum, tx) => sum + tx.quantity, 0)
+
+        return { date: dayStr, purchases: 0, sales, quantity }
+      })
+      
+      console.log('[Dashboard API] Generated salesOverTime for date range:', {
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        daysGenerated: daysDiff,
+        firstDay: salesOverTime[0],
+        lastDay: salesOverTime[salesOverTime.length - 1],
+        daysWithSales: salesOverTime.filter(d => d.sales > 0).length
+      })
+    } else if (period === 'ID') {
       // Today: Hourly data
       salesOverTime = Array.from({ length: 24 }, (_, i) => {
         const hourStart = new Date(today)
@@ -606,7 +672,7 @@ export async function GET(request: Request) {
     }
 
     console.log('[Dashboard API] Financial Metrics Summary:', {
-      source: 'transactions table (complete sales data)',
+      source: 'orders table (primary sales data)',
       totalTransactions: financialMetrics.totalOrders,
       totalRevenue: financialMetrics.totalRevenue,
       totalProfit: financialMetrics.totalProfit,

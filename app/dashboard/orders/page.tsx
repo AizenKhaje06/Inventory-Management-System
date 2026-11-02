@@ -25,6 +25,7 @@ import { apiGet, apiPost } from '@/lib/api-client'
 import { formatPhilippinesDateTime } from '@/lib/timezone-utils'
 import { getCurrentUser } from '@/lib/auth'
 import { EnterpriseDateRangePicker } from '@/components/ui/enterprise-date-range-picker'
+import { TablePagination } from '@/components/ui/table-pagination'
 import * as XLSX from 'xlsx'
 
 interface Order {
@@ -71,10 +72,17 @@ export default function OrdersPage() {
   const [startDate, setStartDate] = useState<Date | null>(null)
   const [endDate, setEndDate] = useState<Date | null>(null)
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+
   const currentUser = getCurrentUser()
 
   useEffect(() => { fetchOrders() }, [statusFilter, startDate, endDate])
-  useEffect(() => { applyFilters() }, [searchTerm, orders])
+  useEffect(() => { 
+    applyFilters()
+    setCurrentPage(1) // Reset to first page when filters change
+  }, [searchTerm, orders])
 
   const fetchOrders = async () => {
     try {
@@ -186,6 +194,13 @@ export default function OrdersPage() {
     return `₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredOrders.length / pageSize)
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  )
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -202,12 +217,12 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-      <div className="max-w-[1400px] mx-auto py-4 px-4 sm:px-6 space-y-6">
+      <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold gradient-text leading-tight">Orders Management</h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">Track and manage your dispatched orders efficiently</p>
+            <h2 className="text-2xl sm:text-3xl font-semibold gradient-text">Orders Management</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Track and manage your dispatched orders efficiently</p>
           </div>
           <div className="flex items-center gap-3 sm:flex-shrink-0">
             <EnterpriseDateRangePicker
@@ -375,142 +390,172 @@ export default function OrdersPage() {
               </div>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-3 px-6 w-16">
-                    <Checkbox
-                      checked={selectedOrders.length === filteredOrders.filter(o => !o.is_cancelled).length && filteredOrders.length > 0}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedOrders(filteredOrders.filter(o => !o.is_cancelled).map(o => o.id))
-                        } else {
-                          setSelectedOrders([])
-                        }
-                      }}
-                      className="h-3 w-3"
-                    />
-                  </th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide w-[180px]">Date & Time</th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide min-w-[250px]">Products</th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide w-[180px]">Waybill</th>
-                  <th className="text-right py-3 px-6 text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide w-[130px]">Total</th>
-                  <th className="text-center py-3 px-6 text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide w-[100px]">Status</th>
-                  <th className="text-center py-3 px-6 text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide w-[100px]">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-slate-800">
-                {filteredOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-16">
-                      <div className="flex flex-col items-center gap-2">
-                        <Package className="h-12 w-12 text-slate-300 dark:text-slate-600" />
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">No orders found</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500">Try adjusting your search or filters</p>
-                      </div>
-                    </td>
+          <div className="overflow-hidden border border-slate-200/60 dark:border-slate-700/60">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black border-b border-slate-700/50">
+                    <th className="text-center py-3 px-4 w-[50px]">
+                      <Checkbox
+                        checked={selectedOrders.length === filteredOrders.filter(o => !o.is_cancelled).length && filteredOrders.length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedOrders(filteredOrders.filter(o => !o.is_cancelled).map(o => o.id))
+                          } else {
+                            setSelectedOrders([])
+                          }
+                        }}
+                        className="h-3.5 w-3.5"
+                      />
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[140px]">Date & Time</th>
+                    <th className="text-left py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[100px]">ID</th>
+                    <th className="text-left py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[240px]">Products</th>
+                    <th className="text-center py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[100px]">Quantity</th>
+                    <th className="text-right py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[120px]">Price</th>
+                    <th className="text-center py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[140px]">Waybill</th>
+                    <th className="text-center py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[100px]">Status</th>
+                    <th className="text-center py-3 px-3 text-[10px] font-bold text-white uppercase tracking-wider w-[70px]">Actions</th>
                   </tr>
-                ) : (
-                  filteredOrders.map((order) => (
-                    <tr key={order.id} className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="py-4 px-6">
-                        <Checkbox
-                          checked={selectedOrders.includes(order.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedOrders([...selectedOrders, order.id])
-                            } else {
-                              setSelectedOrders(selectedOrders.filter(id => id !== order.id))
-                            }
-                          }}
-                          disabled={order.is_cancelled}
-                          className="h-3 w-3"
-                        />
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex-shrink-0 h-8 w-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                            <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                </thead>
+                <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/50">
+                  {filteredOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-20">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="h-14 w-14 rounded-full bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center">
+                            <Package className="h-7 w-7 text-slate-300 dark:text-slate-600" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">{formatPhilippinesDateTime(order.date).split(',')[0]}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{formatPhilippinesDateTime(order.date).split(',')[1]}</p>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">No orders found</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Try adjusting your search or filters</p>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div>
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">{order.product}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Qty: {order.qty}</p>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        {order.waybill_number ? (
-                          <button
-                            onClick={() => copyToClipboard(order.waybill_number!)}
-                            className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-                          >
-                            <Truck className="h-3.5 w-3.5" />
-                            <span className="font-mono">{order.waybill_number}</span>
-                            <Copy className="h-3 w-3 opacity-60" />
-                          </button>
-                        ) : (
-                          <span className="text-sm text-slate-400 dark:text-slate-500">No waybill</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white">{formatCurrency(order.total)}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">COGS: {formatCurrency(order.cogs)}</p>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex justify-center">
-                          {order.is_cancelled ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
-                              <span className="h-1.5 w-1.5 rounded-full bg-red-600 dark:bg-red-500"></span>
-                              Cancelled
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-500"></span>
-                              Active
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex justify-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700">
-                                <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem onClick={() => { setSelectedOrder(order); setDetailsModalOpen(true) }} className="text-sm cursor-pointer">
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              {!order.is_cancelled && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => { setSelectedOrder(order); setCancelModalOpen(true) }} className="text-sm cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400">
-                                    <XCircle className="h-4 w-4 mr-2" />
-                                    Cancel Order
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    paginatedOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <td className="py-3.5 px-4 text-center">
+                          <Checkbox
+                            checked={selectedOrders.includes(order.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedOrders([...selectedOrders, order.id])
+                              } else {
+                                setSelectedOrders(selectedOrders.filter(id => id !== order.id))
+                              }
+                            }}
+                            disabled={order.is_cancelled}
+                            className="h-3.5 w-3.5"
+                          />
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex-shrink-0">
+                              <Calendar className="h-4 w-4 text-slate-400" />
+                            </div>
+                            <div>
+                              <p className="text-[12px] font-medium text-slate-900 dark:text-white leading-tight whitespace-nowrap">{formatPhilippinesDateTime(order.date).split(',')[0]}</p>
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 whitespace-nowrap">{formatPhilippinesDateTime(order.date).split(',')[1]}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5 text-slate-400" />
+                            <span className="font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                              #{order.id.slice(0, 8)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <p className="text-[13px] font-medium text-slate-900 dark:text-white">{order.product}</p>
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800">
+                            <Package className="h-3 w-3 text-slate-500" />
+                            <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">{order.qty}</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <p className="text-[13px] font-semibold text-slate-900 dark:text-white whitespace-nowrap">{formatCurrency(order.total)}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 whitespace-nowrap">COGS: {formatCurrency(order.cogs)}</p>
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          {order.waybill_number ? (
+                            <button
+                              onClick={() => copyToClipboard(order.waybill_number!)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            >
+                              <Truck className="h-3.5 w-3.5" />
+                              <span className="font-mono text-[11px] font-medium whitespace-nowrap">{order.waybill_number}</span>
+                              <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500">—</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex justify-center">
+                            {order.is_cancelled ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20">
+                                <span className="h-1 w-1 rounded-full bg-red-600"></span>
+                                Cancelled
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20">
+                                <span className="h-1 w-1 rounded-full bg-emerald-600"></span>
+                                Active
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <div className="flex justify-center">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                  <MoreVertical className="h-4 w-4 text-slate-400" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => { setSelectedOrder(order); setDetailsModalOpen(true) }} className="text-sm cursor-pointer">
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                {!order.is_cancelled && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => { setSelectedOrder(order); setCancelModalOpen(true) }} className="text-sm cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400">
+                                      <XCircle className="h-4 w-4 mr-2" />
+                                      Cancel Order
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination Footer */}
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={filteredOrders.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size)
+                setCurrentPage(1)
+              }}
+            />
           </div>
         </Card>
 
