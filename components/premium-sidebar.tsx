@@ -392,7 +392,7 @@ export function PremiumSidebar({ onNavClick, mobileOpen = false, onMobileClose, 
       >
         {/* Logo & Brand - Professional Layout with Dark Mode Support */}
         <div 
-          className="h-14 flex items-center px-1.5 xl:px-2 flex-shrink-0 relative"
+          className="h-16 flex items-center px-1.5 xl:px-2 pt-2 pb-3 flex-shrink-0 relative"
         >
           {/* Bottom border line - matching separator style */}
           <div className="absolute bottom-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-white to-transparent dark:from-transparent dark:via-white dark:to-transparent" />
@@ -402,15 +402,15 @@ export function PremiumSidebar({ onNavClick, mobileOpen = false, onMobileClose, 
             <div className="flex items-center justify-center py-1.5">
               {/* Light mode logo */}
               <img 
-                src="/Vertex-icon.png" 
-                alt="Vertex" 
-                className="h-9 w-auto object-contain dark:hidden"
+                src="/WIHILOGO.png" 
+                alt="WIHI Asia" 
+                className="h-14 w-auto object-contain dark:hidden"
               />
               {/* Dark mode logo */}
               <img 
-                src="/Vertex-icon-2.png" 
-                alt="Vertex" 
-                className="h-9 w-auto object-contain hidden dark:block"
+                src="/WIHILOGO.png" 
+                alt="WIHI Asia" 
+                className="h-14 w-auto object-contain hidden dark:block"
               />
             </div>
           </div>
@@ -1018,14 +1018,14 @@ export function PremiumSidebar({ onNavClick, mobileOpen = false, onMobileClose, 
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700">
                       <img 
-                        src="/Vertex-icon.png" 
-                        alt="VERTEX" 
-                        className="h-8 w-auto object-contain dark:hidden"
+                        src="/WIHILOGO.png" 
+                        alt="WIHI Asia" 
+                        className="h-10 w-auto object-contain dark:hidden"
                       />
                       <img 
-                        src="/Vertex-icon-2.png" 
-                        alt="VERTEX" 
-                        className="h-8 w-auto object-contain hidden dark:block"
+                        src="/WIHILOGO.png" 
+                        alt="WIHI Asia" 
+                        className="h-10 w-auto object-contain hidden dark:block"
                       />
                     </div>
                     <div className="flex-1 min-w-0">

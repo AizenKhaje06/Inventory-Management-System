@@ -85,7 +85,7 @@ export async function addCustomer(customer: Omit<Customer, "id" | "createdAt">):
 }
 
 export async function updateCustomer(id: string, updates: Partial<Customer>): Promise<void> {
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
   
   if (updates.name !== undefined) updateData.name = updates.name
   if (updates.email !== undefined) updateData.email = updates.email || null

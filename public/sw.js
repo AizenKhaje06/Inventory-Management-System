@@ -4,7 +4,7 @@
 const CACHE_NAME = 'wihi-inventory-v1'
 const urlsToCache = [
   '/',
-  '/packer/dashboard'
+  '/dashboard'
   // Audio files will be cached on-demand (lazy loading)
 ]
 
@@ -99,7 +99,7 @@ self.addEventListener('push', (event) => {
     requireInteraction: data.requireInteraction || false,
     vibrate: data.vibrate || [200, 100, 200],
     data: {
-      url: data.url || '/packer/dashboard',
+      url: data.url || '/dashboard',
       channel: data.channel || 'Unknown'
     },
     actions: [
@@ -130,7 +130,7 @@ self.addEventListener('notificationclick', (event) => {
   }
 
   // Open or focus the app
-  const urlToOpen = event.notification.data?.url || '/packer/dashboard'
+  const urlToOpen = event.notification.data?.url || '/dashboard'
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })

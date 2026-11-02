@@ -42,9 +42,17 @@ export const AuthErrors = {
  * Check if user is authenticated
  * This reads from the request headers (set by client)
  */
+/**
+ * Get authenticated user from request headers
+ * 
+ * Supports 2 active roles (admin, logistics-admin) and 2 legacy roles (operations, packer)
+ * for backward compatibility with existing database records.
+ * 
+ * @deprecated Legacy roles (operations, packer) are no longer actively used.
+ */
 export function getAuthUser(request: NextRequest): { username: string; role: UserRole; displayName: string } | null {
   try {
-    // Check for admin/operations/packer headers
+    // Check for admin/logistics-admin/operations/packer headers
     const username = request.headers.get('x-user-username')
     const role = request.headers.get('x-user-role') as UserRole
     const displayName = request.headers.get('x-user-display-name')

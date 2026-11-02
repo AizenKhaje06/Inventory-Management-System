@@ -412,14 +412,19 @@ export default function DashboardPage() {
       />
 
 
-      {/* Recent Activity */}
-      <div className="grid gap-5 grid-cols-1 lg:grid-cols-2">
+      {/* Recent Activity - 3 Cards in One Line */}
+      <div className="grid gap-5 grid-cols-1 lg:grid-cols-3">
         {/* Recent Sales */}
         <Card className="overflow-hidden border-0 shadow-lg">
           <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-2">
-              <div className="h-5 w-1 bg-emerald-500 rounded-full flex-shrink-0"></div>
-              <h3 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">Recent Sales</h3>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-5 w-1 bg-emerald-500 rounded-full flex-shrink-0"></div>
+                <h3 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">Recent Sales</h3>
+              </div>
+              <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+                ₱{formatNumber(stats?.recentTransactions?.reduce((sum, tx) => sum + tx.totalRevenue, 0) || 0)}
+              </div>
             </div>
             <p className="text-xs mt-0.5 ml-3 text-slate-600 dark:text-slate-400">Latest completed transactions</p>
           </div>
@@ -458,9 +463,14 @@ export default function DashboardPage() {
         {/* Recent Restocks */}
         <Card className="overflow-hidden border-0 shadow-lg">
           <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-2">
-              <div className="h-5 w-1 bg-blue-500 rounded-full flex-shrink-0"></div>
-              <h3 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">Recent Restocks</h3>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-5 w-1 bg-blue-500 rounded-full flex-shrink-0"></div>
+                <h3 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">Recent Restocks</h3>
+              </div>
+              <div className="text-lg font-bold text-blue-600 dark:text-blue-400 flex-shrink-0">
+                ₱{formatNumber(stats?.recentRestocks?.reduce((sum, restock) => sum + restock.totalCost, 0) || 0)}
+              </div>
             </div>
             <p className="text-xs mt-0.5 ml-3 text-slate-600 dark:text-slate-400">Latest inventory replenishments</p>
           </div>
@@ -487,6 +497,56 @@ export default function DashboardPage() {
                 <div className="text-center py-10">
                   <Package className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                   <p className="text-sm text-slate-500 dark:text-slate-400">No recent restocks</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Freebies */}
+        <Card className="overflow-hidden border-0 shadow-lg">
+          <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-5 w-1 bg-orange-500 rounded-full flex-shrink-0"></div>
+                <h3 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">Freebies</h3>
+              </div>
+              <div className="text-lg font-bold text-orange-600 dark:text-orange-400 flex-shrink-0">
+                ₱{formatNumber(stats?.recentFreebies?.reduce((sum, freebie) => sum + freebie.totalCOGS, 0) || 0)}
+              </div>
+            </div>
+            <p className="text-xs mt-0.5 ml-3 text-slate-600 dark:text-slate-400">Promotional giveaways</p>
+          </div>
+          <CardContent className="pt-4 pb-3">
+            <div className="space-y-2">
+              {stats?.recentFreebies && stats.recentFreebies.length > 0 ? (
+                stats.recentFreebies.map((freebie, index) => (
+                  <div key={index} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1a1a1a] hover:bg-slate-100 dark:hover:bg-[#222] transition-colors border border-transparent hover:border-slate-200 dark:hover:border-amber-500/15">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                        <svg className="h-4 w-4 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+                        </svg>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-xs truncate text-slate-900 dark:text-white">{freebie.itemName}</div>
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                          <span>{freebie.quantity} units</span>
+                          {freebie.reason && <><span>·</span><span className="truncate">{freebie.reason}</span></>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-sm font-bold flex-shrink-0 ml-2 text-orange-600 dark:text-orange-400">
+                      ₱{formatNumber(freebie.totalCOGS)}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10">
+                  <svg className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+                  </svg>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">No recent freebies</p>
                 </div>
               )}
             </div>

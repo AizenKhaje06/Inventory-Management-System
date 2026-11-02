@@ -44,6 +44,7 @@ const OPERATION_CONFIG = {
   restock: { label: "Restock", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800", icon: RefreshCw },
   reduce: { label: "Reduce", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200 dark:border-rose-800", icon: Package },
   sale: { label: "Sale", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800", icon: ShoppingCart },
+  freebie: { label: "Freebie", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800", icon: Plus },
   cancel: { label: "Cancelled", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800", icon: X },
   uncancel: { label: "Uncancelled", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800", icon: RefreshCw },
   restore: { label: "Restored", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800", icon: RefreshCw },
@@ -135,10 +136,14 @@ export default function LogPage() {
       )
     }
 
-    // Operation filter (now includes cancel, uncancel, restore)
+    // Operation filter (now includes cancel, uncancel, restore, freebie)
     if (operationFilter !== "all") {
       filtered = filtered.filter(log => {
         const operation = log.operation?.toLowerCase() || ''
+        const detailsLower = log.details?.toLowerCase() || ''
+        
+        // Check for freebie
+        if (operationFilter === 'freebie' && (detailsLower.includes('freebie') || detailsLower.includes('promotional giveaway') || detailsLower.includes('free gift'))) return true
         
         // Direct case-insensitive match for cancel/restore/uncancel
         if (operationFilter === 'cancel' && (operation === 'cancel' || operation === 'cancelled' || operation === 'transaction-cancelled')) return true
@@ -148,16 +153,15 @@ export default function LogPage() {
         let actualOperation = operation.replace(/\s+/g, '-').replace(/_/g, '-') || 'other'
         
         // Check if it's a cancellation operation
-        if (actualOperation.includes('cancelled') || (log.details?.toLowerCase().includes('transaction') && log.details?.toLowerCase().includes('cancelled'))) {
+        if (actualOperation.includes('cancelled') || (detailsLower.includes('transaction') && detailsLower.includes('cancelled'))) {
           actualOperation = 'transaction-cancelled'
         }
         
         // Only override based on details if operation is still unclear
-        const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'restore', 'uncancel']
+        const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'restore', 'uncancel', 'freebie']
         const isExplicitOperation = explicitOperations.includes(actualOperation)
         
         if (!isExplicitOperation) {
-          const detailsLower = log.details?.toLowerCase() || ''
           if (detailsLower.includes('demo/display') || detailsLower.includes('demo / display')) {
             actualOperation = 'demo-display'
           } else if (detailsLower.includes('internal use') || detailsLower.includes('internal-use')) {
@@ -239,8 +243,13 @@ export default function LogPage() {
     // Normalize operation: convert to lowercase, replace spaces and underscores with dashes
     let actualOperation = operation?.toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-') || 'other'
     
+    // Check if it's a freebie from details
+    const detailsLower = details?.toLowerCase() || ''
+    if (detailsLower.includes('freebie') || detailsLower.includes('promotional giveaway') || detailsLower.includes('free gift')) {
+      actualOperation = 'freebie'
+    }
     // Direct mapping for cancel/uncancel
-    if (actualOperation === 'cancel') {
+    else if (actualOperation === 'cancel') {
       actualOperation = 'cancel'
     } else if (actualOperation === 'uncancel') {
       actualOperation = 'uncancel'
@@ -251,12 +260,11 @@ export default function LogPage() {
     }
     
     // Only override based on details if operation is still unclear
-    const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'uncancel']
+    const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'uncancel', 'freebie']
     const isExplicitOperation = explicitOperations.includes(actualOperation)
     
     if (!isExplicitOperation) {
       // Override based on details content for backward compatibility
-      const detailsLower = details?.toLowerCase() || ''
       if (detailsLower.includes('demo/display') || detailsLower.includes('demo / display')) {
         actualOperation = 'demo-display'
       } else if (detailsLower.includes('internal use') || detailsLower.includes('internal-use')) {
@@ -493,6 +501,7 @@ export default function LogPage() {
               <SelectItem value="restock">Restock</SelectItem>
               <SelectItem value="reduce">Reduce</SelectItem>
               <SelectItem value="sale">Sale</SelectItem>
+              <SelectItem value="freebie">Freebies</SelectItem>
               <SelectItem value="to-be-packed">To Be Packed</SelectItem>
               {!isDepartment && <SelectItem value="cancel">Cancelled Orders</SelectItem>}
               {!isDepartment && <SelectItem value="restore">Restored Orders</SelectItem>}

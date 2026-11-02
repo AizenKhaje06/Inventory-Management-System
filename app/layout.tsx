@@ -32,14 +32,14 @@ export const metadata: Metadata = {
   publisher: "Vertex",
   icons: {
     icon: [
-      { url: "/Vertex-icon-3.png", sizes: "32x32", type: "image/png" },
-      { url: "/Vertex-icon-3.png", sizes: "16x16", type: "image/png" },
+      { url: "/IconWIHI.png", sizes: "32x32", type: "image/png" },
+      { url: "/IconWIHI.png", sizes: "16x16", type: "image/png" },
     ],
     apple: [
-      { url: "/Vertex-icon-3.png", sizes: "180x180", type: "image/png" },
+      { url: "/IconWIHI.png", sizes: "180x180", type: "image/png" },
     ],
     other: [
-      { rel: "icon", url: "/Vertex-icon-3.png" },
+      { rel: "icon", url: "/IconWIHI.png" },
     ],
   },
   appleWebApp: {
@@ -91,10 +91,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
       <head>
-        {/* Favicon - Using Vertex Icon */}
-        <link rel="icon" href="/Vertex-icon-3.png" sizes="any" />
-        <link rel="icon" href="/Vertex-icon-3.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/Vertex-icon-3.png" />
+        {/* Favicon - Using IconWIHI */}
+        <link rel="icon" href="/IconWIHI.png" sizes="any" />
+        <link rel="icon" href="/IconWIHI.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/IconWIHI.png" />
       </head>
       <body className={`min-h-screen w-full overflow-x-hidden antialiased ${plusJakartaSans.variable} ${GeistMono.variable} font-sans`} suppressHydrationWarning>
         <ErrorBoundary>

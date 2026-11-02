@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { PremiumSidebar } from "@/components/premium-sidebar"
 import { PremiumNavbar } from "@/components/premium-navbar"
+import { DispatcherNavbar } from "@/components/dispatcher-navbar"
 import { OfflineIndicator } from "@/components/offline-indicator"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { CommandPalette } from "@/components/command-palette"
@@ -22,12 +23,29 @@ export default function ClientLayout({
 }>) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [hideSidebar, setHideSidebar] = useState(false)
+  
+  // Check role immediately on client to prevent sidebar flash
+  const [userRole, setUserRole] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return getCurrentUserRole()
+    }
+    return null
+  })
+  
+  const [hideSidebar, setHideSidebar] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const role = getCurrentUserRole()
+      return role === 'operations' || role === 'packer'
+    }
+    return false
+  })
 
-  // Check if user is operations role (hide sidebar)
+  // Update role on mount and when it changes
   useEffect(() => {
     const role = getCurrentUserRole()
-    setHideSidebar(role === 'operations')
+    setUserRole(role)
+    // Hide sidebar for operations (department) and packer (dispatcher) roles
+    setHideSidebar(role === 'operations' || role === 'packer')
   }, [])
 
   // Initialize keyboard shortcuts
@@ -85,14 +103,28 @@ export default function ClientLayout({
       {/* Main content area */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300",
-        // No margin when sidebar is hidden (operations role)
+        // No margin when sidebar is hidden (operations or packer role)
         hideSidebar ? "ml-0" : sidebarCollapsed ? "lg:ml-14 xl:lg:ml-16 ml-0" : "lg:ml-48 xl:lg:ml-52 ml-0"
       )}>
-        {/* Premium Navbar */}
-        <PremiumNavbar 
-          sidebarCollapsed={sidebarCollapsed}
-          onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
-        />
+        {/* Conditional Navbar - Use DispatcherNavbar for packer/operations roles, PremiumNavbar for others */}
+        {userRole === 'packer' ? (
+          <DispatcherNavbar 
+            showNavigation={true}
+            showActions={true}
+            roleLabel="Dispatcher"
+          />
+        ) : userRole === 'operations' ? (
+          <DispatcherNavbar 
+            showNavigation={false}
+            showActions={true}
+            roleLabel="Agent"
+          />
+        ) : (
+          <PremiumNavbar 
+            sidebarCollapsed={sidebarCollapsed}
+            onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
+          />
+        )}
 
         {/* Main content - Protected by RouteGuard */}
         <main 

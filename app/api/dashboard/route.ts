@@ -49,6 +49,7 @@ function emptyDashboardStats(): DashboardStats {
     revenueToday: 0,
     supplierReturns: [],
     recentRestocks: [],
+    recentFreebies: [],
     averageOrderValue: 0,
     outOfStockCount: 0,
     inventoryHealthScore: 100,
@@ -554,6 +555,43 @@ export async function GET(request: Request) {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, 5)
 
+    // Recent freebies - fetch from freebies table and group by item name
+    let recentFreebies: any[] = []
+    try {
+      const { data: freebiesData, error: freebiesError } = await supabaseAdmin
+        .from('freebies')
+        .select('*')
+        .order('dispatched_date', { ascending: false })
+        .limit(20) // Fetch more to allow grouping
+
+      if (!freebiesError && freebiesData) {
+        // Group freebies by item name and sum quantities/COGS
+        const groupedFreebies = freebiesData.reduce((acc: any, f: any) => {
+          const itemName = f.item_name
+          if (!acc[itemName]) {
+            acc[itemName] = {
+              itemName: itemName,
+              quantity: 0,
+              totalCOGS: 0,
+              reason: f.reason, // Use first occurrence reason
+              dispatchedBy: f.dispatched_by,
+              dispatchedDate: f.dispatched_date
+            }
+          }
+          acc[itemName].quantity += f.quantity
+          acc[itemName].totalCOGS += f.total_cogs
+          return acc
+        }, {})
+
+        // Convert to array and take top 5
+        recentFreebies = Object.values(groupedFreebies)
+          .sort((a: any, b: any) => new Date(b.dispatchedDate).getTime() - new Date(a.dispatchedDate).getTime())
+          .slice(0, 5)
+      }
+    } catch (error) {
+      console.error('[Dashboard API] Error fetching freebies:', error)
+    }
+
     // Average order value
     const averageOrderValue = financialMetrics.totalOrders > 0 
       ? financialMetrics.totalRevenue / financialMetrics.totalOrders 
@@ -647,6 +685,7 @@ export async function GET(request: Request) {
       revenueToday,
       supplierReturns: [],
       recentRestocks,
+      recentFreebies,
       averageOrderValue,
       outOfStockCount,
       inventoryHealthScore,

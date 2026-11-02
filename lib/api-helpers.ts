@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, requireAdmin, requireRole, type UserRole } from './api-auth'
+import type { RouteContext, AuthenticatedUser } from './types'
 
 /**
  * Wrap an API handler with authentication
@@ -19,10 +20,10 @@ import { requireAuth, requireAdmin, requireRole, type UserRole } from './api-aut
 export function withAuth(
   handler: (
     request: NextRequest,
-    context: { user: { username: string; role: UserRole; displayName: string }, params?: any }
+    context: { user: AuthenticatedUser, params?: RouteContext['params'] }
   ) => Promise<NextResponse>
 ) {
-  return async (request: NextRequest, routeContext?: { params: any }) => {
+  return async (request: NextRequest, routeContext?: RouteContext) => {
     const authResult = requireAuth(request)
 
     if (authResult instanceof NextResponse) {
@@ -45,10 +46,10 @@ export function withAuth(
 export function withAdmin(
   handler: (
     request: NextRequest,
-    context: { user: { username: string; role: UserRole; displayName: string }, params?: any }
+    context: { user: AuthenticatedUser, params?: RouteContext['params'] }
   ) => Promise<NextResponse>
 ) {
-  return async (request: NextRequest, routeContext?: { params: any }) => {
+  return async (request: NextRequest, routeContext?: RouteContext) => {
     const authResult = requireAdmin(request)
 
     if (authResult instanceof NextResponse) {
@@ -73,12 +74,12 @@ export function withRoles(
   handler: (
     request: NextRequest,
     context: { 
-      user: { username: string; role: UserRole; displayName: string };
-      params?: any  // Added for dynamic routes with params
+      user: AuthenticatedUser;
+      params?: RouteContext['params']
     }
   ) => Promise<NextResponse>
 ) {
-  return async (request: NextRequest, context?: { params: any }) => {
+  return async (request: NextRequest, context?: RouteContext) => {
     const authResult = requireRole(request, allowedRoles)
 
     if (authResult instanceof NextResponse) {
@@ -116,10 +117,10 @@ export const ApiErrors = {
  * Standard success responses
  */
 export const ApiSuccess = {
-  ok: (data: any) =>
+  ok: <T = unknown>(data: T) =>
     NextResponse.json(data, { status: 200 }),
   
-  created: (data: any) =>
+  created: <T = unknown>(data: T) =>
     NextResponse.json(data, { status: 201 }),
   
   noContent: () =>

@@ -161,8 +161,8 @@ export default function MinimalistLoginPage() {
         <div className="space-y-8">
           <div className="space-y-2">
             <img 
-              src="/Vertex-icon.png" 
-              alt="Vertex" 
+              src="/WIHILOGO.png" 
+              alt="WIHI Asia" 
               className="h-12 w-auto object-contain opacity-90"
               loading="eager"
             />
@@ -212,37 +212,6 @@ export default function MinimalistLoginPage() {
           </div>
         </div>
 
-        {/* Core Features - New Addition */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#ffffff', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>Core Features</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50"></div>
-              <span className="font-normal" style={{ color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.5)' }}>Real-time Tracking</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50"></div>
-              <span className="font-normal" style={{ color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.5)' }}>Multi-Channel Sync</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50"></div>
-              <span className="font-normal" style={{ color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.5)' }}>Automated Processing</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50"></div>
-              <span className="font-normal" style={{ color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.5)' }}>Advanced Analytics</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50"></div>
-              <span className="font-normal" style={{ color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.5)' }}>Role-Based Access</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50"></div>
-              <span className="font-normal" style={{ color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.5)' }}>Secure Encryption</span>
-            </div>
-          </div>
-        </div>
-
         {/* Premium Closing Message */}
         <div className="space-y-2">
           <p className="text-slate-500 text-sm font-light leading-relaxed">
@@ -261,8 +230,8 @@ export default function MinimalistLoginPage() {
         {/* Mobile Logo */}
         <div className="lg:hidden absolute top-8 left-6">
           <img 
-            src="/Vertex-icon.png" 
-            alt="Vertex" 
+            src="/WIHILOGO.png" 
+            alt="WIHI Asia" 
             className="h-10 w-auto object-contain opacity-90"
             loading="eager"
           />

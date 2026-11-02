@@ -159,8 +159,8 @@ export function RoleLayout({
             {/* Left: Brand + Navigation */}
             <div className="flex items-center gap-3 sm:gap-8">
               <div className="flex items-center gap-2 sm:gap-3 pr-3 sm:pr-8 border-r border-slate-200 dark:border-slate-800">
-                <img src="/Vertex-icon.png" alt="" aria-hidden="true" className="h-6 w-auto object-contain dark:hidden" />
-                <img src="/Vertex-icon-2.png" alt="" aria-hidden="true" className="h-6 w-auto object-contain hidden dark:block" />
+                <img src="/WIHILOGO.png" alt="WIHI Asia" aria-hidden="true" className="h-8 w-auto object-contain dark:hidden" />
+                <img src="/WIHILOGO.png" alt="WIHI Asia" aria-hidden="true" className="h-8 w-auto object-contain hidden dark:block" />
                 {/* Hide name on mobile - show only on sm and up */}
                 <div className="hidden sm:flex flex-col">
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-none">
@@ -364,8 +364,8 @@ export function RoleLayout({
             {/* Menu Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <img src="/Vertex-icon.png" alt="" aria-hidden="true" className="h-6 w-auto object-contain dark:hidden" />
-                <img src="/Vertex-icon-2.png" alt="" aria-hidden="true" className="h-6 w-auto object-contain hidden dark:block" />
+                <img src="/WIHILOGO.png" alt="WIHI Asia" aria-hidden="true" className="h-8 w-auto object-contain dark:hidden" />
+                <img src="/WIHILOGO.png" alt="WIHI Asia" aria-hidden="true" className="h-8 w-auto object-contain hidden dark:block" />
                 <span className="text-sm font-semibold text-slate-900 dark:text-white">{displayName}</span>
               </div>
               <Button

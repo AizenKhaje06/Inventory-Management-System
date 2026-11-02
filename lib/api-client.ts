@@ -68,8 +68,9 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
 
 /**
  * Authenticated fetch with JSON response
+ * @template T - Expected response type
  */
-export async function apiGet<T = any>(url: string): Promise<T> {
+export async function apiGet<T>(url: string): Promise<T> {
   const response = await apiFetch(url)
   
   if (!response.ok) {
@@ -83,8 +84,10 @@ export async function apiGet<T = any>(url: string): Promise<T> {
 
 /**
  * Authenticated POST request
+ * @template T - Expected response type
+ * @template D - Request body type
  */
-export async function apiPost<T = any>(url: string, data: any): Promise<T> {
+export async function apiPost<T, D = unknown>(url: string, data: D): Promise<T> {
   const response = await apiFetch(url, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -102,8 +105,10 @@ export async function apiPost<T = any>(url: string, data: any): Promise<T> {
 
 /**
  * Authenticated PUT request
+ * @template T - Expected response type
+ * @template D - Request body type
  */
-export async function apiPut<T = any>(url: string, data: any): Promise<T> {
+export async function apiPut<T, D = unknown>(url: string, data: D): Promise<T> {
   const response = await apiFetch(url, {
     method: 'PUT',
     body: JSON.stringify(data),
