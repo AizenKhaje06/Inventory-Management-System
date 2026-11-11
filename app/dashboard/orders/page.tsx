@@ -234,10 +234,6 @@ export default function OrdersPage() {
               }}
               className="w-full sm:w-auto"
             />
-            <Button onClick={fetchOrders} variant="outline" size="sm" className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </Button>
           </div>
         </div>
 
@@ -348,12 +344,16 @@ export default function OrdersPage() {
                 </SelectContent>
               </Select>
               <div className="flex gap-3">
-                <Button onClick={exportToExcel} variant="outline" className="gap-2 h-12">
+                <Button 
+                  onClick={exportToExcel} 
+                  size="sm"
+                  className="h-12 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold gap-2 shadow-sm"
+                >
                   <Download className="h-4 w-4" />
-                  Export
+                  Export Excel
                 </Button>
                 {selectedOrders.length > 0 && (
-                  <Button onClick={handleBulkCancel} variant="destructive" className="gap-2 h-12">
+                  <Button onClick={handleBulkCancel} variant="destructive" className="gap-2 h-12 px-4 font-semibold">
                     <XCircle className="h-4 w-4" />
                     Cancel ({selectedOrders.length})
                   </Button>

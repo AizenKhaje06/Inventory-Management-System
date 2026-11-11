@@ -756,7 +756,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-[1400px] mx-auto py-5 space-y-6" aria-live="polite" aria-busy="true">
+      <div className="max-w-[1400px] mx-auto py-5 px-6 space-y-6" aria-live="polite" aria-busy="true">
         <div className="space-y-2">
           <div className="h-8 w-64 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
           <div className="h-3 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />

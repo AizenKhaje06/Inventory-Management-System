@@ -104,7 +104,7 @@ export default function DashboardPage() {
   // Show loading state with skeleton loaders
   if (loading) {
     return (
-      <div className="max-w-[1400px] mx-auto py-5 space-y-6" aria-live="polite" aria-busy="true">
+      <div className="max-w-[1600px] mx-auto py-4 px-6 space-y-5 sm:space-y-6" aria-live="polite" aria-busy="true">
         {/* Header skeleton */}
         <div className="flex items-center justify-between gap-4 mb-6">
           <div className="space-y-2">
@@ -181,7 +181,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto py-4 px-6 space-y-5 sm:space-y-6">
+    <div className="max-w-[1600px] mx-auto py-4 px-6 space-y-5 sm:space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div className="flex-1 min-w-0">
