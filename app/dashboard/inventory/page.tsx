@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Pencil, Trash2, PackagePlus, Package, Filter, X, ArrowUpDown, AlertCircle, TrendingUp, Tag, LayoutGrid, LayoutList, Eye, ShoppingCart, Check, Building2, FileDown, FileSpreadsheet, ChevronDown, AlertTriangle } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, PackagePlus, Package, Filter, X, ArrowUpDown, AlertCircle, TrendingUp, Tag, LayoutGrid, LayoutList, Eye, ShoppingCart, Check, Building2, FileDown, FileSpreadsheet, ChevronDown, AlertTriangle, RotateCcw } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -93,6 +93,14 @@ export default function InventoryPage() {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set()) // Bulk selection
+  
+  // Bad Stock Management
+  const [restoreDialogItem, setRestoreDialogItem] = useState<InventoryItem | null>(null)
+  const [disposeDialogItem, setDisposeDialogItem] = useState<InventoryItem | null>(null)
+  const [restoreAmount, setRestoreAmount] = useState(0)
+  const [disposeAmount, setDisposeAmount] = useState(0)
+  const [restoreNotes, setRestoreNotes] = useState("")
+  const [disposeNotes, setDisposeNotes] = useState("")
   
   // Calculate initial column widths based on viewport
   const getInitialColumnWidths = () => {
@@ -1251,9 +1259,9 @@ export default function InventoryPage() {
                 </p>
               </div>
 
-              <div className="overflow-hidden">
+              <div className="overflow-x-auto">
                 <div className="w-full">
-                  <table className="w-full text-sm table-fixed">
+                  <table className="w-full text-sm">
                   <thead className="sticky top-0 z-10">
                     <tr className="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black">
                       {statusFilter === "bad" ? (
@@ -1319,11 +1327,14 @@ export default function InventoryPage() {
                           <th className="py-2.5 px-3 text-center text-[10px] font-bold text-slate-300 uppercase tracking-wider border-r border-slate-700/50 w-[80px]">
                             Other
                           </th>
-                          <th className="py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 md:sticky md:right-[90px] bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[90px]">
+                          <th className="py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 md:sticky md:right-[220px] bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[110px]">
                             Total Bad
                           </th>
-                          <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider md:sticky md:right-0 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[90px]">
+                          <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 md:sticky md:right-[110px] bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[110px]">
                             Cost
+                          </th>
+                          <th className="py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider md:sticky md:right-0 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[110px]">
+                            Actions
                           </th>
                         </>
                       ) : (
@@ -1642,16 +1653,46 @@ export default function InventoryPage() {
                             </td>
                             
                             {/* Total Bad - No Sticky on Mobile, Sticky on Desktop (Bad Stocks) */}
-                            <td className="py-2 px-3 text-center md:sticky md:right-[90px] bg-white dark:bg-slate-900 md:z-10">
+                            <td className="py-2 px-3 text-center md:sticky md:right-[220px] bg-white dark:bg-slate-900 md:z-10 w-[110px]">
                               <span className="inline-flex items-center justify-center min-w-[50px] px-2.5 py-1 rounded-lg font-bold text-sm bg-red-600 text-white">
                                 {totalBadQty}
                               </span>
                             </td>
                             
                             {/* Cost - No Sticky on Mobile, Sticky on Desktop (Bad Stocks) */}
-                            <td className="py-2 px-3 text-left md:sticky md:right-0 bg-white dark:bg-slate-900 md:z-10">
+                            <td className="py-2 px-3 text-left md:sticky md:right-[110px] bg-white dark:bg-slate-900 md:z-10 w-[110px]">
                               <div className="text-slate-700 dark:text-slate-300 font-medium">
                                 ₱{item.costPrice.toFixed(2)}
+                              </div>
+                            </td>
+                            
+                            {/* Actions - No Sticky on Mobile, Sticky on Desktop (Bad Stocks) */}
+                            <td className="py-2 px-3 text-center md:sticky md:right-0 bg-white dark:bg-slate-900 md:z-10 w-[110px]">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-300 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400 dark:border-green-700"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setRestoreDialogItem(item)
+                                  }}
+                                  title="Restore to Good Stock"
+                                >
+                                  <RotateCcw className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs bg-red-50 hover:bg-red-100 text-red-700 border-red-300 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 dark:border-red-700"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setDisposeDialogItem(item)
+                                  }}
+                                  title="Dispose Bad Stock"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
                             </td>
                           </tr>
@@ -1735,17 +1776,13 @@ export default function InventoryPage() {
                           <td className="py-2 px-3">
                             {(() => {
                               const badQty = item.bad_item_quantity || 0
-                              const goodQty = item.quantity - badQty
+                              const goodQty = item.quantity // item.quantity is GOOD stock only
                               const hasBadItems = badQty > 0
                               const breakdown = item.bad_items_breakdown || {}
                               const hasBreakdown = Object.keys(breakdown).length > 0
                               
-                              // If filtered to "Bad Stock", show breakdown by reason OR just red bar
+                              // If filtered to "Bad Stock", show breakdown by reason AND good stock if exists
                               if (statusFilter === "bad" && hasBadItems) {
-                                // If we have breakdown data, show multiple bars
-                                if (hasBreakdown) {
-                                  const totalBad = Object.values(breakdown).reduce((sum: number, qty) => sum + (qty as number), 0)
-                                
                                 // Color mapping for different reasons
                                 const reasonColors: Record<string, string> = {
                                   // New comprehensive reasons
@@ -1830,36 +1867,57 @@ export default function InventoryPage() {
                                 
                                 return (
                                   <div className="flex flex-col gap-1 items-start">
-                                    {Object.entries(breakdown)
-                                      .filter(([_, qty]) => (qty as number) > 0)
-                                      .map(([reason, qty]) => {
-                                        const percentage = totalBad > 0 ? ((qty as number) / totalBad) * 100 : 0
-                                        return (
-                                          <div key={reason} className="flex items-center gap-2 w-full max-w-[180px]">
-                                            <span className={cn(
-                                              "text-[10px] font-semibold min-w-[35px] text-left tabular-nums",
-                                              textColors[reason] || 'text-red-700 dark:text-red-400'
-                                            )}>
-                                              {formatNumber(qty as number)}
-                                            </span>
-                                            <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                                              <div 
-                                                className={cn("h-full transition-all", reasonColors[reason] || 'bg-red-500')}
-                                                style={{ width: `${percentage}%` }}
-                                              />
-                                            </div>
-                                            <span className="text-[9px] text-slate-500 dark:text-slate-400 min-w-[40px]">
-                                              {reasonLabels[reason] || reason}
-                                            </span>
-                                          </div>
-                                        )
-                                      })}
-                                  </div>
-                                )
-                                } else {
-                                  // No breakdown data, show single red bar for bad items
-                                  return (
-                                    <div className="flex flex-col gap-1 items-start">
+                                    {/* Show good items bar if exists */}
+                                    {goodQty > 0 && (
+                                      <div className="flex items-center gap-2 w-full max-w-[160px]">
+                                        <span className="text-[10px] font-semibold text-green-700 dark:text-green-400 min-w-[35px] text-left tabular-nums">
+                                          {formatNumber(goodQty)}
+                                        </span>
+                                        <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                          <div 
+                                            className="h-full bg-green-500 transition-all" 
+                                            style={{ width: '100%' }}
+                                          />
+                                        </div>
+                                        <span className="text-[9px] text-slate-500 dark:text-slate-400 min-w-[40px]">
+                                          Good
+                                        </span>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Show bad items breakdown */}
+                                    {hasBreakdown ? (
+                                      <>
+                                        {(() => {
+                                          const totalBad = Object.values(breakdown).reduce((sum: number, qty) => sum + (qty as number), 0)
+                                          return Object.entries(breakdown)
+                                            .filter(([_, qty]) => (qty as number) > 0)
+                                            .map(([reason, qty]) => {
+                                              const percentage = totalBad > 0 ? ((qty as number) / totalBad) * 100 : 0
+                                              return (
+                                                <div key={reason} className="flex items-center gap-2 w-full max-w-[180px]">
+                                                  <span className={cn(
+                                                    "text-[10px] font-semibold min-w-[35px] text-left tabular-nums",
+                                                    textColors[reason] || 'text-red-700 dark:text-red-400'
+                                                  )}>
+                                                    {formatNumber(qty as number)}
+                                                  </span>
+                                                  <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                    <div 
+                                                      className={cn("h-full transition-all", reasonColors[reason] || 'bg-red-500')}
+                                                      style={{ width: `${percentage}%` }}
+                                                    />
+                                                  </div>
+                                                  <span className="text-[9px] text-slate-500 dark:text-slate-400 min-w-[40px]">
+                                                    {reasonLabels[reason] || reason}
+                                                  </span>
+                                                </div>
+                                              )
+                                            })
+                                        })()}
+                                      </>
+                                    ) : (
+                                      // No breakdown data, show single red bar for bad items
                                       <div className="flex items-center gap-2 w-full max-w-[160px]">
                                         <span className="text-[10px] font-semibold text-red-700 dark:text-red-400 min-w-[35px] text-left tabular-nums">
                                           {formatNumber(badQty)}
@@ -1874,14 +1932,15 @@ export default function InventoryPage() {
                                           Bad
                                         </span>
                                       </div>
-                                    </div>
-                                  )
-                                }
+                                    )}
+                                  </div>
+                                )
                               }
                               
                               // Default display (All Status or Good Stock filter)
-                              const goodPercent = item.quantity > 0 ? (goodQty / item.quantity) * 100 : 0
-                              const badPercent = item.quantity > 0 ? (badQty / item.quantity) * 100 : 0
+                              const totalItems = goodQty + badQty
+                              const goodPercent = totalItems > 0 ? (goodQty / totalItems) * 100 : 0
+                              const badPercent = totalItems > 0 ? (badQty / totalItems) * 100 : 0
                               
                               return (
                                 <div className="flex flex-col gap-1 items-start">
@@ -1951,7 +2010,9 @@ export default function InventoryPage() {
                                   )
                                 }
                                 
-                                // Default: show total quantity
+                                // Default: show total quantity (good + bad items)
+                                const badQty = item.bad_item_quantity || 0
+                                const totalStock = item.quantity + badQty
                                 return (
                                   <span className={cn(
                                     "text-lg font-bold tabular-nums",
@@ -1959,7 +2020,7 @@ export default function InventoryPage() {
                                       ? "text-blue-900 dark:text-blue-100" 
                                       : "text-slate-900 dark:text-white"
                                   )}>
-                                    {formatNumber(item.quantity)}
+                                    {formatNumber(totalStock)}
                                   </span>
                                 )
                               })()}
@@ -2523,6 +2584,205 @@ export default function InventoryPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Restore Bad Stock Dialog */}
+      {restoreDialogItem && (
+        <Dialog open={!!restoreDialogItem} onOpenChange={(open) => !open && setRestoreDialogItem(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                <RotateCcw className="h-5 w-5" />
+                Restore Bad Stock to Good
+              </DialogTitle>
+              <DialogDescription>
+                Convert bad stock back to good condition for <strong>{restoreDialogItem.name}</strong>
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Available bad stock: <span className="font-bold text-red-600 dark:text-red-400">{restoreDialogItem.bad_item_quantity || 0} units</span>
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="restore-amount">Quantity to Restore *</Label>
+                <Input
+                  id="restore-amount"
+                  type="number"
+                  min="1"
+                  max={restoreDialogItem.bad_item_quantity || 0}
+                  value={restoreAmount}
+                  onChange={(e) => setRestoreAmount(parseInt(e.target.value) || 0)}
+                  placeholder="Enter quantity"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="restore-notes">Notes (Optional)</Label>
+                <Input
+                  id="restore-notes"
+                  value={restoreNotes}
+                  onChange={(e) => setRestoreNotes(e.target.value)}
+                  placeholder="e.g., Items re-inspected and verified as good"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRestoreDialogItem(null)
+                  setRestoreAmount(0)
+                  setRestoreNotes("")
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!restoreAmount || restoreAmount <= 0) {
+                    showError("Please enter a valid quantity")
+                    return
+                  }
+                  if (restoreAmount > (restoreDialogItem.bad_item_quantity || 0)) {
+                    showError("Quantity exceeds available bad stock")
+                    return
+                  }
+
+                  try {
+                    await apiPost(`/api/items/${restoreDialogItem.id}/restore`, {
+                      amount: restoreAmount,
+                      notes: restoreNotes
+                    })
+                    showSuccess(`Successfully restored ${restoreAmount} units to good stock!`)
+                    setRestoreDialogItem(null)
+                    setRestoreAmount(0)
+                    setRestoreNotes("")
+                    await fetchItems()
+                  } catch (error) {
+                    console.error("Error restoring stock:", error)
+                    showError("Failed to restore stock")
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Restore to Good
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Dispose Bad Stock Dialog */}
+      {disposeDialogItem && (
+        <Dialog open={!!disposeDialogItem} onOpenChange={(open) => !open && setDisposeDialogItem(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
+                <Trash2 className="h-5 w-5" />
+                Dispose Bad Stock
+              </DialogTitle>
+              <DialogDescription>
+                Permanently remove bad stock from inventory for <strong>{disposeDialogItem.name}</strong>
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+                <p className="text-sm text-red-700 dark:text-red-300 flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>This action will permanently remove items from inventory. This cannot be undone.</span>
+                </p>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Available bad stock: <span className="font-bold text-red-600 dark:text-red-400">{disposeDialogItem.bad_item_quantity || 0} units</span>
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="dispose-amount">Quantity to Dispose *</Label>
+                <Input
+                  id="dispose-amount"
+                  type="number"
+                  min="1"
+                  max={disposeDialogItem.bad_item_quantity || 0}
+                  value={disposeAmount}
+                  onChange={(e) => setDisposeAmount(parseInt(e.target.value) || 0)}
+                  placeholder="Enter quantity"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="dispose-notes">Disposal Notes *</Label>
+                <Input
+                  id="dispose-notes"
+                  value={disposeNotes}
+                  onChange={(e) => setDisposeNotes(e.target.value)}
+                  placeholder="e.g., Thrown away, donated, sent to supplier"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDisposeDialogItem(null)
+                  setDisposeAmount(0)
+                  setDisposeNotes("")
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!disposeAmount || disposeAmount <= 0) {
+                    showError("Please enter a valid quantity")
+                    return
+                  }
+                  if (disposeAmount > (disposeDialogItem.bad_item_quantity || 0)) {
+                    showError("Quantity exceeds available bad stock")
+                    return
+                  }
+                  if (!disposeNotes.trim()) {
+                    showError("Please provide disposal notes")
+                    return
+                  }
+
+                  try {
+                    await apiPost(`/api/items/${disposeDialogItem.id}/dispose`, {
+                      amount: disposeAmount,
+                      notes: disposeNotes
+                    })
+                    showSuccess(`Successfully disposed ${disposeAmount} units of bad stock!`)
+                    setDisposeDialogItem(null)
+                    setDisposeAmount(0)
+                    setDisposeNotes("")
+                    await fetchItems()
+                  } catch (error) {
+                    console.error("Error disposing stock:", error)
+                    showError("Failed to dispose stock")
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Dispose Stock
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

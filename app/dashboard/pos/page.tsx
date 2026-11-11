@@ -15,6 +15,7 @@ import { formatCurrency, cn, toDisplayName } from "@/lib/utils"
 import { toast } from "sonner"
 
 interface CartItem {
+  cartItemId: string  // Unique ID for each cart row
   item: InventoryItem
   quantity: number
   isFreebie?: boolean // NEW: Track if this item is a freebie
@@ -27,7 +28,14 @@ export default function POSPage() {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('pos_cart_draft')
-        if (saved) return JSON.parse(saved)
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          // Ensure each cart item has a cartItemId (for backward compatibility)
+          return parsed.map((ci: CartItem, index: number) => ({
+            ...ci,
+            cartItemId: ci.cartItemId || `${ci.item?.id || 'item'}-${Date.now()}-${index}`
+          }))
+        }
       } catch {}
     }
     return []
@@ -66,10 +74,10 @@ export default function POSPage() {
     return sum
   }, 0), [cart])
 
-  // Helper function to calculate sellable quantity (total - bad stock)
+  // Helper function to get sellable quantity (good stock only, excludes bad stock)
   const getSellableQuantity = (item: InventoryItem): number => {
-    const badQuantity = item.bad_item_quantity || 0
-    return Math.max(0, item.quantity - badQuantity)
+    // item.quantity already represents GOOD stock only (bad stock is separate)
+    return item.quantity
   }
 
   // Persist cart to localStorage whenever it changes
@@ -173,9 +181,9 @@ export default function POSPage() {
   }
 
   // Toggle freebie status
-  function toggleFreebie(itemId: string) {
+  function toggleFreebie(cartItemId: string) {
     setCart(cart.map(ci => 
-      ci.item.id === itemId ? { ...ci, isFreebie: !ci.isFreebie } : ci
+      ci.cartItemId === cartItemId ? { ...ci, isFreebie: !ci.isFreebie } : ci
     ))
   }
 
@@ -303,55 +311,57 @@ export default function POSPage() {
   }
 
   function addToCart(item: InventoryItem) {
-    const existingItem = cart.find((cartItem) => cartItem.item.id === item.id)
     const sellableQty = getSellableQuantity(item)
 
-    if (existingItem) {
-      if (existingItem.quantity < sellableQty) {
-        setCart(
-          cart.map((cartItem) =>
-            cartItem.item.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem,
-          ),
-        )
-        // Toast for quantity increase
-        toast.success(`${item.name} quantity increased to ${existingItem.quantity + 1}`, {
-          duration: 2000,
-          icon: '➕',
-        })
-      } else {
-        // Toast when max stock reached
-        toast.warning(`Maximum stock reached for ${item.name}`, {
-          duration: 2000,
-          icon: '⚠️',
-        })
-      }
-    } else {
-      setCart([...cart, { item, quantity: 1 }])
-      // Toast for new item added
-      toast.success(`${item.name} added to cart`, {
+    // Check total quantity already in cart for this item across all rows
+    const totalInCart = cart
+      .filter(ci => ci.item.id === item.id)
+      .reduce((sum, ci) => sum + ci.quantity, 0)
+
+    if (totalInCart >= sellableQty) {
+      toast.warning(`Maximum stock reached for ${item.name}`, {
         duration: 2000,
-        icon: '✓',
+        icon: '⚠️',
       })
-    }
-  }
-
-  function updateQuantity(itemId: string, quantity: number) {
-    const cartItem = cart.find((ci) => ci.item.id === itemId)
-    if (!cartItem) return
-
-    if (quantity <= 0) {
-      removeFromCart(itemId)
       return
     }
 
-    // Allow any quantity to be entered, but cap at sellable stock
-    const sellableQty = getSellableQuantity(cartItem.item)
-    const finalQuantity = Math.min(quantity, sellableQty)
-    setCart(cart.map((ci) => (ci.item.id === itemId ? { ...ci, quantity: finalQuantity } : ci)))
+    // Always add as a new separate row (for buy 1 take 1 scenarios)
+    const newCartItem: CartItem = {
+      cartItemId: `${item.id}-${Date.now()}`,
+      item,
+      quantity: 1,
+      isFreebie: false
+    }
+    setCart([...cart, newCartItem])
+    toast.success(`${item.name} added to cart`, {
+      duration: 2000,
+      icon: '✓',
+    })
   }
 
-  function removeFromCart(itemId: string) {
-    setCart(cart.filter((cartItem) => cartItem.item.id !== itemId))
+  function updateQuantity(cartItemId: string, quantity: number) {
+    const cartItem = cart.find((ci) => ci.cartItemId === cartItemId)
+    if (!cartItem) return
+
+    if (quantity <= 0) {
+      removeFromCart(cartItemId)
+      return
+    }
+
+    // Check total in cart for this product excluding current row
+    const otherRowsTotal = cart
+      .filter(ci => ci.item.id === cartItem.item.id && ci.cartItemId !== cartItemId)
+      .reduce((sum, ci) => sum + ci.quantity, 0)
+
+    const sellableQty = getSellableQuantity(cartItem.item)
+    const maxForThisRow = sellableQty - otherRowsTotal
+    const finalQuantity = Math.min(quantity, maxForThisRow)
+    setCart(cart.map((ci) => (ci.cartItemId === cartItemId ? { ...ci, quantity: finalQuantity } : ci)))
+  }
+
+  function removeFromCart(cartItemId: string) {
+    setCart(cart.filter((cartItem) => cartItem.cartItemId !== cartItemId))
   }
 
   // NEW: Cart modal state
@@ -500,7 +510,7 @@ export default function POSPage() {
                               ? "bg-red-500 text-white"
                               : isLowStock
                               ? "bg-amber-500 text-white"
-                              : "bg-slate-900/70 text-white"
+                              : "bg-green-600 text-white"
                           )}>
                             {isOutOfStock ? "OUT" : sellableQty}
                           </span>
@@ -572,49 +582,66 @@ export default function POSPage() {
 
       {/* Professional Corporate Cart Modal */}
       <Dialog open={cartModalOpen} onOpenChange={setCartModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
-          {/* Clean Header */}
-          <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 pr-16">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <DialogTitle className="text-2xl font-bold text-slate-900 dark:text-white">
-                  Cart Summary
-                </DialogTitle>
-                {cart.length > 0 && (
-                  <button
-                    onClick={clearCart}
-                    className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors flex items-center gap-1.5 mt-2"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Clear All Items
-                  </button>
-                )}
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
-                  ₱{total.toFixed(2)}
+        <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col p-0 gap-0 rounded-2xl border-0 shadow-2xl [&>button]:hidden">
+          {/* Premium Header - Warehouse Style */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-4">
+            {/* Background warehouse image effect */}
+            <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC40Ij48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLThoLTJ2LTRoMnY0em0tNiA4aC0ydi00aDJ2NHptMC04aC0ydi00aDJ2NHoiLz48L2c+PC9nPjwvc3ZnPg==')]"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-950/50 via-transparent to-blue-950/30 pointer-events-none"></div>
+
+            <div className="relative flex items-center justify-between gap-4">
+              {/* Left - Icon + Title + Subtitle + Badges */}
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                {/* Cart Icon Box */}
+                <div className="flex-shrink-0 w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <ShoppingCart className="h-7 w-7 text-white" />
                 </div>
-                {freebieCOGS > 0 && (
-                  <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    +₱{freebieCOGS.toFixed(2)} freebies
+
+                {/* Vertical Divider */}
+                <div className="w-px h-12 bg-white/20 flex-shrink-0"></div>
+
+                {/* Title + Subtitle */}
+                <div className="flex-1 min-w-0">
+                  <DialogTitle className="text-2xl font-bold !text-white tracking-tight leading-tight">
+                    Shopping Cart
+                  </DialogTitle>
+                  <p className="text-blue-200/80 text-xs mt-0.5">
+                    Manage orders and dispatch for warehouse operations
+                  </p>
+                </div>
+              </div>
+
+              {/* Right - Total Amount */}
+              <div className="flex items-center gap-3 flex-shrink-0 pl-4 border-l border-white/20">
+                <div className="text-right leading-none">
+                  <div className="text-xs font-semibold text-blue-200/80 mb-0.5">
+                    Total Amount
                   </div>
-                )}
-                {cart.length > 0 && (
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {cart.length} item{cart.length !== 1 ? 's' : ''}
+                  <div className="text-2xl font-black text-yellow-400 tabular-nums tracking-tight -mt-0.5">
+                    ₱{total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
-                )}
+                  {freebieCOGS > 0 && (
+                    <div className="text-[10px] font-semibold text-orange-300 mt-0.5">
+                      +₱{freebieCOGS.toFixed(2)} freebies
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Cart Items - Clean Professional Design */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-slate-50 dark:bg-slate-950">
+          {/* Cart Items - Premium Design */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-950/50 dark:to-slate-900">
             {cart.length === 0 ? (
-              <div className="text-center py-16">
-                <ShoppingCart className="h-16 w-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" strokeWidth={1.5} />
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Your cart is empty</h3>
-                <p className="text-slate-600 dark:text-slate-400">Start adding products to begin checkout</p>
+              <div className="text-center py-20">
+                <div className="relative inline-block mb-6">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-2xl"></div>
+                  <div className="relative p-6 bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl">
+                    <ShoppingCart className="h-20 w-20 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Your cart is empty</h3>
+                <p className="text-slate-600 dark:text-slate-400 text-lg">Start adding products to begin checkout</p>
               </div>
             ) : (
               cart.map((cartItem) => {
@@ -625,7 +652,7 @@ export default function POSPage() {
                 
                 return (
                   <div
-                    key={cartItem.item.id}
+                    key={cartItem.cartItemId}
                     className={cn(
                       "rounded-xl border transition-all p-3",
                       cartItem.isFreebie 
@@ -665,11 +692,11 @@ export default function POSPage() {
                       </div>
 
                       {/* Quantity Section - Stepper with Maintained Width */}
-                      <div className="flex flex-col items-center gap-0.5">
+                      <div className="flex flex-col items-center gap-0.5 ml-4">
                         <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Qty</span>
                         <div className="flex items-center bg-white dark:bg-slate-800 rounded-md border border-slate-300 dark:border-slate-600">
                           <button
-                            onClick={() => updateQuantity(freshItem.id, cartItem.quantity - 1)}
+                            onClick={() => updateQuantity(cartItem.cartItemId, cartItem.quantity - 1)}
                             className="h-7 w-7 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-base transition-colors rounded-l-md"
                           >
                             −
@@ -690,13 +717,13 @@ export default function POSPage() {
                                     icon: '⚠️',
                                   })
                                 }
-                                updateQuantity(freshItem.id, numValue)
+                                updateQuantity(cartItem.cartItemId, numValue)
                               }
                             }}
                             className="h-7 w-14 text-center font-semibold text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none px-1"
                           />
                           <button
-                            onClick={() => updateQuantity(freshItem.id, cartItem.quantity + 1)}
+                            onClick={() => updateQuantity(cartItem.cartItemId, cartItem.quantity + 1)}
                             className="h-7 w-7 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-base transition-colors rounded-r-md"
                           >
                             +
@@ -705,7 +732,7 @@ export default function POSPage() {
                       </div>
 
                       {/* Subtotal Section - Refined Size */}
-                      <div className="flex flex-col items-end gap-0.5 min-w-[90px]">
+                      <div className="flex flex-col items-end gap-0.5 min-w-[90px] ml-4">
                         <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Subtotal</span>
                         <div className="text-base font-bold text-slate-900 dark:text-white">
                           {cartItem.isFreebie ? (
@@ -716,18 +743,18 @@ export default function POSPage() {
                         </div>
                       </div>
 
-                      {/* Action Icons - Compact & Balanced */}
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {/* Action Icons - Pushed to far right */}
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
                         {/* Gift Icon - Toggle Freebie */}
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => toggleFreebie(cartItem.item.id)} 
+                          onClick={() => toggleFreebie(cartItem.cartItemId)} 
                           className={cn(
-                            "h-8 w-8 p-0 transition-colors rounded-md",
+                            "h-9 w-9 p-0 transition-all rounded-lg border",
                             cartItem.isFreebie
-                              ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50"
-                              : "text-slate-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-600 dark:hover:text-orange-400"
+                              ? "bg-orange-100 text-orange-600 border-orange-300 hover:bg-orange-200"
+                              : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300"
                           )}
                           title={cartItem.isFreebie ? "Remove freebie status" : "Mark as freebie"}
                         >
@@ -740,11 +767,11 @@ export default function POSPage() {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => removeFromCart(freshItem.id)} 
-                          className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-600 rounded-md transition-colors"
+                          onClick={() => removeFromCart(cartItem.cartItemId)} 
+                          className="h-9 w-9 p-0 bg-slate-100 text-slate-500 border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-300 rounded-lg transition-all"
                           title="Remove from cart"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
 
@@ -809,15 +836,18 @@ export default function POSPage() {
               <Button
                 onClick={() => setConfirmDispatchOpen(true)}
                 disabled={loading || cart.length === 0}
-                className="w-full h-12 text-base font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900"
+                className="w-full h-14 text-lg font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:via-slate-700 hover:to-slate-800 dark:from-white dark:via-slate-50 dark:to-white dark:hover:from-slate-50 dark:hover:via-white dark:hover:to-slate-50 text-white dark:text-slate-900 shadow-xl hover:shadow-2xl transition-all duration-200 rounded-xl"
                 size="lg"
               >
                 {loading ? (
-                  "Processing..."
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-5 border-3 border-white/30 border-t-white dark:border-slate-900/30 dark:border-t-slate-900 rounded-full animate-spin"></div>
+                    <span>Processing Order...</span>
+                  </div>
                 ) : (
                   <>
-                    <Truck className="h-5 w-5 mr-2" />
-                    Dispatch Order ({cart.length} item{cart.length !== 1 ? 's' : ''})
+                    <Truck className="h-6 w-6 mr-2" />
+                    Dispatch Order • {cart.length} {cart.length === 1 ? 'Item' : 'Items'}
                   </>
                 )}
               </Button>
