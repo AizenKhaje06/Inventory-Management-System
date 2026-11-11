@@ -27,49 +27,31 @@ export function formatChartData(
 ): ChartDataPoint[] {
   if (!salesOverTime || salesOverTime.length === 0) return []
 
-  console.log('[formatChartData] Input:', { timePeriod, sampleDate: salesOverTime[0]?.date, count: salesOverTime.length })
-
-  const formatted = salesOverTime.map(item => {
+  return salesOverTime.map(item => {
     let displayDate = item.date
 
     if (timePeriod === "ID") {
-      // Day: show 12-hour format (e.g., "12am", "1am", "2pm", "11pm")
-      // API sends "14:00" format, convert to 12-hour format
-      try {
-        const hour = parseInt(item.date.split(':')[0])
-        if (!isNaN(hour) && hour >= 0 && hour < 24) {
-          if (hour === 0) {
-            displayDate = '12am'
-          } else if (hour < 12) {
-            displayDate = `${hour}am`
-          } else if (hour === 12) {
-            displayDate = '12pm'
-          } else {
-            displayDate = `${hour - 12}pm`
-          }
+      // Day: 12-hour format (12am, 1am, 2pm, 11pm)
+      const parts = item.date.split(':')
+      const hour = parseInt(parts[0])
+      if (!isNaN(hour) && hour >= 0 && hour < 24) {
+        if (hour === 0) {
+          displayDate = '12am'
+        } else if (hour < 12) {
+          displayDate = `${hour}am`
+        } else if (hour === 12) {
+          displayDate = '12pm'
         } else {
-          displayDate = item.date
+          displayDate = `${hour - 12}pm`
         }
-      } catch (e) {
-        console.error('Hour parsing error:', e, item.date)
-        displayDate = item.date
       }
     } else if (timePeriod === "1W") {
-      // Week: format as "Mon", "Tue", etc. (short day name only)
-      try {
-        // API sends ISO date like "2026-11-02"
-        const dateObj = new Date(item.date + 'T00:00:00')
-        if (!isNaN(dateObj.getTime())) {
-          displayDate = dateObj.toLocaleDateString('en-US', { 
-            weekday: 'short' // Mon, Tue, Wed, etc.
-          })
-        }
-      } catch (e) {
-        console.error('Date parsing error:', e, item.date)
-        displayDate = item.date
-      }
+      // Week: Date format (Nov 5, Nov 6, etc.)
+      // API already sends "Nov 5" format, use as-is
+      displayDate = item.date
     } else if (timePeriod === "1M") {
-      // Month: API sends "Nov 15" format, use as-is
+      // Month: Date format (Nov 1, Nov 2, etc.)
+      // API already sends "Nov 15" format, use as-is
       displayDate = item.date
     }
 
@@ -80,9 +62,6 @@ export function formatChartData(
       quantity: item.quantity || 0
     }
   })
-
-  console.log('[formatChartData] Output:', { sampleFormatted: formatted[0]?.date, count: formatted.length })
-  return formatted
 }
 
 // ============================================================================
