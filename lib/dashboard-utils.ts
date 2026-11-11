@@ -46,8 +46,8 @@ export function formatChartData(
         }
       }
     } else if (timePeriod === "1W") {
-      // Week: Just day numbers (5, 6, 7, 8, 9, 10, 11)
-      // API already sends day numbers, use as-is
+      // Week: Month and day (Nov 5, Nov 6, Nov 7, etc.)
+      // API already sends "Nov 5" format, use as-is
       displayDate = item.date
     } else if (timePeriod === "1M") {
       // Month: Just day numbers (1, 2, 3... 30)

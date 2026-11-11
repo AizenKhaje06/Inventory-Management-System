@@ -11,9 +11,10 @@ export async function POST(request: NextRequest) {
 
     console.log('[Sales API] Received request:', { items, department, staffName, notes })
 
-    // Get user from headers for department filtering
+    // Get user from headers for department filtering and dispatcher info
     const userRole = request.headers.get('x-user-role')
     const assignedChannel = request.headers.get('x-assigned-channel')
+    const dispatcherName = request.headers.get('x-user-display-name') || 'N/A'
 
     if (!department) {
       console.error('[Sales API] Department is missing')
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
           operation: transactionType === 'sale' ? 'sale' : transactionType === 'demo' ? 'demo-display' : transactionType === 'internal' ? 'internal-usage' : 'warehouse',
           itemId: bundle.id,
           itemName: bundle.name,
-          details: `${transactionType === 'sale' ? 'Dispatched' : transactionType === 'demo' ? 'Demo/Display' : transactionType === 'internal' ? 'Internal Use' : 'Transferred'} bundle "${bundle.name}" - Qty: ${saleItem.quantity}, ${transactionType === 'sale' ? `Total: ₱${totalRevenue.toFixed(2)}, ` : ''}Department: ${department}, Staff: ${staffName || 'N/A'}`
+          details: `${transactionType === 'sale' ? 'Dispatched' : transactionType === 'demo' ? 'Demo/Display' : transactionType === 'internal' ? 'Internal Use' : 'Transferred'} bundle "${bundle.name}" - Qty: ${saleItem.quantity}, ${transactionType === 'sale' ? `Total: ₱${totalRevenue.toFixed(2)}, ` : ''}Department: ${department}, Dispatcher: ${dispatcherName}`
         })
         
         transactions.push(transaction)
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
               operation: 'warehouse',
               itemId: inventoryItem.id,
               itemName: inventoryItem.name,
-              details: `Transferred "${inventoryItem.name}" - Qty: ${saleItem.quantity}, Staff: ${staffName || 'N/A'}`
+              details: `Transferred "${inventoryItem.name}" - Qty: ${saleItem.quantity}, Dispatcher: ${dispatcherName}`
             }),
             // Record transaction
             addTransaction({
@@ -204,7 +205,7 @@ export async function POST(request: NextRequest) {
               operation: 'warehouse',
               itemId: inventoryItem.id,
               itemName: inventoryItem.name,
-              details: `Transferred "${inventoryItem.name}" from ${inventoryItem.store} to ${destinationStorage} (new entry) - Qty: ${saleItem.quantity}, Staff: ${staffName || 'N/A'}`
+              details: `Transferred "${inventoryItem.name}" from ${inventoryItem.store} to ${destinationStorage} (new entry) - Qty: ${saleItem.quantity}, Dispatcher: ${dispatcherName}`
             }),
             // Record transaction
             addTransaction({
@@ -246,7 +247,7 @@ export async function POST(request: NextRequest) {
             operation: transactionType === 'sale' ? 'sale' : transactionType === 'demo' ? 'demo-display' : transactionType === 'internal' ? 'internal-usage' : 'warehouse',
             itemId: inventoryItem.id,
             itemName: inventoryItem.name,
-            details: `${transactionType === 'sale' ? 'Dispatched' : transactionType === 'demo' ? 'Demo/Display' : transactionType === 'internal' ? 'Internal Use' : 'Transferred'} "${inventoryItem.name}" - Qty: ${saleItem.quantity}, ${transactionType === 'sale' ? `Total: ₱${totalRevenue.toFixed(2)}, ` : ''}Department: ${department}, Staff: ${staffName || 'N/A'}`
+            details: `${transactionType === 'sale' ? 'Dispatched' : transactionType === 'demo' ? 'Demo/Display' : transactionType === 'internal' ? 'Internal Use' : 'Transferred'} "${inventoryItem.name}" - Qty: ${saleItem.quantity}, ${transactionType === 'sale' ? `Total: ₱${totalRevenue.toFixed(2)}, ` : ''}Department: ${department}, Dispatcher: ${dispatcherName}`
           })
         ]
         

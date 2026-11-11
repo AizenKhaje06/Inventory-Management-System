@@ -65,16 +65,11 @@ export default function DashboardPage() {
       
       // Build API URL
       // - Tabs (Day/Week/Month) control chart data with their own date ranges
-      // - Date picker controls KPI cards and other metrics
+      // - Date picker should NOT override the tabs, only filter KPI data
       let apiUrl = `/api/dashboard?period=${timePeriod}`
       
-      // Add date filter for KPI cards (if set)
-      if (startDate) {
-        apiUrl += `&startDate=${startDate.toISOString()}`
-      }
-      if (endDate) {
-        apiUrl += `&endDate=${endDate.toISOString()}`
-      }
+      // DON'T send date filters - let the period tabs control the chart data
+      // The backend will use the period parameter to determine the correct date range
       
       const [stats, items] = await Promise.all([
         apiGet<DashboardStats>(apiUrl),
@@ -104,7 +99,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchData()
-  }, [timePeriod, startDate, endDate]) // Refetch when tab OR date filter changes
+  }, [timePeriod]) // Only refetch when period tab changes, not date filter
 
   // Show loading state with skeleton loaders
   if (loading) {

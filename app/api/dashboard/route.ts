@@ -386,7 +386,7 @@ export async function GET(request: Request) {
         return { date: hourStr, purchases: 0, sales, quantity }
       })
     } else if (period === '1W') {
-      // Last 7 days - show just day numbers (5, 6, 7, 8, 9, 10, 11)
+      // Last 7 days - show month and day (Nov 5, Nov 6, etc.)
       salesOverTime = Array.from({ length: 7 }, (_, i) => {
         const day = new Date(today)
         day.setDate(today.getDate() - (6 - i))
@@ -394,8 +394,11 @@ export async function GET(request: Request) {
         const nextDay = new Date(day)
         nextDay.setDate(day.getDate() + 1)
 
-        // Show just the day number
-        const dayStr = day.getDate().toString()
+        // Format as "Nov 5", "Nov 6", etc.
+        const dayStr = day.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        })
 
         const dayTransactions = activeTransactions.filter(tx => {
           const txDate = new Date(tx.timestamp)
