@@ -62,6 +62,9 @@
                   "        pm.collectionVariables.set('adminUsername', jsonData.user.username);",
                   "        pm.collectionVariables.set('adminRole', jsonData.user.role);",
                   "    }",
+                  "    if (jsonData.sessionId) {",
+                  "        pm.collectionVariables.set('sessionId', jsonData.sessionId);",
+                  "    }",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -103,6 +106,7 @@
                   "pm.test('Session is valid', function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property('valid');",
+                  "    pm.expect(jsonData.valid).to.be.true;",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -110,14 +114,23 @@
             }
           ],
           "request": {
-            "method": "GET",
-            "header": [],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
             "url": {
               "raw": "{{baseUrl}}/api/auth/validate-session",
               "host": ["{{baseUrl}}"],
               "path": ["api", "auth", "validate-session"]
             },
-            "description": "Validate current session"
+            "description": "Validate current session using saved credentials from login"
           },
           "response": []
         }

@@ -340,7 +340,11 @@ export async function GET(request: Request) {
         const nextDay = new Date(day)
         nextDay.setDate(nextDay.getDate() + 1)
 
-        const dayStr = day.toISOString()
+        // Format as "Nov 15" for consistency
+        const dayStr = day.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        })
 
         const dayTransactions = activeTransactionsKPI.filter(tx => {
           const txDate = new Date(tx.timestamp)
@@ -382,7 +386,7 @@ export async function GET(request: Request) {
         return { date: hourStr, purchases: 0, sales, quantity }
       })
     } else if (period === '1W') {
-      // Last 7 days
+      // Last 7 days - show just day numbers (5, 6, 7, 8, 9, 10, 11)
       salesOverTime = Array.from({ length: 7 }, (_, i) => {
         const day = new Date(today)
         day.setDate(today.getDate() - (6 - i))
@@ -390,7 +394,8 @@ export async function GET(request: Request) {
         const nextDay = new Date(day)
         nextDay.setDate(day.getDate() + 1)
 
-        const dayStr = day.toISOString().split('T')[0]
+        // Show just the day number
+        const dayStr = day.getDate().toString()
 
         const dayTransactions = activeTransactions.filter(tx => {
           const txDate = new Date(tx.timestamp)
@@ -412,7 +417,7 @@ export async function GET(request: Request) {
         const nextDay = new Date(day)
         nextDay.setDate(nextDay.getDate() + 1)
 
-        const dayStr = `${today.toLocaleDateString('en-US', { month: 'short' })} ${i + 1}`
+        const dayStr = `${i + 1}` // Just the day number: 1, 2, 3, etc.
 
         const dayTransactions = activeTransactions.filter(tx => {
           const txDate = new Date(tx.timestamp)

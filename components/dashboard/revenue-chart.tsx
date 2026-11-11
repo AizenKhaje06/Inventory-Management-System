@@ -269,12 +269,12 @@ export function RevenueChart({
     
     if (isMobile) {
       // Mobile: Show very few labels to prevent crowding
-      if (timePeriod === '1M') return Math.floor(dataLength / 4)  // Show only 4-5 labels
-      if (timePeriod === '1W') return 1  // Show every other day (3-4 labels)
+      if (timePeriod === '1M') return 2  // Show every 3rd day (~10 labels for 30 days)
+      if (timePeriod === '1W') return 0  // Show all 7 days
       return Math.floor(dataLength / 4)  // Day view: Show only 4-5 labels
     } else {
-      // Desktop: Show fewer labels to prevent overlap
-      if (timePeriod === '1M') return Math.floor(dataLength / 6)  // Show ~6-7 labels
+      // Desktop: Show more labels for Month like Week
+      if (timePeriod === '1M') return 1  // Show every other day (~15 labels for 30 days)
       if (timePeriod === '1W') return 0  // Show all 7 days
       return Math.floor(dataLength / 6)  // Day view: Show ~6 labels
     }
