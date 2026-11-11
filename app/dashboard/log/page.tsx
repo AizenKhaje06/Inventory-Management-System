@@ -331,7 +331,7 @@ export default function LogPage() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto py-5 space-y-6">
+    <div className="max-w-[1400px] mx-auto py-5 px-6 space-y-6">
       {/* Page Header with Date Filter - Mobile Responsive */}
       <div className="flex flex-col gap-4 mb-6">
         <div>

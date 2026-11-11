@@ -391,7 +391,7 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden pt-2">
+    <div className="max-w-[1400px] mx-auto py-4 px-6 space-y-5 sm:space-y-6">
       {/* Page Header */}
       <div className="mb-6 animate-in fade-in-0 slide-in-from-top-4 duration-700">
         <h1 className="text-2xl sm:text-3xl font-semibold gradient-text">

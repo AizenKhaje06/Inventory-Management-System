@@ -181,7 +181,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto py-4 px-4 sm:px-6 space-y-5 sm:space-y-6">
+    <div className="max-w-[1400px] mx-auto py-4 px-6 space-y-5 sm:space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div className="flex-1 min-w-0">
@@ -681,14 +681,12 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a]">
                 <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                    <TrendingUp className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                  <div className="h-6 w-6 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
                   </div>
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Return Rate</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Bad Stock Items</span>
                 </div>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">
-                  {(stats?.returnRate || 0).toFixed(1)}%
-                </span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">{totalBadQty} units</span>
               </div>
               <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a]">
                 <div className="flex items-center gap-2">
