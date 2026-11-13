@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Orders - Profit Calculation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .info-box li {
+            padding: 5px 0;
+            color: #555;
+            font-size: 14px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result h3 {
+            margin-bottom: 10px;
+        }
+        .result pre {
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .spinner {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading button {
+            pointer-events: none;
+        }
+        .loading .spinner {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Order Profit Calculations</h1>
+        <p class="subtitle">Repair incorrect COGS values in 3 orders</p>
+
+        <div class="info-box">
+            <h3>📋 Orders to be Fixed:</h3>
+            <ul>
+                <li>✅ ORD-1788361733302 - Volcanic Mud Scrub (500 units)</li>
+                <li>✅ ORD-1788358757437 - Niacinamide Soap (700 units)</li>
+                <li>✅ ORD-1788356709322 - Berry Soap (892 units)</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h3>🔍 What will be fixed:</h3>
+            <ul>
+                <li>• COGS values will be changed from total cost to per-unit cost</li>
+                <li>• Profit calculations will become accurate</li>
+                <li>• Dashboard metrics will display correctly</li>
+            </ul>
+        </div>
+
+        <button id="fixBtn" onclick="fixOrders()">
+            <span id="btnText">Fix Orders Now</span>
+            <div class="spinner"></div>
+        </button>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function fixOrders() {
+            const btn = document.getElementById('fixBtn');
+            const result = document.getElementById('result');
+            const container = document.querySelector('.container');
+            
+            // Show loading state
+            container.classList.add('loading');
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/fix-profit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                // Hide loading
+                container.classList.remove('loading');
+
+                if (data.success) {
+                    result.className = 'result success';
+                    result.style.display = 'block';
+                    result.innerHTML = `
+                        <h3>✅ Success! Orders Fixed</h3>
+                        <p>All 3 orders have been updated successfully.</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <p style="margin-top: 15px;"><strong>Next step:</strong> Refresh your dashboard to see the corrected values!</p>
+                    `;
+                    btn.disabled = true;
+                    document.getElementById('btnText').textContent = 'Orders Fixed ✓';
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                container.classList.remove('loading');
+                result.className = 'result error';
+                result.style.display = 'block';
+                result.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p>${error.message}</p>
+                    <p>Please check the console for more details.</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

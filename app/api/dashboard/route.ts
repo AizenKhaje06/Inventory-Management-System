@@ -142,23 +142,53 @@ export async function GET(request: Request) {
     }
 
     // Transform orders to transaction format for compatibility
-    const allTransactions = (allOrders || []).map(order => ({
-      id: order.id,
-      item_id: null, // Orders don't have item_id
-      item_name: order.product,
-      quantity: order.qty,
-      cost_price: order.cogs,
-      selling_price: order.total / order.qty, // Calculate selling price
-      total_cost: order.cogs * order.qty,
-      total_revenue: order.total,
-      profit: order.total - (order.cogs * order.qty),
-      timestamp: order.date || order.created_at, // Use date first (timestamptz column), fallback to created_at
-      type: 'sale',
-      staff_name: order.dispatched_by,
-      notes: order.notes || ''
-    }))
+    const allTransactions = (allOrders || []).map(order => {
+      // Validate and sanitize data
+      let qty = Math.abs(order.qty || 0)
+      let cogs = Math.abs(order.cogs || 0)
+      let total = Math.abs(order.total || 0)
+      
+      // SMART DETECTION: If COGS seems to be total instead of per-unit
+      // Heuristic: If (cogs * qty) > total * 10, then cogs is likely already a total
+      if (qty > 1 && cogs > 0 && total > 0) {
+        const calculatedTotalCost = cogs * qty
+        // If calculated cost is more than 10x the order total, COGS is probably wrong
+        if (calculatedTotalCost > total * 10) {
+          // COGS is likely the total cost, so divide by quantity to get per-unit
+          console.warn(`[Dashboard API] Detected incorrect COGS for order ${order.id}: ${cogs} (likely total). Converting to per-unit: ${cogs / qty}`)
+          cogs = cogs / qty
+        }
+      }
+      
+      const totalCost = cogs * qty
+      const profit = total - totalCost
+      
+      return {
+        id: order.id,
+        item_id: null, // Orders don't have item_id
+        item_name: order.product,
+        quantity: qty,
+        cost_price: cogs,
+        selling_price: qty > 0 ? total / qty : 0,
+        total_cost: totalCost,
+        total_revenue: total,
+        profit: profit,
+        timestamp: order.date || order.created_at,
+        type: 'sale',
+        staff_name: order.dispatched_by,
+        notes: order.notes || ''
+      }
+    })
     
     console.log('[Dashboard API] Sample transformed transaction:', allTransactions[0]);
+    console.log('[Dashboard API] Total transactions:', allTransactions.length);
+    
+    // Check for data issues
+    const negativeProfit = allTransactions.filter(tx => tx.profit < 0)
+    if (negativeProfit.length > 0) {
+      console.warn('[Dashboard API] Found', negativeProfit.length, 'transactions with negative profit');
+      console.warn('[Dashboard API] Sample negative profit transaction:', negativeProfit[0]);
+    }
 
     // Apply date filters ONLY for KPI cards (not for chart data)
     // Chart data is controlled by period tabs (Day/Week/Month)
@@ -231,6 +261,14 @@ export async function GET(request: Request) {
     const totalProfit = activeTransactionsKPI.reduce((sum, tx) => sum + tx.profit, 0)
     const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
     const totalQuantity = activeTransactionsKPI.reduce((sum, tx) => sum + tx.quantity, 0)
+
+    console.log('[Dashboard API] Financial Metrics Calculation:');
+    console.log('  - Transactions used (KPI):', activeTransactionsKPI.length);
+    console.log('  - Total Revenue:', totalRevenue);
+    console.log('  - Total COGS:', totalCOGS);
+    console.log('  - Total Profit:', totalProfit);
+    console.log('  - Profit Margin:', profitMargin.toFixed(2) + '%');
+    console.log('  - Total Quantity:', totalQuantity);
 
     const financialMetrics = {
       totalRevenue,
@@ -420,7 +458,11 @@ export async function GET(request: Request) {
         const nextDay = new Date(day)
         nextDay.setDate(nextDay.getDate() + 1)
 
-        const dayStr = `${i + 1}` // Just the day number: 1, 2, 3, etc.
+        // Format as "Nov 1", "Nov 2", etc.
+        const dayStr = day.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        })
 
         const dayTransactions = activeTransactions.filter(tx => {
           const txDate = new Date(tx.timestamp)
@@ -606,11 +648,29 @@ export async function GET(request: Request) {
       : 0
 
     // Inventory health score
+    // Calculate bad stock metrics
+    const badStockItems = items?.filter((item: InventoryItem) => item.item_status === 'bad') || []
+    const totalBadQty = badStockItems.reduce((sum, item) => sum + (item.bad_item_quantity || 0), 0)
+    const totalGoodQty = items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
+    const totalStockQty = totalGoodQty + totalBadQty
+    
+    // Health components
     const stockHealthPercent = totalItems > 0 ? ((totalItems - outOfStockCount) / totalItems) * 100 : 100
     const returnHealthPercent = 100 - Math.min(returnRate * 10, 100)
     const lowStockHealthPercent = totalItems > 0 ? ((totalItems - lowStockItems) / totalItems) * 100 : 100
+    
+    // Bad stock health: Penalize based on % of bad stock
+    const badStockHealthPercent = totalStockQty > 0 
+      ? ((totalStockQty - totalBadQty) / totalStockQty) * 100 
+      : 100
+    
+    // Weighted health score calculation
+    // Stock availability: 30%, Low stock: 25%, Bad stock: 30%, Returns: 15%
     const inventoryHealthScore = Math.round(
-      (stockHealthPercent * 0.4 + returnHealthPercent * 0.3 + lowStockHealthPercent * 0.3)
+      (stockHealthPercent * 0.30) + 
+      (lowStockHealthPercent * 0.25) + 
+      (badStockHealthPercent * 0.30) + 
+      (returnHealthPercent * 0.15)
     )
 
     // Business insights

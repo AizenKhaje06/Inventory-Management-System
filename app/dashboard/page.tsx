@@ -667,35 +667,75 @@ export default function DashboardPage() {
             </div>
 
             {/* Metrics */}
-            <div className="space-y-2 border-t border-slate-100 dark:border-amber-500/10 pt-3">
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a]">
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <Package className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+            <div className="space-y-3 border-t border-slate-100 dark:border-amber-500/10 pt-4">
+              {/* Stock Quantity Breakdown (Good vs Bad) - Should total 100% */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3">Stock Quantity Breakdown</p>
+                
+                {/* Good Stock */}
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a]">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                      <Package className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Good Stock</span>
                   </div>
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Stock Levels</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      {allItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0} units
+                    </span>
+                    <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                      ({Math.round((allItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0) / 
+                      (((allItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0) + totalBadQty) || 1) * 100)}%)
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">
-                  {Math.round(((stats?.totalItems || 0) - (stats?.outOfStockCount || 0)) / (stats?.totalItems || 1) * 100)}%
-                </span>
+                
+                {/* Bad Stock */}
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a]">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                      <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Bad Stock</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">{totalBadQty} units</span>
+                    <span className="text-xs font-semibold text-red-600 dark:text-red-400">
+                      ({Math.round(totalBadQty / 
+                      (((allItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0) + totalBadQty) || 1) * 100)}%)
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Total */}
+                <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Total Inventory</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
+                    {((allItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0) + totalBadQty)} units (100%)
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a]">
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                    <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+              
+              {/* Item Status (Separate metric) */}
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3">Item Status</p>
+                
+                {/* Low Stock Items */}
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a]">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Low Stock Items</span>
                   </div>
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Bad Stock Items</span>
-                </div>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">{totalBadQty} units</span>
-              </div>
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a]">
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                    <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">{lowStockCount} items</span>
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      ({Math.round(lowStockCount / (allItems?.length || 1) * 100)}%)
+                    </span>
                   </div>
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Low Stock Items</span>
                 </div>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">{lowStockCount}</span>
               </div>
             </div>
           </CardContent>

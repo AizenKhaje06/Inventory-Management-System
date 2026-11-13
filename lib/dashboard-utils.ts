@@ -50,8 +50,8 @@ export function formatChartData(
       // API already sends "Nov 5" format, use as-is
       displayDate = item.date
     } else if (timePeriod === "1M") {
-      // Month: Just day numbers (1, 2, 3... 30)
-      // API already sends day numbers, use as-is
+      // Month: Month abbreviation and day (Nov 1, Nov 2, Nov 3... Nov 30)
+      // API already sends "Nov 1" format, use as-is
       displayDate = item.date
     }
 

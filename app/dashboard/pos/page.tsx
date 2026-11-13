@@ -470,7 +470,7 @@ export default function POSPage() {
           </CardHeader>
 
           <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2.5">
                 {filteredItems.map((item) => {
                   const sellableQty = getSellableQuantity(item)
                   const isLowStock = sellableQty <= item.reorderLevel && sellableQty > 0
@@ -488,24 +488,24 @@ export default function POSPage() {
                           : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-500 hover:-translate-y-0.5 cursor-pointer active:scale-95"
                       )}
                     >
-                      {/* Image Section */}
-                      <div className="relative w-full aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      {/* Image Section - Reduced height */}
+                      <div className="relative w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 overflow-hidden">
                         {item.imageUrl ? (
                           <img 
                             src={item.imageUrl} 
                             alt={item.name}
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-contain p-1"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+                            <Package className="h-6 w-6 text-slate-300 dark:text-slate-600" />
                           </div>
                         )}
                         
-                        {/* Stock Badge */}
-                        <div className="absolute top-1.5 right-1.5">
+                        {/* Stock Badge - Smaller */}
+                        <div className="absolute top-1 right-1">
                           <span className={cn(
-                            "px-1.5 py-0.5 text-[9px] font-bold rounded shadow-sm",
+                            "px-1.5 py-0.5 text-[8px] font-bold rounded shadow-sm",
                             isOutOfStock
                               ? "bg-red-500 text-white"
                               : isLowStock
@@ -516,11 +516,11 @@ export default function POSPage() {
                           </span>
                         </div>
 
-                        {/* Add Button Hover */}
+                        {/* Add Button Hover - Smaller */}
                         {!isOutOfStock && (
                           <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shadow-lg">
-                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center shadow-lg">
+                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
                               </svg>
                             </div>
@@ -528,23 +528,23 @@ export default function POSPage() {
                         )}
                       </div>
 
-                      {/* Product Info */}
-                      <div className="p-2 flex flex-col gap-1 bg-white dark:bg-[#1a1a1a] border-t border-slate-100 dark:border-amber-500/10">
+                      {/* Product Info - More compact */}
+                      <div className="p-1.5 flex flex-col gap-0.5 bg-white dark:bg-[#1a1a1a] border-t border-slate-100 dark:border-amber-500/10">
                         <h3 
-                          className="font-semibold text-slate-800 dark:text-white line-clamp-2 leading-snug min-h-[28px]" 
-                          style={{ fontSize: '13px' }}
+                          className="font-semibold text-slate-800 dark:text-white line-clamp-2 leading-tight min-h-[24px]" 
+                          style={{ fontSize: '11px' }}
                           title={item.name}
                         >
                           {toDisplayName(item.name)}
                         </h3>
                         
                         <div className="flex items-center justify-between pt-0.5">
-                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                             ₱{item.sellingPrice.toFixed(0)}
                           </span>
                           {currentUserRole !== 'operations' && currentUserRole !== 'dept-manager' && (
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">
-                              COGS ₱{item.costPrice.toFixed(0)}
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 tabular-nums">
+                              ₱{item.costPrice.toFixed(0)}
                             </span>
                           )}
                         </div>

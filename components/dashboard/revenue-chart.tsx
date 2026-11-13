@@ -69,8 +69,8 @@ export interface RevenueChartProps {
 // ============================================================================
 
 const CHART_CONFIG = {
-  height: 320,
-  margins: { top: 10, bottom: 30, left: 10, right: 10 },
+  height: 380,
+  margins: { top: 10, bottom: 100, left: 10, right: 15 },
   colors: {
     sales: {
       stroke: "#6366F1",
@@ -268,15 +268,15 @@ export function RevenueChart({
     const dataLength = chartData.length
     
     if (isMobile) {
-      // Mobile: Show very few labels to prevent crowding
+      // Mobile: Show fewer labels to prevent crowding
+      if (timePeriod === '1M') return 4  // Show every 5th day (~6 labels for 30 days)
+      if (timePeriod === '1W') return 0  // Show all 7 days
+      return 2  // Day view: Show every 3rd hour (~8 labels)
+    } else {
+      // Desktop: Show more labels
       if (timePeriod === '1M') return 2  // Show every 3rd day (~10 labels for 30 days)
       if (timePeriod === '1W') return 0  // Show all 7 days
-      return Math.floor(dataLength / 4)  // Day view: Show only 4-5 labels
-    } else {
-      // Desktop: Show more labels for Month like Week
-      if (timePeriod === '1M') return 1  // Show every other day (~15 labels for 30 days)
-      if (timePeriod === '1W') return 0  // Show all 7 days
-      return Math.floor(dataLength / 6)  // Day view: Show ~6 labels
+      return 1  // Day view: Show every 2nd hour (12 labels: 12am, 2am, 4am, 6am, 8am, 10am, 12pm, 2pm, 4pm, 6pm, 8pm, 10pm)
     }
   }
 
@@ -428,7 +428,7 @@ export function RevenueChart({
           <ResponsiveContainer width="100%" height={CHART_CONFIG.height}>
             <AreaChart 
               data={chartData} 
-              margin={{ top: 10, bottom: 60, left: 0, right: 5 }}
+              margin={{ top: 10, bottom: 60, left: 0, right: 15 }}
             >
               {/* Gradient Definitions */}
               <defs>
@@ -450,15 +450,14 @@ export function RevenueChart({
               <XAxis 
                 dataKey="date" 
                 className="fill-slate-400 dark:fill-slate-500" 
-                fontSize={8}
+                fontSize={11}
                 tickLine={false}
                 axisLine={false}
                 interval={getXAxisInterval()}
-                angle={-45}
-                textAnchor="end"
-                height={70}
-                dy={5}
-                dx={-3}
+                angle={0}
+                textAnchor="middle"
+                height={50}
+                dy={10}
               />
 
               {/* Y Axis */}

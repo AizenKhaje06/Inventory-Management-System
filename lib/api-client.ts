@@ -75,11 +75,16 @@ export async function apiGet<T>(url: string): Promise<T> {
   
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }))
-    console.error(`[API Client] GET ${url} failed:`, response.status, error)
+    console.error(`[API Client] GET ${url} failed:`, {
+      status: response.status,
+      statusText: response.statusText,
+      error
+    })
     throw new Error(error.error || `HTTP ${response.status}`)
   }
 
-  return response.json()
+  const data = await response.json()
+  return data
 }
 
 /**

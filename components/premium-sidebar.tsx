@@ -21,6 +21,7 @@ import {
   FileBarChart2,
   MessageCircle,
   ClipboardList,
+  Wallet,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useReducedMotion } from "@/hooks/use-accessibility"
@@ -70,6 +71,7 @@ const getNavigation = (lowStockCount: number = 0, outOfStockCount: number = 0): 
     items: [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "Point of Sale (POS)", href: "/dashboard/pos", icon: ShoppingCart },
+      { name: "Employee Purchases", href: "/dashboard/employee-purchases", icon: Wallet },
     ],
   },
   {
