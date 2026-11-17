@@ -47,10 +47,10 @@ export default function EmployeePurchasesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
-            💰 Employee Purchases
+          <h2 className="text-2xl sm:text-3xl font-semibold gradient-text">
+            Employee Purchases
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Manage salary deductions and employee credit purchases
           </p>
         </div>

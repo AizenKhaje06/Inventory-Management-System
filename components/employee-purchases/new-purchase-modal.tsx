@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   Search, 
   Package, 
@@ -44,6 +45,7 @@ interface Product {
   sellingPrice: number
   quantity: number
   imageUrl?: string
+  category?: string
 }
 
 interface NewPurchaseModalProps {
@@ -57,6 +59,7 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
   const [deductionDate, setDeductionDate] = useState<Date>(getNextPayrollDate())
   const [cart, setCart] = useState<CartItem[]>([])
   const [search, setSearch] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null)
@@ -80,6 +83,7 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
       setCart([])
       setDeductionDate(getNextPayrollDate())
       setSearch("")
+      setCategoryFilter("all")
       setSelectedProduct(null)
     }
   }, [open])
@@ -87,6 +91,8 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
   const fetchProducts = async () => {
     try {
       const data = await apiGet<any>('/api/products')
+      console.log('[Employee Purchases] RAW API Response:', data)
+      
       const itemsArray = Array.isArray(data) ? data : (data.products || data.items || data.data || [])
       
       const availableItems = itemsArray.filter((item: any) => {
@@ -99,8 +105,11 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
         name: item.name,
         sellingPrice: item.sellingPrice || item.selling_price || 0,
         quantity: item.quantity || 0,
-        imageUrl: item.imageUrl || item.image_url
+        imageUrl: item.imageUrl || item.image_url,
+        category: item.category || 'Uncategorized'
       }))
+      
+      console.log('[Employee Purchases] Loaded products with categories:', mappedProducts.map(p => ({ name: p.name, category: p.category })))
       
       setProducts(mappedProducts)
     } catch (error: any) {
@@ -119,9 +128,18 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
     return fifteenth
   }
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase()) && product.quantity > 0
-  )
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase())
+    const matchesCategory = categoryFilter === "all" || product.category === categoryFilter
+    const hasStock = product.quantity > 0
+    
+    return matchesSearch && matchesCategory && hasStock
+  })
+
+  // Get unique categories from products (exclude 'Uncategorized' if there are other categories)
+  const allCategories = Array.from(new Set(products.map(p => p.category || 'Uncategorized'))).sort()
+  const hasRealCategories = allCategories.some(cat => cat !== 'Uncategorized')
+  const categories = hasRealCategories ? allCategories.filter(cat => cat !== 'Uncategorized') : allCategories
 
   const regularTotal = cart.filter(item => !item.isFreebie).reduce((sum, item) => sum + item.price * item.quantity, 0)
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
@@ -262,76 +280,111 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
                   className="pl-10 h-11 bg-white border-slate-200"
                 />
               </div>
-              <Button variant="outline" className="h-11 px-4 bg-white border-slate-200">
-                <Grid3x3 className="h-4 w-4 mr-2" />
-                All Categories
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
+              
+              {/* Category Filter Dropdown */}
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="h-11 w-[200px] bg-white border-slate-200">
+                  <Grid3x3 className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Products Grid */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-3">
               {filteredProducts.map((product) => (
-                <div
+                <button
                   key={product.id}
+                  onClick={() => addToCart(product)}
+                  disabled={product.quantity === 0}
                   className={cn(
-                    "relative bg-white rounded-xl border-2 overflow-hidden transition-all duration-200",
-                    selectedProduct === product.id 
-                      ? "border-blue-500 shadow-lg shadow-blue-200 scale-105" 
-                      : "border-slate-200 hover:border-blue-300 hover:shadow-md"
+                    "group relative overflow-hidden transition-all duration-200 text-left border-2 rounded-xl flex flex-col",
+                    product.quantity === 0
+                      ? "border-red-200 bg-red-50 opacity-60 cursor-not-allowed"
+                      : "border-slate-200 bg-white hover:shadow-lg hover:border-blue-400 hover:-translate-y-1 cursor-pointer active:scale-95",
+                    selectedProduct === product.id && "ring-2 ring-blue-500 border-blue-500 shadow-xl scale-[1.02]"
                   )}
                 >
-                  {/* Stock Badge */}
-                  <div className="absolute top-3 left-3 z-10">
-                    <Badge className="bg-emerald-500 text-white border-0 shadow-sm">
-                      <Package className="h-3 w-3 mr-1" />
-                      {product.quantity} in stock
-                    </Badge>
-                  </div>
-
-                  {/* Selected Checkmark */}
-                  {selectedProduct === product.id && (
-                    <div className="absolute top-3 right-3 z-10 h-6 w-6 rounded-full bg-blue-600 flex items-center justify-center shadow-lg">
-                      <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )}
-
-                  {/* Product Image */}
-                  <div className="aspect-square bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+                  {/* Image Section */}
+                  <div className="relative w-full aspect-square bg-slate-100 overflow-hidden">
                     {product.imageUrl ? (
-                      <img
-                        src={product.imageUrl}
+                      <img 
+                        src={product.imageUrl} 
                         alt={product.name}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain p-3"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-16 w-16 text-slate-300" />
+                        <Package className="h-12 w-12 text-slate-300" />
+                      </div>
+                    )}
+                    
+                    {/* Stock Badge */}
+                    <div className="absolute top-2 right-2">
+                      <span className={cn(
+                        "px-2 py-1 text-[10px] font-bold rounded-md shadow-sm flex items-center gap-1",
+                        product.quantity === 0
+                          ? "bg-red-500 text-white"
+                          : product.quantity <= 10
+                          ? "bg-amber-500 text-white"
+                          : "bg-emerald-500 text-white"
+                      )}>
+                        <Package className="h-3 w-3" />
+                        {product.quantity === 0 ? "OUT" : product.quantity}
+                      </span>
+                    </div>
+
+                    {/* Add Button Hover */}
+                    {product.quantity > 0 && (
+                      <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center shadow-lg">
+                          <ShoppingCart className="h-6 w-6 text-white" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Selected Checkmark */}
+                    {selectedProduct === product.id && (
+                      <div className="absolute top-2 left-2 w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
+                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
                       </div>
                     )}
                   </div>
 
-                  {/* Product Info */}
-                  <div className="p-4 border-t">
-                    <h3 className="font-bold text-slate-900 text-sm mb-1 line-clamp-1">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xl font-bold text-blue-600">
+                  {/* Product Info - Rebuilt */}
+                  <div className="p-2 bg-white border-t border-slate-200">
+                    <div className="mb-1">
+                      <p 
+                        style={{ fontSize: '8px', lineHeight: '1.2' }}
+                        className="font-semibold text-slate-900 overflow-hidden"
+                        title={product.name}
+                      >
+                        {product.name}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-600">
                         ₱{product.sellingPrice.toLocaleString()}
                       </span>
+                      {product.quantity > 0 && (
+                        <span style={{ fontSize: '9px' }} className="text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded">
+                          In Stock
+                        </span>
+                      )}
                     </div>
-                    <Button
-                      onClick={() => addToCart(product)}
-                      className="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Add to Cart
-                    </Button>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
 
