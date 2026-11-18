@@ -62,6 +62,8 @@ export default function POSPage() {
   const [assignedChannel, setAssignedChannel] = useState<string>('')
   const [dispatchId, setDispatchId] = useState('')
   const [dispatchedItems, setDispatchedItems] = useState<Array<{name: string, quantity: number, price: number}>>([])
+  const [dispatchedWaybill, setDispatchedWaybill] = useState('')
+  const [dispatchedCourier, setDispatchedCourier] = useState('')
   const [successModalOpen, setSuccessModalOpen] = useState(false)
   const [confirmDispatchOpen, setConfirmDispatchOpen] = useState(false) // NEW: Confirmation dialog state
   
@@ -302,6 +304,8 @@ export default function POSPage() {
       
       // Clear cart
       setCart([])
+      setDispatchedWaybill(waybillNumber.trim()) // Save before clearing
+      setDispatchedCourier(courierName)          // Save before clearing
       setWaybillNumber('') // Clear waybill number
       setCourierName('')   // Clear courier
       localStorage.removeItem('pos_cart_draft')
@@ -967,46 +971,63 @@ export default function POSPage() {
 
       {/* Success Modal - Enterprise Grade */}
       <Dialog open={successModalOpen} onOpenChange={setSuccessModalOpen}>
-        <DialogContent className="bg-white dark:bg-slate-900 border-0 shadow-2xl max-w-md p-0 overflow-hidden rounded-2xl gap-0">
+        <DialogContent className="bg-white dark:bg-slate-900 border-0 shadow-2xl max-w-sm p-0 overflow-hidden rounded-2xl gap-0 [&>button]:hidden">
           
           {/* Header Banner */}
-          <div className="relative bg-gradient-to-br from-emerald-600 to-teal-700 px-6 pt-6 pb-8">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                  <CheckCircle className="h-7 w-7 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white tracking-tight">Transaction Complete</h2>
-                  <p className="text-emerald-100 text-xs mt-0.5">Sale processed & inventory updated</p>
-                </div>
+          <div className="relative bg-gradient-to-br from-emerald-500 to-teal-600 px-5 pt-5 pb-5">
+            {/* Custom close button - top right corner */}
+            <button
+              onClick={() => setSuccessModalOpen(false)}
+              className="absolute top-2 right-2 w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors z-10"
+            >
+              <X className="h-3 w-3 text-white" />
+            </button>
+
+            {/* Icon + Title row */}
+            <div className="flex items-center gap-3 pr-10">
+              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="h-5 w-5 text-white" />
               </div>
-              <button
-                onClick={() => setSuccessModalOpen(false)}
-                className="text-white/60 hover:text-white transition-colors mt-0.5"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: 'white', lineHeight: '1.2', whiteSpace: 'nowrap' }}>Transaction Complete</div>
+                <p className="text-emerald-100 text-xs mt-0.5">Sale processed & inventory updated</p>
+              </div>
             </div>
 
-            {/* Transaction ID Card */}
-            <div className="mt-5 bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
-              <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-widest mb-1">Transaction ID</p>
-              <p className="text-white font-mono font-bold text-sm tracking-wide">{dispatchId}</p>
+            {/* Waybill Number */}
+            <div className="mt-3 bg-white/15 rounded-lg px-4 py-2.5 border border-white/20 mx-1">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-widest">Waybill Number</p>
+                  <p className="text-white font-mono font-bold text-sm mt-0.5 truncate">
+                    {dispatchedWaybill || '—'}
+                  </p>
+                </div>
+                {dispatchedCourier && (
+                  <div className="flex items-center gap-1.5 ml-3 flex-shrink-0">
+                    <img
+                      src={COURIERS.find(c => c.value === dispatchedCourier)?.icon}
+                      alt={dispatchedCourier}
+                      className="w-6 h-6 object-contain rounded bg-white/20 p-0.5"
+                    />
+                    <span className="text-white text-xs font-medium">{dispatchedCourier}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Body */}
-          <div className="px-6 py-5 space-y-5 -mt-2">
+          <div className="px-5 py-4 space-y-4">
 
             {/* Items Table */}
             {dispatchedItems.length > 0 && (
               <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Items Dispatched</span>
-                  <span className="text-xs text-slate-500">{dispatchedItems.length} item{dispatchedItems.length !== 1 ? 's' : ''}</span>
+                <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Items Dispatched</span>
+                  <span className="text-[10px] text-slate-400">{dispatchedItems.length} item{dispatchedItems.length !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-700/50 max-h-44 overflow-y-auto">
+                <div className="divide-y divide-slate-100 dark:divide-slate-700/50 max-h-40 overflow-y-auto">
                   {dispatchedItems.map((item, index) => {
                     const isFree = item.name.includes('🎁 FREE')
                     return (
@@ -1014,12 +1035,12 @@ export default function POSPage() {
                         "px-4 py-2.5 flex items-center justify-between",
                         isFree ? "bg-amber-50 dark:bg-amber-900/10" : "bg-white dark:bg-slate-900"
                       )}>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 mr-3">
                           <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{item.name}</p>
-                          <p className="text-[11px] text-slate-400">Qty: {item.quantity}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Qty: {item.quantity}</p>
                         </div>
                         <span className={cn(
-                          "text-sm font-bold ml-4 tabular-nums",
+                          "text-sm font-bold flex-shrink-0 tabular-nums",
                           isFree ? "text-amber-600" : "text-slate-900 dark:text-white"
                         )}>
                           {isFree ? 'FREE' : formatCurrency(item.price)}
@@ -1029,7 +1050,7 @@ export default function POSPage() {
                   })}
                 </div>
                 {/* Total Row */}
-                <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
                   <span className="text-sm font-bold text-slate-900 dark:text-white">Total</span>
                   <span className="text-base font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
                     {formatCurrency(dispatchedItems.reduce((sum, item) => sum + item.price, 0))}
@@ -1038,33 +1059,27 @@ export default function POSPage() {
               </div>
             )}
 
-            {/* Status Checklist */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Status Checklist - plain text, 1 row */}
+            <div className="flex items-center gap-4 py-1">
               {[
-                { label: 'Sale recorded', ok: true },
-                { label: 'Inventory updated', ok: true },
-                { label: `Staff: ${staffName}`, ok: true },
-                ...(dispatchedItems.some(i => i.name.includes('🎁 FREE'))
-                  ? [{ label: 'Freebies tracked', ok: true }]
-                  : [])
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
-                  <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium text-emerald-800 dark:text-emerald-200 truncate">{item.label}</span>
+                'Sale recorded',
+                'Inventory updated',
+                `Staff: ${staffName}`,
+                ...(dispatchedItems.some(i => i.name.includes('🎁 FREE')) ? ['Freebies tracked'] : [])
+              ].map((label, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <svg className="w-3 h-3 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span style={{ fontSize: '11px' }} className="text-slate-600 font-medium whitespace-nowrap">{label}</span>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="px-6 pb-6">
+            {/* Done Button */}
             <Button
               onClick={() => setSuccessModalOpen(false)}
-              className="w-full h-12 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-semibold rounded-xl shadow-lg transition-all"
+              className="w-full h-11 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-semibold rounded-xl"
             >
               Done
             </Button>
