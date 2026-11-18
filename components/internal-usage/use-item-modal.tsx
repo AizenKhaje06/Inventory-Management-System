@@ -32,8 +32,7 @@ const DEPARTMENTS = [
 
 const USAGE_TYPES = [
   { value: 'demo', label: 'Demo / Display' },
-  { value: 'internal', label: 'Internal Use' },
-  { value: 'transfer', label: 'Transfer / Relocation' }
+  { value: 'internal', label: 'Internal Use' }
 ]
 
 interface UseItemModalProps {

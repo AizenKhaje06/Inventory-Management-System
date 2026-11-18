@@ -53,7 +53,6 @@ const OPERATION_CONFIG = {
   'demo-display': { label: "Demo/Display", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800", icon: Activity },
   demo: { label: "Demo/Display", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800", icon: Activity },
   internal: { label: "Internal Use", color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800", icon: Package },
-  transfer: { label: "Transfer", color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800", icon: Truck },
   warehouse: { label: "Warehouse", color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800", icon: Database },
   'to-be-packed': { label: "To Be Packed", color: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 border border-sky-200 dark:border-sky-800", icon: Package },
   other: { label: "Sale", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800", icon: ShoppingCart }
@@ -519,7 +518,6 @@ export default function LogPage() {
               {!isDepartment && <SelectItem value="restore">Restored Orders</SelectItem>}
               <SelectItem value="demo">Demo / Display</SelectItem>
               <SelectItem value="internal">Internal Use</SelectItem>
-              <SelectItem value="transfer">Transfer</SelectItem>
               <SelectItem value="warehouse">Warehouse</SelectItem>
             </SelectContent>
           </Select>

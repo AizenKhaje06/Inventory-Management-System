@@ -32,6 +32,7 @@ export const POST = withAuth(async (request, { user }) => {
     // Validate required fields
     if (!department)          return NextResponse.json({ error: 'Department is required' }, { status: 400 })
     if (!usageType)           return NextResponse.json({ error: 'Usage type is required' }, { status: 400 })
+    if (!['demo', 'internal'].includes(usageType)) return NextResponse.json({ error: 'Invalid usage type' }, { status: 400 })
     if (!reason?.trim())      return NextResponse.json({ error: 'Reason is required' }, { status: 400 })
     if (!items?.length)       return NextResponse.json({ error: 'Items are required' }, { status: 400 })
 
@@ -98,9 +99,9 @@ export const POST = withAuth(async (request, { user }) => {
         await updateInventoryItem(reqItem.itemId, { quantity: newQty })
 
         // Log the operation
-        const typeLabel = usageType === 'demo' ? 'Demo/Display' : usageType === 'internal' ? 'Internal Use' : 'Transfer'
+        const typeLabel = usageType === 'demo' ? 'Demo/Display' : 'Internal Use'
         await addLog({
-          operation: usageType === 'transfer' ? 'transfer' : usageType === 'demo' ? 'demo' : 'internal',
+          operation: usageType === 'demo' ? 'demo' : 'internal',
           itemId:    reqItem.itemId,
           itemName:  reqItem.itemName,
           quantity:  reqItem.quantity,

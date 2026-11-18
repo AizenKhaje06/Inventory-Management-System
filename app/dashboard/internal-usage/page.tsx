@@ -32,9 +32,8 @@ interface UsageRecord {
 }
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  demo:     { label: 'Demo / Display',        color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  internal: { label: 'Internal Use',          color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  transfer: { label: 'Transfer / Relocation', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  demo:     { label: 'Demo / Display', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  internal: { label: 'Internal Use',   color: 'bg-blue-100 text-blue-700 border-blue-200' },
 }
 
 export default function InternalUsagePage() {
@@ -72,14 +71,12 @@ export default function InternalUsagePage() {
     return matchesSearch && matchesType
   })
 
-  // KPI calculations - exclude transfer (stock just relocated, not consumed)
+  // KPI calculations - transfer removed
   const totalRecords  = records.length
-  const consumedRecords = records.filter(r => r.usage_type !== 'transfer')
-  const totalCost     = consumedRecords.reduce((sum, r) => sum + (r.total_cost || 0), 0)
-  const totalQty      = consumedRecords.reduce((sum, r) => sum + (r.total_qty || 0), 0)
+  const totalCost     = records.reduce((sum, r) => sum + (r.total_cost || 0), 0)
+  const totalQty      = records.reduce((sum, r) => sum + (r.total_qty || 0), 0)
   const demoCount     = records.filter(r => r.usage_type === 'demo').length
   const internalCount = records.filter(r => r.usage_type === 'internal').length
-  const transferCount = records.filter(r => r.usage_type === 'transfer').length
 
   const formatDate = (ts: string) => {
     if (!ts) return '—'
@@ -157,12 +154,12 @@ export default function InternalUsagePage() {
         <Card className="border-0 shadow-lg">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-100">
-                <Package className="h-5 w-5 text-amber-600" />
+              <div className="p-2.5 rounded-xl bg-blue-100">
+                <Building2 className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Internal / Transfer</p>
-                <p className="text-2xl font-bold text-slate-900">{internalCount + transferCount}</p>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Internal Use</p>
+                <p className="text-2xl font-bold text-slate-900">{internalCount}</p>
                 <p className="text-xs text-slate-500 mt-0.5">records</p>
               </div>
             </div>
@@ -201,12 +198,6 @@ export default function InternalUsagePage() {
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
                     Internal Use
-                  </span>
-                </SelectItem>
-                <SelectItem value="transfer">
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
-                    Transfer / Relocation
                   </span>
                 </SelectItem>
               </SelectContent>
@@ -376,10 +367,7 @@ export default function InternalUsagePage() {
               Showing <span className="font-semibold text-slate-700">{filteredRecords.length}</span> of <span className="font-semibold text-slate-700">{records.length}</span> records
             </span>
             <span className="text-xs text-slate-500">
-              Total: <span className="font-bold text-red-600">{formatCurrency(filteredRecords.filter(r => r.usage_type !== 'transfer').reduce((s, r) => s + (r.total_cost || 0), 0))}</span>
-              {filteredRecords.some(r => r.usage_type === 'transfer') && (
-                <span className="text-slate-400 ml-1">(transfers excluded)</span>
-              )}
+              Total: <span className="font-bold text-red-600">{formatCurrency(filteredRecords.reduce((s, r) => s + (r.total_cost || 0), 0))}</span>
             </span>
           </div>
         )}
