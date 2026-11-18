@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin as supabase } from "@/lib/supabase"
-import { getInventoryItems, updateInventoryItem } from "@/lib/supabase-db"
+import { getInventoryItems, updateInventoryItem, addLog } from "@/lib/supabase-db"
 import { withAuth } from "@/lib/api-helpers"
 
 // ─── GET: Fetch all internal usage records ───────────────────────────────────
@@ -27,7 +27,7 @@ export const GET = withAuth(async (request, { user }) => {
 export const POST = withAuth(async (request, { user }) => {
   try {
     const body = await request.json()
-    const { department, usageType, reason, notes, items } = body
+    const { department, usageType, reason, notes, items, processedBy } = body
 
     // Validate required fields
     if (!department)          return NextResponse.json({ error: 'Department is required' }, { status: 400 })
@@ -81,7 +81,7 @@ export const POST = withAuth(async (request, { user }) => {
         items:       itemsData,
         total_cost:  totalCost,
         total_qty:   totalQty,
-        recorded_by: user?.username || user?.displayName || 'Unknown',
+        recorded_by: processedBy || user?.username || user?.displayName || 'Unknown',
         created_at:  new Date().toISOString()
       })
 
@@ -90,12 +90,22 @@ export const POST = withAuth(async (request, { user }) => {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
-    // Deduct stock from inventory for each item
+    // Deduct stock from inventory and create log for each item
     for (const reqItem of items) {
       const inventoryItem = allItems.find(i => i.id === reqItem.itemId)
       if (inventoryItem) {
         const newQty = inventoryItem.quantity - reqItem.quantity
         await updateInventoryItem(reqItem.itemId, { quantity: newQty })
+
+        // Log the operation
+        const typeLabel = usageType === 'demo' ? 'Demo/Display' : usageType === 'internal' ? 'Internal Use' : 'Transfer'
+        await addLog({
+          operation: usageType === 'transfer' ? 'transfer' : usageType === 'demo' ? 'demo' : 'internal',
+          itemId:    reqItem.itemId,
+          itemName:  reqItem.itemName,
+          quantity:  reqItem.quantity,
+          details:   `${typeLabel} "${reqItem.itemName}" - Qty: ${reqItem.quantity}, Department: ${department}, Requested by: ${reason}, Processed by: ${processedBy || user?.displayName || 'Unknown'}`,
+        })
       }
     }
 

@@ -11,6 +11,7 @@ import { Package, Search, Plus, Minus, Trash2, X, ShoppingCart, FileText } from 
 import { cn, formatCurrency } from "@/lib/utils"
 import { toast } from "sonner"
 import { apiGet, apiPost } from "@/lib/api-client"
+import { getCurrentUser } from "@/lib/auth"
 import type { InventoryItem } from "@/lib/types"
 
 interface CartItem {
@@ -47,7 +48,8 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [department, setDepartment] = useState("")
   const [usageType, setUsageType] = useState("")
-  const [reason, setReason] = useState("")
+  const [requestedBy, setRequestedBy] = useState("") // manual - employee who requested
+  const [processedBy, setProcessedBy] = useState("") // auto-filled - logged in user
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -57,9 +59,16 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
       setCart([])
       setDepartment("")
       setUsageType("")
-      setReason("")
+      setRequestedBy("")
       setNotes("")
       setSearch("")
+
+      // Auto-fill processedBy from logged in user
+      const currentUser = getCurrentUser()
+      if (currentUser) {
+        const name = currentUser.displayName || currentUser.username || ''
+        setProcessedBy(name)
+      }
     }
   }, [open])
 
@@ -98,18 +107,19 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
   const totalCost = cart.reduce((sum, item) => sum + item.costPrice * item.quantity, 0)
 
   const handleSubmit = async () => {
-    if (!department) { toast.error("Please select a department"); return }
-    if (!usageType) { toast.error("Please select usage type"); return }
-    if (!reason.trim()) { toast.error("Please enter a reason"); return }
-    if (cart.length === 0) { toast.error("Cart is empty"); return }
+    if (!department)          { toast.error("Please select a department"); return }
+    if (!usageType)           { toast.error("Please select usage type"); return }
+    if (!requestedBy.trim())  { toast.error("Please enter the requester name"); return }
+    if (cart.length === 0)    { toast.error("Cart is empty"); return }
 
     setLoading(true)
     try {
       await apiPost("/api/internal-usage", {
         department,
         usageType,
-        reason: reason.trim(),
-        notes: notes.trim() || null,
+        reason:      requestedBy.trim(), // stored as reason in DB
+        notes:       notes.trim() || null,
+        processedBy: processedBy,
         items: cart.map(c => ({
           itemId:    c.id,
           itemName:  c.name,
@@ -240,48 +250,49 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
                 <h3 className="text-sm font-bold text-slate-900">Usage Details</h3>
               </div>
               <div className="space-y-3">
-                {/* Department */}
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 mb-1 block">Department <span className="text-red-500">*</span></label>
-                  <Select value={department} onValueChange={setDepartment}>
-                    <SelectTrigger className="h-9 bg-white border-slate-300 text-sm">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DEPARTMENTS.map(dept => (
-                        <SelectItem key={dept.value} value={dept.value}>
-                          <div className="flex items-center gap-2">
-                            <img src={dept.icon} alt={dept.label} className="w-4 h-4 object-contain" />
-                            <span className="text-sm">{dept.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Department + Usage Type - side by side */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 mb-1 block">Department <span className="text-red-500">*</span></label>
+                    <Select value={department} onValueChange={setDepartment}>
+                      <SelectTrigger className="h-9 bg-white border-slate-300 text-sm">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DEPARTMENTS.map(dept => (
+                          <SelectItem key={dept.value} value={dept.value}>
+                            <div className="flex items-center gap-2">
+                              <img src={dept.icon} alt={dept.label} className="w-4 h-4 object-contain" />
+                              <span className="text-sm">{dept.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 mb-1 block">Usage Type <span className="text-red-500">*</span></label>
+                    <Select value={usageType} onValueChange={setUsageType}>
+                      <SelectTrigger className="h-9 bg-white border-slate-300 text-sm">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent className="w-[160px]" align="start">
+                        {USAGE_TYPES.map(t => (
+                          <SelectItem key={t.value} value={t.value}>
+                            <span className="text-sm">{t.label}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                {/* Usage Type */}
+                {/* Requested By */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 mb-1 block">Usage Type <span className="text-red-500">*</span></label>
-                  <Select value={usageType} onValueChange={setUsageType}>
-                    <SelectTrigger className="h-9 bg-white border-slate-300 text-sm">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {USAGE_TYPES.map(t => (
-                        <SelectItem key={t.value} value={t.value}>
-                          <span className="text-sm">{t.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* Reason */}
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 mb-1 block">Reason <span className="text-red-500">*</span></label>
+                  <label className="text-xs font-semibold text-slate-700 mb-1 block">Requested By <span className="text-red-500">*</span></label>
                   <Input
-                    placeholder="e.g., Display for promotion"
-                    value={reason}
-                    onChange={e => setReason(e.target.value)}
+                    placeholder="Employee name who requested..."
+                    value={requestedBy}
+                    onChange={e => setRequestedBy(e.target.value)}
                     className="h-9 bg-white border-slate-300 text-sm"
                   />
                 </div>
@@ -369,7 +380,7 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
                   <Button
                     className="flex-1 h-10 bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={handleSubmit}
-                    disabled={loading || cart.length === 0 || !department || !usageType || !reason.trim()}
+                    disabled={loading || cart.length === 0 || !department || !usageType || !requestedBy.trim()}
                   >
                     {loading ? (
                       <><div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-r-transparent" />Recording...</>

@@ -51,6 +51,9 @@ const OPERATION_CONFIG = {
   'transaction-cancelled': { label: "Cancelled", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800", icon: X },
   'internal-usage': { label: "Internal Usage", color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800", icon: Package },
   'demo-display': { label: "Demo/Display", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800", icon: Activity },
+  demo: { label: "Demo/Display", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800", icon: Activity },
+  internal: { label: "Internal Use", color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800", icon: Package },
+  transfer: { label: "Transfer", color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800", icon: Truck },
   warehouse: { label: "Warehouse", color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800", icon: Database },
   'to-be-packed': { label: "To Be Packed", color: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 border border-sky-200 dark:border-sky-800", icon: Package },
   other: { label: "Sale", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800", icon: ShoppingCart }
@@ -158,7 +161,7 @@ export default function LogPage() {
         }
         
         // Only override based on details if operation is still unclear
-        const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'restore', 'uncancel', 'freebie']
+        const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'restore', 'uncancel', 'freebie', 'demo', 'internal', 'transfer']
         const isExplicitOperation = explicitOperations.includes(actualOperation)
         
         if (!isExplicitOperation) {
@@ -170,6 +173,15 @@ export default function LogPage() {
             actualOperation = 'warehouse'
           }
         }
+
+        // Map new operation names to match filter values
+        if (actualOperation === 'demo') actualOperation = 'demo'
+        if (actualOperation === 'internal') actualOperation = 'internal'
+        if (actualOperation === 'transfer') actualOperation = 'transfer'
+        // Also match old demo-display and internal-usage to new filter values
+        if (operationFilter === 'demo' && (actualOperation === 'demo' || actualOperation === 'demo-display')) return true
+        if (operationFilter === 'internal' && (actualOperation === 'internal' || actualOperation === 'internal-usage')) return true
+        if (operationFilter === 'transfer' && (actualOperation === 'transfer' || actualOperation === 'warehouse')) return true
         
         return actualOperation === operationFilter
       })
@@ -505,8 +517,9 @@ export default function LogPage() {
               <SelectItem value="to-be-packed">To Be Packed</SelectItem>
               {!isDepartment && <SelectItem value="cancel">Cancelled Orders</SelectItem>}
               {!isDepartment && <SelectItem value="restore">Restored Orders</SelectItem>}
-              <SelectItem value="internal-usage">Internal Usage</SelectItem>
-              <SelectItem value="demo-display">Demo/Display</SelectItem>
+              <SelectItem value="demo">Demo / Display</SelectItem>
+              <SelectItem value="internal">Internal Use</SelectItem>
+              <SelectItem value="transfer">Transfer</SelectItem>
               <SelectItem value="warehouse">Warehouse</SelectItem>
             </SelectContent>
           </Select>
