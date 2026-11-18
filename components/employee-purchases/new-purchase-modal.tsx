@@ -361,26 +361,31 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
                     )}
                   </div>
 
-                  {/* Product Info - Rebuilt */}
-                  <div className="p-2 bg-white border-t border-slate-200">
-                    <div className="mb-1">
-                      <p 
-                        style={{ fontSize: '8px', lineHeight: '1.2' }}
-                        className="font-semibold text-slate-900 overflow-hidden"
-                        title={product.name}
-                      >
+                  {/* Product Info */}
+                  <div className="p-2 bg-white border-t border-slate-200" data-product-info="true">
+                    <div data-item-name={product.name} style={{marginBottom:'4px'}}>
+                      <div style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        lineHeight: '1.3',
+                        color: '#1e293b',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical' as const,
+                        overflow: 'hidden',
+                        maxHeight: '26px'
+                      }}>
                         {product.name}
-                      </p>
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-emerald-600">
+                    <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                      <div style={{fontSize:'11px', fontWeight:700, color:'#059669'}}>
                         ₱{product.sellingPrice.toLocaleString()}
-                      </span>
+                      </div>
                       {product.quantity > 0 && (
-                        <span style={{ fontSize: '9px' }} className="text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded">
+                        <div style={{fontSize:'9px', color:'#64748b', background:'#f1f5f9', padding:'2px 6px', borderRadius:'4px', fontWeight:500}}>
                           In Stock
-                        </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -504,80 +509,54 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
                       <div
                         key={`${item.id}-${item.isFreebie}-${index}`}
                         className={cn(
-                          "flex gap-3 p-3 rounded-xl border-2 shadow-sm transition-all",
+                          "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all",
                           item.isFreebie 
-                            ? "bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200" 
-                            : "bg-white border-slate-200 hover:border-blue-200 hover:shadow-md"
+                            ? "bg-pink-50 border-pink-200" 
+                            : "bg-white border-slate-200 hover:border-blue-200"
                         )}
                       >
-                        {/* Product Image */}
-                        <div className="h-16 w-16 rounded-lg bg-white border border-slate-200 flex-shrink-0 overflow-hidden shadow-sm">
+                        {/* Image */}
+                        <div className="h-9 w-9 rounded-md bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden">
                           {item.imageUrl ? (
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="w-full h-full object-contain p-1.5"
-                            />
+                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain p-0.5" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <Package className="h-7 w-7 text-slate-300" />
+                              <Package className="h-4 w-4 text-slate-300" />
                             </div>
                           )}
                         </div>
 
-                        {/* Product Details */}
+                        {/* Name */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-sm text-slate-900 line-clamp-1">
-                                {item.name}
-                              </h4>
-                              {item.isFreebie ? (
-                                <p className="text-xs text-pink-600 font-semibold mt-0.5">Freebie</p>
-                              ) : (
-                                <p className="text-xs text-slate-500 mt-0.5">₱{item.price.toLocaleString()}</p>
-                              )}
-                            </div>
-                            <div className="ml-2 text-right">
-                              <p className="font-bold text-slate-900">
-                                ₱{item.isFreebie ? 0 : (item.price * item.quantity).toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Controls */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 w-7 p-0 rounded"
-                                onClick={() => updateQuantity(item.id, item.isFreebie, item.quantity - 1)}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <span className="text-sm font-bold w-6 text-center">{item.quantity}</span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 w-7 p-0 rounded"
-                                onClick={() => updateQuantity(item.id, item.isFreebie, item.quantity + 1)}
-                                disabled={item.quantity >= item.maxStock}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeFromCart(item.id, item.isFreebie)}
-                              className="h-7 text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
-                            >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              Remove
-                            </Button>
-                          </div>
+                          <p className="text-xs font-semibold text-slate-900 truncate">{item.name}</p>
+                          {item.isFreebie && <span className="text-[10px] text-pink-600 font-medium">Freebie</span>}
                         </div>
+
+                        {/* Quantity Controls */}
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Button size="sm" variant="outline" className="h-5 w-5 p-0 rounded"
+                            onClick={() => updateQuantity(item.id, item.isFreebie, item.quantity - 1)}>
+                            <Minus className="h-2 w-2" />
+                          </Button>
+                          <span className="text-xs font-bold w-5 text-center">{item.quantity}</span>
+                          <Button size="sm" variant="outline" className="h-5 w-5 p-0 rounded"
+                            onClick={() => updateQuantity(item.id, item.isFreebie, item.quantity + 1)}
+                            disabled={item.quantity >= item.maxStock}>
+                            <Plus className="h-2 w-2" />
+                          </Button>
+                        </div>
+
+                        {/* Total */}
+                        <div className="text-xs font-bold text-slate-800 flex-shrink-0 w-14 text-right">
+                          ₱{item.isFreebie ? 0 : (item.price * item.quantity).toLocaleString()}
+                        </div>
+
+                        {/* Delete */}
+                        <Button size="sm" variant="ghost"
+                          onClick={() => removeFromCart(item.id, item.isFreebie)}
+                          className="h-6 w-6 p-0 flex-shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50 rounded">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     ))}
                   </div>
