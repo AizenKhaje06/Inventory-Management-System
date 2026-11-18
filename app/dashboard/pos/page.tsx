@@ -265,7 +265,8 @@ export default function POSPage() {
           total: totalAmount,
           product: productList,
           dispatchedBy: staffName,
-          waybillNumber: waybillNumber.trim() || null
+          waybillNumber: waybillNumber.trim() || null,
+          courier: courierName || null
         })
         
         console.log('[POS] Order created successfully:', orderResponse)
@@ -294,6 +295,10 @@ export default function POSPage() {
       // Generate dispatch ID
       const newDispatchId = `DIS-${Date.now()}`
       setDispatchId(newDispatchId)
+
+      // Capture waybill & courier BEFORE any state clearing
+      const capturedWaybill = waybillNumber.trim()
+      const capturedCourier = courierName
       
       // Store dispatched items for display
       setDispatchedItems(cart.map(cartItem => ({
@@ -304,10 +309,10 @@ export default function POSPage() {
       
       // Clear cart
       setCart([])
-      setDispatchedWaybill(waybillNumber.trim()) // Save before clearing
-      setDispatchedCourier(courierName)          // Save before clearing
-      setWaybillNumber('') // Clear waybill number
-      setCourierName('')   // Clear courier
+      setDispatchedWaybill(capturedWaybill)
+      setDispatchedCourier(capturedCourier)
+      setWaybillNumber('')
+      setCourierName('')
       localStorage.removeItem('pos_cart_draft')
       
       // Refresh items
@@ -904,68 +909,95 @@ export default function POSPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation Dialog - NEW */}
+      {/* Confirmation Dialog */}
       <Dialog open={confirmDispatchOpen} onOpenChange={setConfirmDispatchOpen}>
-        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-slate-900 dark:text-white text-xl font-semibold flex items-center gap-2">
-              <Truck className="h-6 w-6 text-blue-500" />
-              Confirm Order Dispatch
-            </DialogTitle>
-            <DialogDescription className="text-slate-600 dark:text-slate-400">
-              Are you sure you want to dispatch this order?
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="bg-white dark:bg-slate-900 border-0 shadow-2xl max-w-sm p-0 overflow-hidden rounded-2xl gap-0 [&>button]:hidden">
           
-          <div className="py-4 space-y-4">
-            {/* Order Summary */}
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">Total Items:</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{cart.length}</span>
+          {/* Header */}
+          <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 px-5 pt-5 pb-5">
+            <div className="flex items-center gap-3 pr-8">
+              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Truck className="h-5 w-5 text-white" />
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">Total Amount:</span>
-                <span className="font-bold text-lg text-slate-900 dark:text-white">
-                  ₱{total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: 'white', lineHeight: '1.2' }}>Confirm Order Dispatch</div>
+                <p className="text-slate-300 text-xs mt-0.5">Review before dispatching</p>
               </div>
-              {freebieCOGS > 0 && (
-                <div className="flex justify-between text-sm pt-2 border-t border-slate-200 dark:border-slate-700">
-                  <span className="text-orange-600 dark:text-orange-400">Freebies:</span>
-                  <span className="font-semibold text-orange-600 dark:text-orange-400">
-                    {cart.filter(item => item.isFreebie).length} item(s)
-                  </span>
-                </div>
-              )}
             </div>
-
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              This action will update inventory and create a sale record. This cannot be undone.
-            </p>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmDispatchOpen(false)}
-              className="flex-1"
-              disabled={loading}
-            >
-              No, Cancel
-            </Button>
-            <Button
-              onClick={async () => {
-                setConfirmDispatchOpen(false)
-                setCartModalOpen(false)
-                await handleDispatchOrder()
-              }}
-              disabled={loading}
-              className="flex-1 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900"
-            >
-              Yes, Dispatch
-            </Button>
-          </DialogFooter>
+          {/* Body */}
+          <div className="px-5 py-4 space-y-4">
+            
+            {/* Order Summary */}
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Order Summary</span>
+              </div>
+              <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                <div className="flex justify-between items-center px-4 py-2.5">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Total Items</span>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white">{cart.length} {cart.length === 1 ? 'item' : 'items'}</span>
+                </div>
+                <div className="flex justify-between items-center px-4 py-2.5">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Total Amount</span>
+                  <span className="text-base font-black text-slate-900 dark:text-white tabular-nums">
+                    ₱{total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                {waybillNumber.trim() && (
+                  <div className="flex justify-between items-center px-4 py-2.5">
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Waybill</span>
+                    <span className="text-sm font-mono font-semibold text-slate-900 dark:text-white">{waybillNumber.trim()}</span>
+                  </div>
+                )}
+                {courierName && (
+                  <div className="flex justify-between items-center px-4 py-2.5">
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Courier</span>
+                    <div className="flex items-center gap-1.5">
+                      <img src={COURIERS.find(c => c.value === courierName)?.icon} alt={courierName} className="w-4 h-4 object-contain rounded" />
+                      <span className="text-sm font-semibold text-slate-900 dark:text-white">{courierName}</span>
+                    </div>
+                  </div>
+                )}
+                {freebieCOGS > 0 && (
+                  <div className="flex justify-between items-center px-4 py-2.5">
+                    <span className="text-sm text-amber-600">Freebies</span>
+                    <span className="text-sm font-semibold text-amber-600">{cart.filter(i => i.isFreebie).length} item(s)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Warning note */}
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+              This will update inventory and create a sale record. This cannot be undone.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setConfirmDispatchOpen(false)}
+                className="flex-1 h-10 border-slate-300 text-slate-700 font-semibold rounded-xl"
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  setConfirmDispatchOpen(false)
+                  setCartModalOpen(false)
+                  await handleDispatchOrder()
+                }}
+                disabled={loading}
+                className="flex-1 h-10 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl"
+              >
+                <Truck className="h-4 w-4 mr-1.5" />
+                Yes, Dispatch
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1000,7 +1032,7 @@ export default function POSPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-widest">Waybill Number</p>
                   <p className="text-white font-mono font-bold text-sm mt-0.5 truncate">
-                    {dispatchedWaybill || '—'}
+                    {dispatchedWaybill ? dispatchedWaybill : <span className="font-normal text-emerald-200 text-xs italic">Not provided</span>}
                   </p>
                 </div>
                 {dispatchedCourier && (

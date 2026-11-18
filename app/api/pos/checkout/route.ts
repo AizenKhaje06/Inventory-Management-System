@@ -11,13 +11,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const {
-      items, // Array of items with details
+      items,
       qty,
       cogs,
       total,
       product,
       dispatchedBy,
-      waybillNumber
+      waybillNumber,
+      courier
     } = body
 
     // Validate required fields
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
         product,
         dispatched_by: dispatchedBy,
         waybill_number: waybillNumber || null,
+        courier: courier || null,
         created_at: now
       })
       .select()

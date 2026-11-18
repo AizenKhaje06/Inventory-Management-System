@@ -37,6 +37,7 @@ interface Order {
   product: string
   dispatched_by: string
   waybill_number: string | null
+  courier: string | null
   is_cancelled: boolean
   cancelled_at: string | null
   cancelled_by: string | null
@@ -409,11 +410,11 @@ export default function OrdersPage() {
                       />
                     </th>
                     <th className="text-left py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[140px]">Date & Time</th>
-                    <th className="text-left py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[100px]">ID</th>
                     <th className="text-left py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[240px]">Products</th>
                     <th className="text-center py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[100px]">Quantity</th>
                     <th className="text-right py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[120px]">Price</th>
                     <th className="text-center py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[140px]">Waybill</th>
+                    <th className="text-center py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[70px]">Courier</th>
                     <th className="text-center py-3 px-4 text-[10px] font-bold text-white uppercase tracking-wider w-[100px]">Status</th>
                     <th className="text-center py-3 px-3 text-[10px] font-bold text-white uppercase tracking-wider w-[70px]">Actions</th>
                   </tr>
@@ -462,14 +463,6 @@ export default function OrdersPage() {
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-1.5">
-                            <FileText className="h-3.5 w-3.5 text-slate-400" />
-                            <span className="font-mono text-[11px] text-slate-600 dark:text-slate-400">
-                              #{order.id.slice(0, 8)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4">
                           <p className="text-[13px] font-medium text-slate-900 dark:text-white">{order.product}</p>
                         </td>
                         <td className="py-3.5 px-4 text-center">
@@ -494,6 +487,30 @@ export default function OrdersPage() {
                             </button>
                           ) : (
                             <span className="text-[11px] text-slate-400 dark:text-slate-500">—</span>
+                          )}
+                        </td>
+                        {/* Courier icon */}
+                        <td className="py-3.5 px-4 text-center">
+                          {order.courier ? (
+                            <div className="flex justify-center">
+                              <img
+                                src={`/Courrier/${
+                                  order.courier === 'J&T Express' ? 'J&T_logo.png' :
+                                  order.courier === 'SPX Express' ? 'SPX_logo.jpg' :
+                                  order.courier === 'Flash Express' ? 'flash_logo.jpg' :
+                                  order.courier === 'Ninja Van' ? 'Ninja Van_logo.jpg' :
+                                  order.courier === 'LBC Express' ? 'LBC_logo.png' :
+                                  order.courier === '2GO Express' ? '2GO_logo.png' :
+                                  order.courier === 'JRS Express' ? 'jrs_logo.jpg' :
+                                  order.courier === 'Lalamove' ? 'Lalamove_logo.jpg' : ''
+                                }`}
+                                alt={order.courier}
+                                title={order.courier}
+                                className="w-7 h-7 object-contain rounded"
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-slate-400">—</span>
                           )}
                         </td>
                         <td className="py-3.5 px-4">
