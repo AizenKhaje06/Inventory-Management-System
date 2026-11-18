@@ -6,13 +6,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, ShoppingCart, Trash2, CheckCircle, Package, Truck, User } from "lucide-react"
+import { Search, ShoppingCart, Trash2, CheckCircle, Package, Truck, User, X } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import type { InventoryItem } from "@/lib/types"
 import { apiGet, apiPost } from "@/lib/api-client"
 import { getCurrentUser } from "@/lib/auth"
 import { formatCurrency, cn, toDisplayName } from "@/lib/utils"
 import { toast } from "sonner"
+
+const COURIERS = [
+  { value: 'J&T Express',    icon: '/Courrier/J&T_logo.png' },
+  { value: 'SPX Express',    icon: '/Courrier/SPX_logo.jpg' },
+  { value: 'Flash Express',  icon: '/Courrier/flash_logo.jpg' },
+  { value: 'Ninja Van',      icon: '/Courrier/Ninja Van_logo.jpg' },
+  { value: 'LBC Express',    icon: '/Courrier/LBC_logo.png' },
+  { value: '2GO Express',    icon: '/Courrier/2GO_logo.png' },
+  { value: 'JRS Express',    icon: '/Courrier/jrs_logo.jpg' },
+  { value: 'Lalamove',       icon: '/Courrier/Lalamove_logo.jpg' },
+]
 
 interface CartItem {
   cartItemId: string  // Unique ID for each cart row
@@ -45,6 +56,7 @@ export default function POSPage() {
   const [loading, setLoading] = useState(false)
   const [staffName, setStaffName] = useState('')
   const [waybillNumber, setWaybillNumber] = useState('')
+  const [courierName, setCourierName] = useState('')
   const [staffProfileImage, setStaffProfileImage] = useState<string | null>(null)
   const [currentUserRole, setCurrentUserRole] = useState<string>('')
   const [assignedChannel, setAssignedChannel] = useState<string>('')
@@ -291,6 +303,7 @@ export default function POSPage() {
       // Clear cart
       setCart([])
       setWaybillNumber('') // Clear waybill number
+      setCourierName('')   // Clear courier
       localStorage.removeItem('pos_cart_draft')
       
       // Refresh items
@@ -787,18 +800,49 @@ export default function POSPage() {
           {cart.length > 0 && (
             <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-5 space-y-4">
               
-              {/* Waybill Number Input - MOVED TO TOP */}
+              {/* Courier + Waybill - side by side */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  Waybill Number (Optional)
+                  <Truck className="h-4 w-4" />
+                  Courier & Waybill <span className="text-slate-400 font-normal text-xs">(Optional)</span>
                 </label>
-                <Input
-                  placeholder="Enter waybill/tracking number"
-                  value={waybillNumber}
-                  onChange={(e) => setWaybillNumber(e.target.value)}
-                  className="h-11"
-                />
+                <div className="flex gap-2">
+                  {/* Courier Dropdown */}
+                  <Select value={courierName} onValueChange={setCourierName}>
+                    <SelectTrigger className="h-11 w-[200px] flex-shrink-0 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                      {courierName ? (
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={COURIERS.find(c => c.value === courierName)?.icon}
+                            alt={courierName}
+                            className="w-5 h-5 object-contain rounded-sm"
+                          />
+                          <span className="text-sm">{courierName}</span>
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select courier" />
+                      )}
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COURIERS.map(courier => (
+                        <SelectItem key={courier.value} value={courier.value}>
+                          <div className="flex items-center gap-2.5">
+                            <img src={courier.icon} alt={courier.value} className="w-5 h-5 object-contain rounded-sm" />
+                            <span className="text-sm font-medium">{courier.value}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Waybill Input */}
+                  <Input
+                    placeholder="Enter waybill/tracking number"
+                    value={waybillNumber}
+                    onChange={(e) => setWaybillNumber(e.target.value)}
+                    className="h-11 flex-1"
+                  />
+                </div>
               </div>
 
               {/* Dispatched By - MOVED TO BOTTOM */}
@@ -921,101 +965,111 @@ export default function POSPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Success Modal - Updated for Freebies */}
+      {/* Success Modal - Enterprise Grade */}
       <Dialog open={successModalOpen} onOpenChange={setSuccessModalOpen}>
-        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-slate-900 dark:text-white text-xl font-semibold flex items-center gap-2">
-              <CheckCircle className="h-6 w-6 text-green-500" />
-              Transaction Completed!
-            </DialogTitle>
-            <DialogDescription className="text-slate-600 dark:text-slate-400">
-              Sale processed and inventory updated
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <p className="text-center text-green-800 dark:text-green-200 font-medium mb-2">
-                ✓ Transaction Successful
-              </p>
-              <p className="text-center text-sm text-green-700 dark:text-green-300">
-                Transaction ID: <span className="font-mono font-bold">{dispatchId}</span>
-              </p>
+        <DialogContent className="bg-white dark:bg-slate-900 border-0 shadow-2xl max-w-md p-0 overflow-hidden rounded-2xl gap-0">
+          
+          {/* Header Banner */}
+          <div className="relative bg-gradient-to-br from-emerald-600 to-teal-700 px-6 pt-6 pb-8">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                  <CheckCircle className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white tracking-tight">Transaction Complete</h2>
+                  <p className="text-emerald-100 text-xs mt-0.5">Sale processed & inventory updated</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSuccessModalOpen(false)}
+                className="text-white/60 hover:text-white transition-colors mt-0.5"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            {/* Product Details */}
+            {/* Transaction ID Card */}
+            <div className="mt-5 bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-widest mb-1">Transaction ID</p>
+              <p className="text-white font-mono font-bold text-sm tracking-wide">{dispatchId}</p>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-5 space-y-5 -mt-2">
+
+            {/* Items Table */}
             {dispatchedItems.length > 0 && (
-              <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                <div className="bg-slate-50 dark:bg-slate-800 px-4 py-2 border-b border-slate-200 dark:border-slate-700">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Items</h4>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Items Dispatched</span>
+                  <span className="text-xs text-slate-500">{dispatchedItems.length} item{dispatchedItems.length !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="divide-y divide-slate-200 dark:divide-slate-700 max-h-48 overflow-y-auto">
+                <div className="divide-y divide-slate-100 dark:divide-slate-700/50 max-h-44 overflow-y-auto">
                   {dispatchedItems.map((item, index) => {
                     const isFree = item.name.includes('🎁 FREE')
                     return (
-                      <div 
-                        key={index} 
-                        className={cn(
-                          "px-4 py-3 flex items-center justify-between transition-colors",
-                          isFree 
-                            ? "bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20" 
-                            : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                        )}
-                      >
+                      <div key={index} className={cn(
+                        "px-4 py-2.5 flex items-center justify-between",
+                        isFree ? "bg-amber-50 dark:bg-amber-900/10" : "bg-white dark:bg-slate-900"
+                      )}>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                            {item.name}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Qty: {item.quantity}
-                          </p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{item.name}</p>
+                          <p className="text-[11px] text-slate-400">Qty: {item.quantity}</p>
                         </div>
-                        <div className="ml-4 flex-shrink-0">
-                          <p className={cn(
-                            "text-sm font-bold",
-                            isFree 
-                              ? "text-amber-600 dark:text-amber-400" 
-                              : "text-slate-900 dark:text-white"
-                          )}>
-                            {isFree ? 'FREE' : formatCurrency(item.price)}
-                          </p>
-                        </div>
+                        <span className={cn(
+                          "text-sm font-bold ml-4 tabular-nums",
+                          isFree ? "text-amber-600" : "text-slate-900 dark:text-white"
+                        )}>
+                          {isFree ? 'FREE' : formatCurrency(item.price)}
+                        </span>
                       </div>
                     )
                   })}
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800 px-4 py-3 border-t border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white">Total</span>
-                    <span className="text-lg font-bold text-slate-900 dark:text-white">
-                      {formatCurrency(dispatchedItems.reduce((sum, item) => sum + item.price, 0))}
-                    </span>
-                  </div>
-                  {dispatchedItems.some(i => i.name.includes('🎁 FREE')) && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                      + {dispatchedItems.filter(i => i.name.includes('🎁 FREE')).length} freebie item(s)
-                    </p>
-                  )}
+                {/* Total Row */}
+                <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">Total</span>
+                  <span className="text-base font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    {formatCurrency(dispatchedItems.reduce((sum, item) => sum + item.price, 0))}
+                  </span>
                 </div>
               </div>
             )}
-            
-            <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-              <p>✓ Sale recorded</p>
-              <p>✓ Inventory updated</p>
-              <p>✓ Staff: {staffName}</p>
-              {dispatchedItems.some(i => i.name.includes('🎁 FREE')) && (
-                <p className="text-amber-600 dark:text-amber-400">
-                  🎁 Freebies tracked separately
-                </p>
-              )}
+
+            {/* Status Checklist */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: 'Sale recorded', ok: true },
+                { label: 'Inventory updated', ok: true },
+                { label: `Staff: ${staffName}`, ok: true },
+                ...(dispatchedItems.some(i => i.name.includes('🎁 FREE'))
+                  ? [{ label: 'Freebies tracked', ok: true }]
+                  : [])
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
+                  <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium text-emerald-800 dark:text-emerald-200 truncate">{item.label}</span>
+                </div>
+              ))}
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={() => setSuccessModalOpen(false)} className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white">
-              Close
+
+          {/* Footer */}
+          <div className="px-6 pb-6">
+            <Button
+              onClick={() => setSuccessModalOpen(false)}
+              className="w-full h-12 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-semibold rounded-xl shadow-lg transition-all"
+            >
+              Done
             </Button>
-          </DialogFooter>
+          </div>
+
         </DialogContent>
       </Dialog>
     </div>
