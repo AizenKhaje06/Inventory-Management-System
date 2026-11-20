@@ -98,6 +98,7 @@ export default function InventoryPage() {
   const [restoreDialogItem, setRestoreDialogItem] = useState<InventoryItem | null>(null)
   const [disposeDialogItem, setDisposeDialogItem] = useState<InventoryItem | null>(null)
   const [restoreAmount, setRestoreAmount] = useState(0)
+  const [restoreReason, setRestoreReason] = useState("")
   const [disposeAmount, setDisposeAmount] = useState(0)
   const [restoreNotes, setRestoreNotes] = useState("")
   const [disposeNotes, setDisposeNotes] = useState("")
@@ -1023,134 +1024,100 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-0 shadow-lg">
-        <CardHeader className="pb-5 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex flex-col gap-4">
-            {/* Title Row */}
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-3 text-xl font-bold text-slate-900 dark:text-white">
-                <div className="p-2 rounded-lg bg-blue-600 shadow-sm">
-                  <Package className="h-5 w-5 text-white" />
-                </div>
-                <span>Product Inventory</span>
-              </CardTitle>
+      {/* KPI Cards - Internal Usage Style */}
+      <div className={cn(
+        "grid grid-cols-2 gap-4",
+        isReadOnly ? "lg:grid-cols-3" : "lg:grid-cols-5"
+      )}>
+        {/* Total Items */}
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-100">
+                <Package className="h-5 w-5 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Items</p>
+                <p className="text-2xl font-bold text-slate-900">{formatNumber(Array.isArray(items) ? items.length : 0)}</p>
+                <p className="text-xs text-slate-500 mt-0.5">products</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Quantity */}
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-100">
+                <Package className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Quantity</p>
+                <p className="text-2xl font-bold text-slate-900">{formatNumber(Array.isArray(items) ? items.reduce((sum, item) => sum + item.quantity, 0) : 0)}</p>
+                <p className="text-xs text-slate-500 mt-0.5">units</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Value */}
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-green-100">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Value</p>
+                <p className="text-2xl font-bold text-slate-900">{formatCurrency(Array.isArray(items) ? items.reduce((sum, item) => sum + (item.sellingPrice * item.quantity), 0) : 0)}</p>
+                <p className="text-xs text-slate-500 mt-0.5">inventory value</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total COGS - Hidden for Department Agents */}
+        {!isReadOnly && (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-5">
               <div className="flex items-center gap-3">
-                <Badge className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-0 text-sm px-3 py-1 font-bold">
-                  {filteredItems.length} items
-                </Badge>
-              </div>
-            </div>
-            
-            {/* Stats Row - Responsive Grid (5 cards for admin, 3 cards for department agents) */}
-            <div className={cn(
-              "grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4",
-              isReadOnly ? "lg:grid-cols-3" : "lg:grid-cols-5"
-            )}>
-              {/* Total Items - Indigo Gradient */}
-              <div className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 p-4 rounded-xl bg-white dark:bg-slate-900">
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
-                      <Package className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wide">Total Items</p>
-                  <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-indigo-600 to-indigo-700 bg-clip-text text-transparent tabular-nums mb-2">
-                    {formatNumber(Array.isArray(items) ? items.length : 0)}
-                  </p>
-                  {(search || salesChannelFilter !== "all") && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Filtered: {formatNumber(Array.isArray(filteredItems) ? filteredItems.length : 0)}
-                    </p>
-                  )}
+                <div className="p-2.5 rounded-xl bg-orange-100">
+                  <Package className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total COGS</p>
+                  <p className="text-2xl font-bold text-slate-900">{formatCurrency(Array.isArray(items) ? items.reduce((sum, item) => sum + (item.totalCOGS || (item.costPrice * item.quantity)), 0) : 0)}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">cost basis</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        )}
 
-              {/* Total Quantity - Blue Gradient */}
-              <div className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 p-4 rounded-xl bg-white dark:bg-slate-900">
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                      <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wide">Total Quantity</p>
-                  <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-blue-600 to-blue-700 bg-clip-text text-transparent tabular-nums mb-2">
-                    {formatNumber(Array.isArray(items) ? items.reduce((sum, item) => sum + item.quantity, 0) : 0)}
-                  </p>
-                  {(search || salesChannelFilter !== "all") && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Filtered: {formatNumber(Array.isArray(filteredItems) ? filteredItems.reduce((sum, item) => sum + item.quantity, 0) : 0)}
-                    </p>
-                  )}
+        {/* Total Bad Stock - Hidden for Department Agents */}
+        {!isReadOnly && (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-red-100">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Bad Stock</p>
+                  <p className="text-2xl font-bold text-slate-900">{formatNumber(Array.isArray(items) ? items.filter(item => item.item_status === 'bad').reduce((sum, item) => sum + (item.bad_item_quantity || 0), 0) : 0)}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">units</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
-              {/* Total Value - Green Gradient */}
-              <div className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 p-4 rounded-xl bg-white dark:bg-slate-900">
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                      <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wide">Total Value</p>
-                  <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-green-600 to-green-700 bg-clip-text text-transparent tabular-nums mb-2">
-                    {formatCurrency(Array.isArray(items) ? items.reduce((sum, item) => sum + (item.sellingPrice * item.quantity), 0) : 0)}
-                  </p>
-                  {(search || salesChannelFilter !== "all") && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Filtered: {formatCurrency(Array.isArray(filteredItems) ? filteredItems.reduce((sum, item) => sum + (item.sellingPrice * item.quantity), 0) : 0)}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Total COGS - Orange Gradient - Hidden for Department Agents */}
-              {!isReadOnly && (
-                <div className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 p-4 rounded-xl bg-white dark:bg-slate-900">
-                  <div className="relative">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
-                        <Package className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                      </div>
-                    </div>
-                    <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wide">Total COGS</p>
-                    <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-orange-600 to-orange-700 bg-clip-text text-transparent tabular-nums mb-2">
-                      {formatCurrency(Array.isArray(items) ? items.reduce((sum, item) => sum + (item.totalCOGS || (item.costPrice * item.quantity)), 0) : 0)}
-                    </p>
-                    {(search || salesChannelFilter !== "all") && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Filtered: {formatCurrency(Array.isArray(filteredItems) ? filteredItems.reduce((sum, item) => sum + (item.totalCOGS || (item.costPrice * item.quantity)), 0) : 0)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Total Bad Stock - Red Gradient - Hidden for Department Agents */}
-              {!isReadOnly && (
-                <div className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 p-4 rounded-xl bg-white dark:bg-slate-900">
-                  <div className="relative">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-                        <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                      </div>
-                    </div>
-                    <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wide">Total Bad Stock</p>
-                    <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-red-600 to-red-700 bg-clip-text text-transparent tabular-nums">
-                      {formatNumber(Array.isArray(items) ? items.filter(item => item.item_status === 'bad').reduce((sum, item) => sum + (item.bad_item_quantity || 0), 0) : 0)} units
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-
-        {/* Search & Actions Bar - No Card Container */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+      {/* Table Card - Internal Usage Style */}
+      <Card className="border-0 shadow-lg overflow-hidden">
+        {/* Table Toolbar */}
+        <div className="px-6 py-4 border-b bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             {/* Search Bar - Half Width with Clear Button */}
             <div className="flex items-center gap-3 lg:w-1/2">
               <div className="relative flex-1 min-w-0">
@@ -1207,7 +1174,6 @@ export default function InventoryPage() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
         </div>
 
         <CardContent className="p-0">
@@ -2588,93 +2554,191 @@ export default function InventoryPage() {
       {/* Restore Bad Stock Dialog */}
       {restoreDialogItem && (
         <Dialog open={!!restoreDialogItem} onOpenChange={(open) => !open && setRestoreDialogItem(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                <RotateCcw className="h-5 w-5" />
-                Restore Bad Stock to Good
-              </DialogTitle>
-              <DialogDescription>
-                Convert bad stock back to good condition for <strong>{restoreDialogItem.name}</strong>
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Available bad stock: <span className="font-bold text-red-600 dark:text-red-400">{restoreDialogItem.bad_item_quantity || 0} units</span>
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="restore-amount">Quantity to Restore *</Label>
-                <Input
-                  id="restore-amount"
-                  type="number"
-                  min="1"
-                  max={restoreDialogItem.bad_item_quantity || 0}
-                  value={restoreAmount}
-                  onChange={(e) => setRestoreAmount(parseInt(e.target.value) || 0)}
-                  placeholder="Enter quantity"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="restore-notes">Notes (Optional)</Label>
-                <Input
-                  id="restore-notes"
-                  value={restoreNotes}
-                  onChange={(e) => setRestoreNotes(e.target.value)}
-                  placeholder="e.g., Items re-inspected and verified as good"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
+          <DialogContent className="max-w-lg p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden [&>button]:hidden ring-0 focus:ring-0 focus-visible:ring-0 outline-none">
+            {/* Premium Header */}
+            <div className="relative bg-slate-900 px-6 py-5">
+              {/* Close button */}
+              <button
                 onClick={() => {
                   setRestoreDialogItem(null)
                   setRestoreAmount(0)
                   setRestoreNotes("")
                 }}
+                className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
               >
-                Cancel
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (!restoreAmount || restoreAmount <= 0) {
-                    showError("Please enter a valid quantity")
-                    return
-                  }
-                  if (restoreAmount > (restoreDialogItem.bad_item_quantity || 0)) {
-                    showError("Quantity exceeds available bad stock")
-                    return
-                  }
+                <X className="h-3.5 w-3.5 text-white" />
+              </button>
 
-                  try {
-                    await apiPost(`/api/items/${restoreDialogItem.id}/restore`, {
-                      amount: restoreAmount,
-                      notes: restoreNotes
-                    })
-                    showSuccess(`Successfully restored ${restoreAmount} units to good stock!`)
+              {/* Header content */}
+              <div className="flex items-center gap-4 pr-10">
+                <div className="w-11 h-11 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                  <RotateCcw className="h-6 w-6 text-green-400" />
+                </div>
+                <div>
+                  <DialogTitle className="!text-white text-2xl font-bold tracking-tight leading-tight" style={{ color: 'white' }}>
+                    Restore Stock
+                  </DialogTitle>
+                  <DialogDescription className="!text-slate-300 text-sm mt-0.5" style={{ color: '#cbd5e1' }}>
+                    Convert bad stock back to good condition for <strong>{restoreDialogItem.name}</strong>
+                  </DialogDescription>
+                </div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-5 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-950/50 dark:to-slate-900">
+              
+              {/* Bad Stock Breakdown - Show all reasons with quantities */}
+              {restoreDialogItem.bad_items_breakdown && Object.keys(restoreDialogItem.bad_items_breakdown).length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Bad Stock Breakdown</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(restoreDialogItem.bad_items_breakdown).map(([reason, qty]) => (
+                      <div key={reason} className="p-3 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/20 rounded-lg border border-red-200 dark:border-red-700/50 shadow-sm">
+                        <p className="text-xs font-semibold text-red-700 dark:text-red-400 capitalize">{reason.replace(/_/g, ' ')}</p>
+                        <p className="text-xl font-black text-red-600 dark:text-red-400 tabular-nums">{qty as number} units</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/20 rounded-xl border border-red-200 dark:border-red-700/50 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wider">Available Bad Stock</p>
+                      <p className="text-2xl font-black text-red-600 dark:text-red-400 tabular-nums">{restoreDialogItem.bad_item_quantity || 0} units</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Reason Selection Dropdown */}
+              {restoreDialogItem.bad_items_breakdown && Object.keys(restoreDialogItem.bad_items_breakdown).length > 0 && (
+                <div>
+                  <Label htmlFor="restore-reason" className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
+                    Select Reason to Restore From *
+                  </Label>
+                  <Select value={restoreReason} onValueChange={setRestoreReason}>
+                    <SelectTrigger id="restore-reason" className="h-12 text-base border-slate-300 focus:border-green-500 focus:ring-green-500">
+                      <SelectValue placeholder="Choose which bad stock reason to restore from" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(restoreDialogItem.bad_items_breakdown).map(([reason, qty]) => (
+                        <SelectItem key={reason} value={reason}>
+                          <span className="capitalize">{reason.replace(/_/g, ' ')}</span> - {qty as number} units available
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Quantity Input */}
+              <div>
+                <Label htmlFor="restore-amount" className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
+                  Quantity to Restore *
+                </Label>
+                <Input
+                  id="restore-amount"
+                  type="number"
+                  min="1"
+                  max={
+                    restoreReason && restoreDialogItem.bad_items_breakdown 
+                      ? (restoreDialogItem.bad_items_breakdown[restoreReason] as number || 0)
+                      : (restoreDialogItem.bad_item_quantity || 0)
+                  }
+                  value={restoreAmount}
+                  onChange={(e) => setRestoreAmount(parseInt(e.target.value) || 0)}
+                  placeholder="Enter quantity to restore"
+                  className="h-12 text-base border-slate-300 focus:border-green-500 focus:ring-green-500"
+                />
+                {restoreReason && restoreDialogItem.bad_items_breakdown && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Max: {restoreDialogItem.bad_items_breakdown[restoreReason] as number} units from "{restoreReason.replace(/_/g, ' ')}"
+                  </p>
+                )}
+              </div>
+
+              {/* Notes Input */}
+              <div>
+                <Label htmlFor="restore-notes" className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
+                  Notes (Optional)
+                </Label>
+                <Input
+                  id="restore-notes"
+                  value={restoreNotes}
+                  onChange={(e) => setRestoreNotes(e.target.value)}
+                  placeholder="e.g., Items re-inspected and verified as good"
+                  className="h-12 text-base border-slate-300 focus:border-green-500 focus:ring-green-500"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
                     setRestoreDialogItem(null)
                     setRestoreAmount(0)
+                    setRestoreReason("")
                     setRestoreNotes("")
-                    await fetchItems()
-                  } catch (error) {
-                    console.error("Error restoring stock:", error)
-                    showError("Failed to restore stock")
-                  }
-                }}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Restore to Good
-              </Button>
-            </DialogFooter>
+                  }}
+                  className="flex-1 h-12 border-2 border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    // Validation
+                    if (!restoreAmount || restoreAmount <= 0) {
+                      showError("Please enter a valid quantity")
+                      return
+                    }
+                    
+                    // Check if reason is required and selected
+                    const hasBreakdown = restoreDialogItem.bad_items_breakdown && Object.keys(restoreDialogItem.bad_items_breakdown).length > 0
+                    if (hasBreakdown && !restoreReason) {
+                      showError("Please select which reason to restore from")
+                      return
+                    }
+
+                    // Check quantity limits
+                    const maxQty = restoreReason && restoreDialogItem.bad_items_breakdown
+                      ? (restoreDialogItem.bad_items_breakdown[restoreReason] as number || 0)
+                      : (restoreDialogItem.bad_item_quantity || 0)
+                    
+                    if (restoreAmount > maxQty) {
+                      showError(`Quantity exceeds available stock (max: ${maxQty})`)
+                      return
+                    }
+
+                    try {
+                      await apiPost(`/api/items/${restoreDialogItem.id}/restore`, {
+                        amount: restoreAmount,
+                        reason: restoreReason || null,
+                        notes: restoreNotes
+                      })
+                      showSuccess(`Successfully restored ${restoreAmount} units to good stock!`)
+                      setRestoreDialogItem(null)
+                      setRestoreAmount(0)
+                      setRestoreReason("")
+                      setRestoreNotes("")
+                      await fetchItems()
+                    } catch (error) {
+                      console.error("Error restoring stock:", error)
+                      showError("Failed to restore stock")
+                    }
+                  }}
+                  className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-lg"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Restore to Good
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       )}

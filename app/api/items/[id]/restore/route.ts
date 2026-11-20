@@ -8,9 +8,9 @@ export async function POST(
   try {
     const { id } = await params
     const body = await request.json()
-    const { amount, notes } = body
+    const { amount, reason, notes } = body
 
-    console.log('[Restore API] Request received:', { id, amount, notes })
+    console.log('[Restore API] Request received:', { id, amount, reason, notes })
 
     if (!amount || amount <= 0) {
       console.log('[Restore API] Validation failed: Invalid amount')
@@ -27,12 +27,14 @@ export async function POST(
     }
 
     const currentBadQty = item.bad_item_quantity || 0
+    const breakdown = (item.bad_items_breakdown || {}) as Record<string, number>
 
     console.log('[Restore API] Item found:', { 
       id: item.id, 
       name: item.name, 
       currentGoodQty: item.quantity,
-      currentBadQty 
+      currentBadQty,
+      breakdown
     })
 
     // Check if there's enough bad stock to restore
@@ -44,30 +46,59 @@ export async function POST(
       )
     }
 
-    // Calculate new quantities
-    const newGoodQty = item.quantity + amount
-    const newBadQty = currentBadQty - amount
-
-    // Update breakdown - reduce proportionally from all reasons
-    const breakdown = (item.bad_items_breakdown || {}) as Record<string, number>
-    const updatedBreakdown: Record<string, number> = {}
+    // If reason is specified, validate and update breakdown
+    let updatedBreakdown: Record<string, number> = { ...breakdown }
     
-    if (Object.keys(breakdown).length > 0) {
+    if (reason && Object.keys(breakdown).length > 0) {
+      // Check if reason exists in breakdown
+      if (!breakdown[reason]) {
+        console.log('[Restore API] Invalid reason:', reason)
+        return NextResponse.json(
+          { error: `Invalid reason: ${reason}` }, 
+          { status: 400 }
+        )
+      }
+
+      // Check if enough quantity for this reason
+      if (breakdown[reason] < amount) {
+        console.log('[Restore API] Insufficient quantity for reason:', { reason, available: breakdown[reason], requested: amount })
+        return NextResponse.json(
+          { error: `Insufficient quantity for "${reason}". Available: ${breakdown[reason]}, Requested: ${amount}` }, 
+          { status: 400 }
+        )
+      }
+
+      // Update breakdown - subtract from specific reason
+      const newQty = breakdown[reason] - amount
+      if (newQty > 0) {
+        updatedBreakdown[reason] = newQty
+      } else {
+        delete updatedBreakdown[reason]
+      }
+    } else if (Object.keys(breakdown).length > 0) {
+      // No specific reason selected but breakdown exists - reduce proportionally
       let remaining = amount
-      const totalBad = Object.values(breakdown).reduce((sum, qty) => sum + qty, 0)
+      updatedBreakdown = {}
       
-      // Reduce proportionally from each reason
-      for (const [reason, qty] of Object.entries(breakdown)) {
-        const proportion = qty / totalBad
-        const toReduce = Math.min(Math.round(proportion * amount), qty, remaining)
+      for (const [reasonKey, qty] of Object.entries(breakdown)) {
+        if (remaining <= 0) {
+          updatedBreakdown[reasonKey] = qty
+          continue
+        }
+        
+        const toReduce = Math.min(qty, remaining)
         const newQty = qty - toReduce
         
         if (newQty > 0) {
-          updatedBreakdown[reason] = newQty
+          updatedBreakdown[reasonKey] = newQty
         }
         remaining -= toReduce
       }
     }
+
+    // Calculate new quantities
+    const newGoodQty = item.quantity + amount
+    const newBadQty = currentBadQty - amount
 
     // Determine new status
     const newStatus = newBadQty === 0 ? 'good' : 'bad'
@@ -78,6 +109,7 @@ export async function POST(
       oldBadQty: currentBadQty,
       newBadQty,
       newStatus,
+      oldBreakdown: breakdown,
       updatedBreakdown
     })
 
@@ -107,11 +139,12 @@ export async function POST(
       hour12: true
     })
     
+    const reasonText = reason ? ` from "${reason.replace(/_/g, ' ')}"` : ''
     await addLog({
       operation: "restore",
       itemId: id,
       itemName: item.name,
-      details: `Restored ${amount} units from bad to good stock${notes ? ` - ${notes}` : ''} | Dispatcher: ${displayName} | ${timestamp}`,
+      details: `Restored ${amount} units${reasonText} from bad to good stock${notes ? ` - ${notes}` : ''} | Dispatcher: ${displayName} | ${timestamp}`,
     })
 
     console.log('[Restore API] Operation completed successfully')
@@ -121,6 +154,7 @@ export async function POST(
         ...item, 
         quantity: newGoodQty,
         bad_item_quantity: newBadQty,
+        bad_items_breakdown: updatedBreakdown,
         item_status: newStatus
       } 
     })

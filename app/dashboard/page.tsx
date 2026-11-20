@@ -63,25 +63,52 @@ export default function DashboardPage() {
       setRefreshing(true)
       console.log('[Dashboard] Fetching data for period:', timePeriod)
       
-      // Build API URL
-      // - Tabs (Day/Week/Month) control chart data with their own date ranges
-      // - Date picker should NOT override the tabs, only filter KPI data
-      let apiUrl = `/api/dashboard?period=${timePeriod}`
+      // Build TWO API URLs:
+      // 1. Chart data - NO date filter (always current month for chart)
+      const chartApiUrl = `/api/dashboard?period=${timePeriod}`
       
-      // DON'T send date filters - let the period tabs control the chart data
-      // The backend will use the period parameter to determine the correct date range
+      // 2. KPI data - WITH date filter (if date picker has values)
+      const kpiParams = new URLSearchParams()
+      kpiParams.append('period', timePeriod)
       
-      const [stats, items] = await Promise.all([
-        apiGet<DashboardStats>(apiUrl),
+      if (startDate) {
+        kpiParams.append('startDate', startDate.toISOString())
+      }
+      if (endDate) {
+        kpiParams.append('endDate', endDate.toISOString())
+      }
+      
+      const kpiApiUrl = `/api/dashboard?${kpiParams.toString()}`
+      
+      // Fetch chart data (unfiltered) and KPI data (filtered) separately
+      const hasDateFilter = startDate || endDate
+      const [chartStats, kpiStats, items] = await Promise.all([
+        apiGet<DashboardStats>(chartApiUrl), // Always unfiltered for chart
+        hasDateFilter ? apiGet<DashboardStats>(kpiApiUrl) : Promise.resolve(null), // Only fetch if filtered
         apiGet<InventoryItem[]>("/api/items")
       ])
+      
+      // Use KPI stats if available (date filtered), otherwise use chart stats
+      const displayStats = hasDateFilter && kpiStats ? {
+        ...kpiStats,
+        // Keep chart data from unfiltered stats
+        salesOverTime: chartStats.salesOverTime,
+        revenueToday: chartStats.revenueToday,
+        itemsSoldToday: chartStats.itemsSoldToday,
+        yesterdaySales: chartStats.yesterdaySales,
+        yesterdayQuantity: chartStats.yesterdayQuantity,
+        lastWeekSales: chartStats.lastWeekSales,
+        lastWeekQuantity: chartStats.lastWeekQuantity,
+        lastMonthSales: chartStats.lastMonthSales,
+        lastMonthQuantity: chartStats.lastMonthQuantity,
+      } : chartStats
 
       console.log('[Dashboard] Data received:', {
-        stats: stats,
+        stats: displayStats,
         items: items
       })
 
-      setStats(stats)
+      setStats(displayStats)
       setAllItems(items)
       setLowStockItems(items.filter((item: InventoryItem) => item.quantity > 0 && item.quantity <= item.reorderLevel))
       setOutOfStockItems(items.filter((item: InventoryItem) => item.quantity === 0))
@@ -99,7 +126,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchData()
-  }, [timePeriod]) // Only refetch when period tab changes, not date filter
+  }, [timePeriod, startDate, endDate]) // Refetch when period tab OR date filter changes
 
   // Show loading state with skeleton loaders
   if (loading) {

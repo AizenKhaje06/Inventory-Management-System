@@ -1003,10 +1003,10 @@ export default function POSPage() {
 
       {/* Success Modal - Enterprise Grade */}
       <Dialog open={successModalOpen} onOpenChange={setSuccessModalOpen}>
-        <DialogContent className="bg-white dark:bg-slate-900 border-0 shadow-2xl max-w-sm p-0 overflow-hidden rounded-2xl gap-0 [&>button]:hidden">
+        <DialogContent className="bg-white dark:bg-slate-900 border-0 shadow-2xl max-w-sm p-0 overflow-hidden rounded-2xl gap-0 [&>button]:hidden ring-0 focus:ring-0 focus-visible:ring-0 outline-none">
           
           {/* Header Banner */}
-          <div className="relative bg-gradient-to-br from-emerald-500 to-teal-600 px-5 pt-5 pb-5">
+          <div className="relative bg-slate-900 px-5 pt-5 pb-5">
             {/* Custom close button - top right corner */}
             <button
               onClick={() => setSuccessModalOpen(false)}
@@ -1022,7 +1022,7 @@ export default function POSPage() {
               </div>
               <div>
                 <div style={{ fontSize: '20px', fontWeight: 700, color: 'white', lineHeight: '1.2', whiteSpace: 'nowrap' }}>Transaction Complete</div>
-                <p className="text-emerald-100 text-xs mt-0.5">Sale processed & inventory updated</p>
+                <p className="text-slate-300 text-xs mt-0.5">Sale processed & inventory updated</p>
               </div>
             </div>
 
@@ -1030,9 +1030,9 @@ export default function POSPage() {
             <div className="mt-3 bg-white/15 rounded-lg px-4 py-2.5 border border-white/20 mx-1">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-widest">Waybill Number</p>
+                  <p className="text-slate-300 text-[10px] font-semibold uppercase tracking-widest">Waybill Number</p>
                   <p className="text-white font-mono font-bold text-sm mt-0.5 truncate">
-                    {dispatchedWaybill ? dispatchedWaybill : <span className="font-normal text-emerald-200 text-xs italic">Not provided</span>}
+                    {dispatchedWaybill ? dispatchedWaybill : <span className="font-normal text-slate-400 text-xs italic">Not provided</span>}
                   </p>
                 </div>
                 {dispatchedCourier && (
@@ -1091,8 +1091,8 @@ export default function POSPage() {
               </div>
             )}
 
-            {/* Status Checklist - plain text, 1 row */}
-            <div className="flex items-center gap-4 py-1">
+            {/* Status Checklist - plain text, 1 row, center aligned */}
+            <div className="flex items-center justify-center gap-4 py-1">
               {[
                 'Sale recorded',
                 'Inventory updated',

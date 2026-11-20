@@ -18,7 +18,7 @@ import {
 import { 
   Package, Search, Download, XCircle, Eye, Copy, CheckCircle, AlertCircle,
   Calendar, Filter, Truck, DollarSign, ShoppingCart, TrendingUp, RefreshCw,
-  MoreVertical, FileText
+  MoreVertical, FileText, X
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { apiGet, apiPost } from '@/lib/api-client'
@@ -578,58 +578,118 @@ export default function OrdersPage() {
 
         {/* Details Modal */}
         <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Order Details</DialogTitle>
-              <DialogDescription>Complete order information</DialogDescription>
-            </DialogHeader>
+          <DialogContent className="max-w-2xl p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden [&>button]:hidden ring-0 focus:ring-0 focus-visible:ring-0 outline-none">
+            {/* Premium Header */}
+            <div className="relative bg-slate-900 px-6 py-5">
+              {/* Close button */}
+              <button
+                onClick={() => setDetailsModalOpen(false)}
+                className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
+              >
+                <X className="h-3.5 w-3.5 text-white" />
+              </button>
+
+              {/* Header content */}
+              <div className="flex items-center gap-4 pr-10">
+                <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <Package className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="!text-white text-2xl font-bold tracking-tight leading-tight" style={{ color: 'white' }}>
+                    Order Details
+                  </DialogTitle>
+                  <DialogDescription className="!text-slate-300 text-sm mt-0.5" style={{ color: '#cbd5e1' }}>
+                    Complete order information
+                  </DialogDescription>
+                </div>
+              </div>
+            </div>
+
+            {/* Body */}
             {selectedOrder && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <p className="text-xs text-slate-500 mb-1">Waybill</p>
-                    <p className="font-mono font-semibold">{selectedOrder.waybill_number || 'No waybill'}</p>
+              <div className="px-6 py-5 space-y-5 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-950/50 dark:to-slate-900 max-h-[70vh] overflow-y-auto">
+                
+                {/* Key Metrics Grid - 2x3 */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Waybill */}
+                  <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Waybill</p>
+                    <p className="font-mono font-bold text-slate-900 dark:text-white text-lg">
+                      {selectedOrder.waybill_number || <span className="text-slate-400 italic text-sm">No waybill</span>}
+                    </p>
                   </div>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <p className="text-xs text-slate-500 mb-1">Date</p>
-                    <p className="font-semibold">{formatPhilippinesDateTime(selectedOrder.date)}</p>
+
+                  {/* Date */}
+                  <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Date</p>
+                    <p className="font-semibold text-slate-900 dark:text-white">{formatPhilippinesDateTime(selectedOrder.date)}</p>
                   </div>
-                  <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                    <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-1">Total</p>
-                    <p className="text-xl font-bold text-emerald-700">{formatCurrency(selectedOrder.total)}</p>
+
+                  {/* Total */}
+                  <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/20 rounded-xl border border-emerald-200 dark:border-emerald-700/50 shadow-sm">
+                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">Total</p>
+                    <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400 tabular-nums">{formatCurrency(selectedOrder.total)}</p>
                   </div>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <p className="text-xs text-slate-500 mb-1">COGS</p>
-                    <p className="font-semibold">{formatCurrency(selectedOrder.cogs)}</p>
+
+                  {/* COGS */}
+                  <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">COGS</p>
+                    <p className="text-lg font-bold text-slate-900 dark:text-white tabular-nums">{formatCurrency(selectedOrder.cogs)}</p>
                   </div>
-                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <p className="text-xs text-blue-700 dark:text-blue-400 mb-1">Profit</p>
-                    <p className="text-xl font-bold text-blue-700">{formatCurrency(selectedOrder.total - selectedOrder.cogs)}</p>
+
+                  {/* Profit */}
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-700/50 shadow-sm">
+                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-2">Profit</p>
+                    <p className="text-2xl font-black text-blue-700 dark:text-blue-400 tabular-nums">{formatCurrency(selectedOrder.total - selectedOrder.cogs)}</p>
                   </div>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <p className="text-xs text-slate-500 mb-1">Quantity</p>
-                    <p className="font-semibold">{selectedOrder.qty} items</p>
+
+                  {/* Quantity */}
+                  <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Quantity</p>
+                    <p className="text-lg font-bold text-slate-900 dark:text-white">{selectedOrder.qty} items</p>
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-2">Products</p>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <p className="text-sm">{selectedOrder.product}</p>
+
+                {/* Products Section */}
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                  <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Products</p>
+                  </div>
+                  <div className="p-4 bg-white dark:bg-slate-900">
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{selectedOrder.product}</p>
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-2">Order ID</p>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <p className="font-mono text-sm">{selectedOrder.id}</p>
+
+                {/* Order ID Section */}
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                  <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Order ID</p>
+                  </div>
+                  <div className="p-4 bg-white dark:bg-slate-900">
+                    <p className="font-mono text-sm text-slate-700 dark:text-slate-300">{selectedOrder.id}</p>
                   </div>
                 </div>
+
+                {/* Cancellation Info (if cancelled) */}
                 {selectedOrder.is_cancelled && (
-                  <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200">
-                    <h3 className="font-bold text-red-700 mb-2">Cancellation Info</h3>
-                    <div className="space-y-1 text-sm">
-                      <p><span className="text-red-600">By:</span> {selectedOrder.cancelled_by}</p>
-                      <p><span className="text-red-600">At:</span> {selectedOrder.cancelled_at ? formatPhilippinesDateTime(selectedOrder.cancelled_at) : 'N/A'}</p>
-                      <p><span className="text-red-600">Reason:</span> {selectedOrder.cancellation_reason}</p>
+                  <div className="p-5 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/20 rounded-xl border-2 border-red-300 dark:border-red-700/50 shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                      <h3 className="font-bold text-red-700 dark:text-red-400 text-base">Cancellation Info</h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-start gap-2">
+                        <span className="text-red-600 font-semibold min-w-[60px]">By:</span>
+                        <span className="text-red-700 dark:text-red-300">{selectedOrder.cancelled_by}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-red-600 font-semibold min-w-[60px]">At:</span>
+                        <span className="text-red-700 dark:text-red-300">{selectedOrder.cancelled_at ? formatPhilippinesDateTime(selectedOrder.cancelled_at) : 'N/A'}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-red-600 font-semibold min-w-[60px]">Reason:</span>
+                        <span className="text-red-700 dark:text-red-300">{selectedOrder.cancellation_reason}</span>
+                      </div>
                     </div>
                   </div>
                 )}

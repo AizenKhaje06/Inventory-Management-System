@@ -139,15 +139,26 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[90vh] p-0 gap-0 bg-gradient-to-br from-slate-50 to-blue-50" hideCloseButton>
-        {/* Header */}
-        <div className="flex items-center gap-2.5 px-5 py-1.5 bg-[#E8F0FE] border-b">
-          <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-md">
-            <ShoppingCart className="h-4 w-4 text-white" />
+      <DialogContent className="max-w-5xl h-[90vh] p-0 gap-0 bg-white rounded-2xl overflow-hidden border-0 shadow-2xl" hideCloseButton>
+        {/* Compact Professional Header */}
+        <div className="relative bg-slate-900 px-5 py-1.5 border-b border-slate-800 flex items-center">
+          <div className="flex items-center gap-3 pr-8">
+            {/* Icon */}
+            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <ShoppingCart className="h-4.5 w-4.5 text-white" />
+            </div>
+            {/* Title & Subtitle */}
+            <div className="flex-1">
+              <h2 className="text-base font-bold !text-white leading-tight" style={{ color: 'white' }}>Record Internal Usage</h2>
+              <p className="text-[11px] !text-slate-300 mt-0.5" style={{ color: '#cbd5e1' }}>Track items used for demo, display, and internal consumption</p>
+            </div>
           </div>
-          <h2 className="flex-1 text-base font-bold text-slate-900">Record Internal Usage</h2>
-          <button onClick={onClose} className="h-5 w-5 flex items-center justify-center rounded-md hover:bg-slate-200/60 transition-colors">
-            <X className="h-3.5 w-3.5 text-slate-600" strokeWidth={2.5} />
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-2.5 right-2.5 w-6 h-6 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          >
+            <X className="h-3.5 w-3.5 text-white" />
           </button>
         </div>
 

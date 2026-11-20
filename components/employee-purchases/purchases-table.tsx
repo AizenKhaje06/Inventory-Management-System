@@ -298,18 +298,6 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-
-            {/* Export Button */}
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handleExport}
-              disabled={filteredPurchases.length === 0}
-              className="bg-white border-slate-300 hover:bg-slate-50"
-            >
-              <FileDown className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
           </div>
         </div>
       </CardHeader>

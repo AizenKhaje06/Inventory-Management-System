@@ -62,6 +62,7 @@ export interface RevenueChartProps {
   onPeriodChange: (period: TimePeriod) => void
   comparison: PeriodComparison
   loading?: boolean
+  showComparison?: boolean // Hide comparison when date filter is active
 }
 
 // ============================================================================
@@ -231,7 +232,8 @@ export function RevenueChart({
   timePeriod,
   onPeriodChange,
   comparison,
-  loading = false
+  loading = false,
+  showComparison = true // Default to true (show comparison)
 }: RevenueChartProps) {
   
   // Detect mobile screen size
@@ -310,6 +312,7 @@ export function RevenueChart({
         </div>
         
         {/* Comparison Metrics */}
+        {showComparison && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
           {/* Current Period */}
           <div className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 sm:p-4">
@@ -384,6 +387,7 @@ export function RevenueChart({
             </div>
           </div>
         </div>
+        )}
 
         {/* Legend */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">

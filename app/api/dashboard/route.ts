@@ -309,15 +309,10 @@ export async function GET(request: Request) {
       return txDate >= today && txDate <= todayEnd
     })
 
-    // For KPI cards (respects date filter)
-    const todayTransactionsKPI = activeTransactionsKPI.filter(tx => {
-      const txDate = new Date(tx.timestamp)
-      return txDate >= today && txDate <= todayEnd
-    })
-
-    const itemsSoldToday = todayTransactionsKPI.reduce((sum, tx) => sum + tx.quantity, 0)
-    const revenueToday = todayTransactionsKPI.reduce((sum, tx) => sum + tx.totalRevenue, 0)
-    const recentSales = todayTransactionsKPI.length
+    // Chart metrics - use activeTransactions (ignores date filter)
+    const itemsSoldToday = todayTransactions.reduce((sum, tx) => sum + tx.quantity, 0)
+    const revenueToday = todayTransactions.reduce((sum, tx) => sum + tx.totalRevenue, 0)
+    const recentSales = todayTransactions.length
 
     // Yesterday's sales for comparison (for Revenue Overview card - ignores date filter)
     const yesterday = new Date(today)
