@@ -22,6 +22,14 @@ interface CartItem {
   imageUrl?: string
 }
 
+interface Employee {
+  id: string
+  name: string
+  department?: string
+  position?: string
+  status: string
+}
+
 const DEPARTMENTS = [
   { value: 'Facebook', label: 'Facebook', icon: '/facebook.png' },
   { value: 'TikTok', label: 'TikTok', icon: '/tiktok.png' },
@@ -43,11 +51,12 @@ interface UseItemModalProps {
 
 export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
   const [products, setProducts] = useState<InventoryItem[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
   const [search, setSearch] = useState("")
   const [cart, setCart] = useState<CartItem[]>([])
   const [department, setDepartment] = useState("")
   const [usageType, setUsageType] = useState("")
-  const [requestedBy, setRequestedBy] = useState("") // manual - employee who requested
+  const [employeeId, setEmployeeId] = useState("") // selected employee ID
   const [processedBy, setProcessedBy] = useState("") // auto-filled - logged in user
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
@@ -55,10 +64,11 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
   useEffect(() => {
     if (open) {
       fetchProducts()
+      fetchEmployees()
       setCart([])
       setDepartment("")
       setUsageType("")
-      setRequestedBy("")
+      setEmployeeId("")
       setNotes("")
       setSearch("")
 
@@ -77,6 +87,16 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
       setProducts(Array.isArray(data) ? data.filter(i => i.quantity > 0) : [])
     } catch (error) {
       toast.error("Failed to load products")
+    }
+  }
+
+  const fetchEmployees = async () => {
+    try {
+      const data = await apiGet<Employee[]>("/api/employees?status=active")
+      setEmployees(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.error("Failed to load employees:", error)
+      // Don't show error toast, just log it
     }
   }
 
@@ -108,7 +128,7 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
   const handleSubmit = async () => {
     if (!department)          { toast.error("Please select a department"); return }
     if (!usageType)           { toast.error("Please select usage type"); return }
-    if (!requestedBy.trim())  { toast.error("Please enter the requester name"); return }
+    if (!employeeId)          { toast.error("Please select an employee"); return }
     if (cart.length === 0)    { toast.error("Cart is empty"); return }
 
     setLoading(true)
@@ -116,7 +136,7 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
       await apiPost("/api/internal-usage", {
         department,
         usageType,
-        reason:      requestedBy.trim(), // stored as reason in DB
+        employeeId,
         notes:       notes.trim() || null,
         processedBy: processedBy,
         items: cart.map(c => ({
@@ -296,15 +316,32 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
                     </Select>
                   </div>
                 </div>
-                {/* Requested By */}
+                {/* Requested By - Employee Dropdown */}
                 <div>
                   <label className="text-xs font-semibold text-slate-700 mb-1 block">Requested By <span className="text-red-500">*</span></label>
-                  <Input
-                    placeholder="Employee name who requested..."
-                    value={requestedBy}
-                    onChange={e => setRequestedBy(e.target.value)}
-                    className="h-9 bg-white border-slate-300 text-sm"
-                  />
+                  <Select value={employeeId} onValueChange={setEmployeeId}>
+                    <SelectTrigger className="h-9 bg-white border-slate-300 text-sm">
+                      <SelectValue placeholder="Select employee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.length === 0 ? (
+                        <div className="px-2 py-3 text-xs text-slate-500 text-center">
+                          No active employees found.<br/>Add employees first.
+                        </div>
+                      ) : (
+                        employees.map(emp => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">{emp.name}</span>
+                              {emp.department && (
+                                <span className="text-xs text-slate-500">- {emp.department}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {/* Notes */}
                 <div>
@@ -390,7 +427,7 @@ export function UseItemModal({ open, onClose, onSuccess }: UseItemModalProps) {
                   <Button
                     className="flex-1 h-10 bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={handleSubmit}
-                    disabled={loading || cart.length === 0 || !department || !usageType || !requestedBy.trim()}
+                    disabled={loading || cart.length === 0 || !department || !usageType || !employeeId}
                   >
                     {loading ? (
                       <><div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-r-transparent" />Recording...</>

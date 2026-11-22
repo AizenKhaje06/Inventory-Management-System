@@ -6,11 +6,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Package, TrendingDown, Building2, Search, RefreshCw, RotateCcw } from "lucide-react"
+import { Plus, Package, TrendingDown, Building2, Search, RefreshCw, RotateCcw, Users } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { apiGet } from "@/lib/api-client"
 import { UseItemModal } from "@/components/internal-usage/use-item-modal"
 import { ReturnDemoItemsModal } from "@/components/internal-usage/return-demo-items-modal"
+import { EmployeeManagementModal } from "@/components/internal-usage/employee-management-modal"
 import { toast } from "sonner"
 
 interface UsageRecord {
@@ -45,6 +46,7 @@ export default function InternalUsagePage() {
   const [loading, setLoading]       = useState(true)
   const [modalOpen, setModalOpen]   = useState(false)
   const [returnModalOpen, setReturnModalOpen] = useState(false)
+  const [employeeModalOpen, setEmployeeModalOpen] = useState(false)
   const [search, setSearch]         = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
 
@@ -104,11 +106,24 @@ export default function InternalUsagePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button onClick={() => setReturnModalOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg">
+          <Button 
+            onClick={() => setEmployeeModalOpen(true)} 
+            className="h-10 px-5 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Employees
+          </Button>
+          <Button 
+            onClick={() => setReturnModalOpen(true)} 
+            className="h-10 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+          >
             <RotateCcw className="mr-2 h-4 w-4" />
             Return Items
           </Button>
-          <Button onClick={() => setModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg">
+          <Button 
+            onClick={() => setModalOpen(true)} 
+            className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Use Item
           </Button>
@@ -463,6 +478,11 @@ export default function InternalUsagePage() {
           setReturnModalOpen(false)
           fetchRecords()
         }}
+      />
+
+      <EmployeeManagementModal
+        open={employeeModalOpen}
+        onClose={() => setEmployeeModalOpen(false)}
       />
     </div>
   )

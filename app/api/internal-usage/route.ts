@@ -27,14 +27,26 @@ export const GET = withAuth(async (request, { user }) => {
 export const POST = withAuth(async (request, { user }) => {
   try {
     const body = await request.json()
-    const { department, usageType, reason, notes, items, processedBy } = body
+    const { department, usageType, employeeId, notes, items, processedBy } = body
 
     // Validate required fields
     if (!department)          return NextResponse.json({ error: 'Department is required' }, { status: 400 })
     if (!usageType)           return NextResponse.json({ error: 'Usage type is required' }, { status: 400 })
     if (!['demo', 'internal'].includes(usageType)) return NextResponse.json({ error: 'Invalid usage type' }, { status: 400 })
-    if (!reason?.trim())      return NextResponse.json({ error: 'Reason is required' }, { status: 400 })
+    if (!employeeId)          return NextResponse.json({ error: 'Employee is required' }, { status: 400 })
     if (!items?.length)       return NextResponse.json({ error: 'Items are required' }, { status: 400 })
+
+    // Fetch employee details
+    const { data: employee, error: empError } = await supabase
+      .from('employees')
+      .select('name')
+      .eq('id', employeeId)
+      .eq('status', 'active')
+      .single()
+
+    if (empError || !employee) {
+      return NextResponse.json({ error: 'Employee not found or inactive' }, { status: 404 })
+    }
 
     // Get current inventory to validate stock
     const allItems = await getInventoryItems()
@@ -77,7 +89,8 @@ export const POST = withAuth(async (request, { user }) => {
         id,
         department,
         usage_type:  usageType,
-        reason:      reason.trim(),
+        employee_id: employeeId,
+        reason:      employee.name, // Store name for backward compatibility and display
         notes:       notes?.trim() || null,
         items:       itemsData,
         total_cost:  totalCost,
@@ -105,12 +118,12 @@ export const POST = withAuth(async (request, { user }) => {
           itemId:    reqItem.itemId,
           itemName:  reqItem.itemName,
           quantity:  reqItem.quantity,
-          details:   `${typeLabel} "${reqItem.itemName}" - Qty: ${reqItem.quantity}, Department: ${department}, Requested by: ${reason}, Processed by: ${processedBy || user?.displayName || 'Unknown'}`,
+          details:   `${typeLabel} "${reqItem.itemName}" - Qty: ${reqItem.quantity}, Department: ${department}, Requested by: ${employee.name}, Processed by: ${processedBy || user?.displayName || 'Unknown'}`,
         })
       }
     }
 
-    console.log(`[Internal Usage POST] ✅ Recorded: ${id}, items: ${totalQty}, cost: ${totalCost}`)
+    console.log(`[Internal Usage POST] ✅ Recorded: ${id}, items: ${totalQty}, cost: ${totalCost}, employee: ${employee.name}`)
     return NextResponse.json({ success: true, id }, { status: 201 })
 
   } catch (error: any) {

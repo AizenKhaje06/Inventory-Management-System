@@ -45,14 +45,19 @@ export const POST = withAuth(async (request, { user }) => {
 
       if (returnQuantity <= 0) continue
 
-      // Find all records that have this item
-      const recordsWithItem = records.filter(rec => 
-        rec.items?.some((i: any) => i.itemId === itemId)
-      )
+      console.log(`[Return] Processing ${itemName} (${itemId}), quantity: ${returnQuantity}`)
+
+      // Find all records that have this item and sort by creation date (oldest first)
+      const recordsWithItem = records
+        .filter(rec => rec.items?.some((i: any) => i.itemId === itemId))
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+      console.log(`[Return] Found ${recordsWithItem.length} records with ${itemName}`)
 
       if (recordsWithItem.length === 0) continue
 
       let remainingToReturn = returnQuantity
+      let totalReturnedForThisItem = 0 // Track total returned for inventory update
 
       // Update each record
       for (const record of recordsWithItem) {
@@ -66,10 +71,15 @@ export const POST = withAuth(async (request, { user }) => {
         const currentlyReturned = returned_items[itemId]?.returned || 0
         const canReturn = totalRequested - currentlyReturned
 
+        console.log(`[Return] Record ${record.id}: requested=${totalRequested}, returned=${currentlyReturned}, canReturn=${canReturn}`)
+
         if (canReturn <= 0) continue
 
         const qtyToReturnFromRecord = Math.min(remainingToReturn, canReturn)
         remainingToReturn -= qtyToReturnFromRecord
+        totalReturnedForThisItem += qtyToReturnFromRecord
+
+        console.log(`[Return] Returning ${qtyToReturnFromRecord} from record ${record.id}, remaining=${remainingToReturn}`)
 
         // Update returned_items JSONB
         const newReturnedItems = {
@@ -80,24 +90,26 @@ export const POST = withAuth(async (request, { user }) => {
           }
         }
 
-        // Calculate total returned vs total requested across all items
+        // Calculate total returned vs total requested across all items in THIS record
         let totalReturnedQty = 0
         let totalRequestedQty = 0
         for (const item of record.items) {
-          const itemId = item.itemId
+          const itemIdInRecord = item.itemId
           const requested = item.quantity
-          const returned = newReturnedItems[itemId]?.returned || 0
+          const returned = newReturnedItems[itemIdInRecord]?.returned || 0
           totalRequestedQty += requested
           totalReturnedQty += returned
         }
 
-        // Determine return status
+        // Determine return status for THIS record
         let returnStatus = 'pending'
         if (totalReturnedQty > 0 && totalReturnedQty < totalRequestedQty) {
           returnStatus = 'partial'
         } else if (totalReturnedQty >= totalRequestedQty) {
           returnStatus = 'completed'
         }
+
+        console.log(`[Return] Record ${record.id} status: ${returnStatus} (${totalReturnedQty}/${totalRequestedQty})`)
 
         // Append to return_history
         const returnHistory = record.return_history || []
@@ -124,20 +136,24 @@ export const POST = withAuth(async (request, { user }) => {
           console.error('[Return Items] Update error:', updateError)
           return NextResponse.json({ error: updateError.message }, { status: 500 })
         }
+      }
 
-        // Add back to inventory
+      // Add back to inventory ONCE per item (after processing all records)
+      if (totalReturnedForThisItem > 0) {
         const inventoryItem = allInventoryItems.find(i => i.id === itemId)
         if (inventoryItem) {
-          const newQty = inventoryItem.quantity + qtyToReturnFromRecord
+          const newQty = inventoryItem.quantity + totalReturnedForThisItem
           await updateInventoryItem(itemId, { quantity: newQty })
 
-          // Log the return
+          console.log(`[Return] Updated inventory for ${itemName}: +${totalReturnedForThisItem} (new qty: ${newQty})`)
+
+          // Log the return ONCE per item
           await addLog({
             operation: 'return',
             itemId,
             itemName,
-            quantity: qtyToReturnFromRecord,
-            details: `Returned "${itemName}" - Qty: ${qtyToReturnFromRecord}, From: ${personName}, Processed by: ${returnedBy}`,
+            quantity: totalReturnedForThisItem,
+            details: `Returned "${itemName}" - Qty: ${totalReturnedForThisItem}, From: ${personName}, Processed by: ${returnedBy}`,
           })
         }
       }

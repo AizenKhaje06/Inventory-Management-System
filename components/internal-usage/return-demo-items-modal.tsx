@@ -215,23 +215,23 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[85vh] p-0 gap-0 bg-white rounded-2xl overflow-hidden border-0 shadow-2xl" hideCloseButton>
+      <DialogContent className="max-w-3xl max-h-[85vh] p-0 gap-0 bg-white rounded-lg overflow-hidden border shadow-xl" hideCloseButton>
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-4 border-b border-emerald-700 flex items-center">
+        <div className="relative bg-slate-800 px-6 py-4 border-b border-slate-700 flex items-center">
           <div className="flex items-center gap-3 pr-8">
-            <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-sm">
+            <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center flex-shrink-0">
               <RotateCcw className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1">
-              <h2 className="text-lg font-bold !text-white leading-tight" style={{ color: 'white' }}>Return Demo/Display Items</h2>
-              <p className="text-xs !text-emerald-100 mt-0.5" style={{ color: '#d1fae5' }}>
+              <h2 className="text-base font-bold leading-tight" style={{ color: '#ffffff' }}>Return Demo/Display Items</h2>
+              <p className="text-xs mt-0.5" style={{ color: '#d1d5db' }}>
                 Select items to return and add back to inventory
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            className="absolute top-4 right-4 w-8 h-8 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition-colors"
           >
             <X className="h-4 w-4 text-white" />
           </button>
@@ -248,7 +248,7 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
               <h3 className="text-sm font-bold text-slate-900">Select Person</h3>
             </div>
             <Select value={selectedPerson} onValueChange={setSelectedPerson}>
-              <SelectTrigger className="h-11 bg-white border-slate-300">
+              <SelectTrigger className="h-10 bg-white border-slate-300">
                 <SelectValue placeholder="Choose who is returning items..." />
               </SelectTrigger>
               <SelectContent>
@@ -257,12 +257,23 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
                 ) : (
                   personNames.map(name => {
                     const personRecords = records.filter(r => r.reason === name)
-                    const totalItems = personRecords.reduce((sum, r) => sum + r.total_qty, 0)
+                    
+                    // Calculate unreturned items count (not total qty)
+                    let unreturnedCount = 0
+                    personRecords.forEach(record => {
+                      record.items.forEach(item => {
+                        const returned_items = record.returned_items || {}
+                        const returnedQty = returned_items[item.itemId]?.returned || 0
+                        const available = item.quantity - returnedQty
+                        unreturnedCount += available
+                      })
+                    })
+                    
                     return (
                       <SelectItem key={name} value={name}>
                         <div className="flex items-center justify-between gap-4 w-full">
                           <span className="font-medium">{name}</span>
-                          <span className="text-xs text-slate-500">{totalItems} items</span>
+                          <span className="text-xs text-slate-500">{unreturnedCount} items</span>
                         </div>
                       </SelectItem>
                     )
@@ -283,7 +294,7 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
               </div>
 
               {aggregatedItems.length === 0 ? (
-                <div className="text-center py-10 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
+                <div className="text-center py-10 bg-slate-50 rounded-lg border border-slate-200">
                   <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
                   <p className="text-sm font-semibold text-slate-700">All items returned!</p>
                   <p className="text-xs text-slate-500 mt-1">No pending items to return for this person</p>
@@ -299,9 +310,9 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
                       <div
                         key={item.itemId}
                         className={cn(
-                          "flex items-center gap-4 p-4 rounded-lg border-2 transition-all",
+                          "flex items-center gap-4 p-4 rounded-lg border transition-all",
                           isSelected
-                            ? "border-blue-400 bg-blue-50"
+                            ? "border-blue-500 bg-blue-50"
                             : "border-slate-200 bg-white hover:border-slate-300"
                         )}
                       >
@@ -356,7 +367,7 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
                             disabled={!isSelected}
                             className={cn(
                               "h-9 w-20 text-center font-bold",
-                              isSelected ? "border-blue-400" : ""
+                              isSelected ? "border-blue-500" : ""
                             )}
                           />
                           <span className="text-xs text-slate-500">
@@ -373,12 +384,17 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
 
           {/* Summary */}
           {selectedPerson && aggregatedItems.length > 0 && selectedItems.size > 0 && (
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-semibold text-slate-600 uppercase">Return Summary</p>
                   <p className="text-sm text-slate-700 mt-1">
-                    <span className="font-bold text-blue-600">{selectedItems.size}</span> item(s) selected
+                    <span className="font-bold text-blue-600">
+                      {Array.from(selectedItems).reduce((sum, itemId) => {
+                        const qty = quantities[itemId] || 0
+                        return sum + qty
+                      }, 0)}
+                    </span> item(s) selected
                   </p>
                 </div>
                 <div className="text-right">
@@ -394,14 +410,14 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
         <div className="border-t bg-slate-50 px-6 py-4 flex items-center justify-between gap-4">
           <Button
             variant="outline"
-            className="h-10 px-6"
+            className="h-10 px-6 rounded-lg font-semibold"
             onClick={onClose}
             disabled={loading}
           >
             Cancel
           </Button>
           <Button
-            className="h-10 px-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg"
+            className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all"
             onClick={handleSubmit}
             disabled={loading || !selectedPerson || selectedItems.size === 0 || aggregatedItems.length === 0}
           >
@@ -413,7 +429,7 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
             ) : (
               <>
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Return Items ({selectedItems.size})
+                Return Items ({Array.from(selectedItems).reduce((sum, itemId) => sum + (quantities[itemId] || 0), 0)})
               </>
             )}
           </Button>
