@@ -164,7 +164,7 @@ export default function SalesAnalyticsPage() {
       
       const transformedSalesOverTime = (data.salesOverTime || []).map((item: any) => {
         const revenue = item.sales || 0;
-        const cost = (item.quantity || 0) * (data.totalCost / Math.max(data.totalTransactions, 1));
+        const cost = item.cost || 0; // Use actual cost from API
         const profit = revenue - cost;
         
         let fullDate: string;
@@ -294,16 +294,16 @@ export default function SalesAnalyticsPage() {
     salesData.dailySales.forEach(day => {
       worksheetData.push([
         new Date(day.date).toLocaleDateString(),
-        day.revenue,
+        parseFloat(day.revenue.toFixed(2)),
         day.itemsSold,
-        day.profit
+        parseFloat(day.profit.toFixed(2))
       ]);
     });
 
     if (salesData.topProducts && salesData.topProducts.length > 0) {
       worksheetData.push([], ['Top Products'], ['Product', 'Quantity', 'Revenue']);
       salesData.topProducts.forEach(product => {
-        worksheetData.push([product.name, product.quantity, product.revenue]);
+        worksheetData.push([product.name, product.quantity, parseFloat(product.revenue.toFixed(2))]);
       });
     }
 

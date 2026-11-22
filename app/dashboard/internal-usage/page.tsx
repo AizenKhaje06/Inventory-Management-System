@@ -6,10 +6,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Package, TrendingDown, Building2, Search, RefreshCw } from "lucide-react"
+import { Plus, Package, TrendingDown, Building2, Search, RefreshCw, RotateCcw } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { apiGet } from "@/lib/api-client"
 import { UseItemModal } from "@/components/internal-usage/use-item-modal"
+import { ReturnDemoItemsModal } from "@/components/internal-usage/return-demo-items-modal"
 import { toast } from "sonner"
 
 interface UsageRecord {
@@ -29,6 +30,9 @@ interface UsageRecord {
   total_qty: number
   recorded_by: string
   created_at: string
+  returned_items?: Record<string, { returned: number; total: number }>
+  return_status?: string
+  last_return_date?: string
 }
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -40,6 +44,7 @@ export default function InternalUsagePage() {
   const [records, setRecords]       = useState<UsageRecord[]>([])
   const [loading, setLoading]       = useState(true)
   const [modalOpen, setModalOpen]   = useState(false)
+  const [returnModalOpen, setReturnModalOpen] = useState(false)
   const [search, setSearch]         = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
 
@@ -98,10 +103,16 @@ export default function InternalUsagePage() {
             Track items used for demo, display, and internal consumption
           </p>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg">
-          <Plus className="mr-2 h-4 w-4" />
-          Use Item
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={() => setReturnModalOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg">
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Return Items
+          </Button>
+          <Button onClick={() => setModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg">
+            <Plus className="mr-2 h-4 w-4" />
+            Use Item
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -219,36 +230,42 @@ export default function InternalUsagePage() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left pl-6 pr-4 py-3.5">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Date & Time</span>
+              <tr className="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black border-b border-slate-700/50">
+                <th className="text-left pl-6 pr-4 py-3 w-[10%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Date & Time</span>
                 </th>
-                <th className="text-left px-4 py-3.5 min-w-[280px]">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Items</span>
+                <th className="text-left px-4 py-3 w-[22%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Items</span>
                 </th>
-                <th className="text-left px-4 py-3.5">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Requested By</span>
+                <th className="text-left px-4 py-3 w-[11%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Requested By</span>
                 </th>
-                <th className="text-left px-4 py-3.5">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Department</span>
+                <th className="text-left px-4 py-3 w-[10%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Department</span>
                 </th>
-                <th className="text-left px-4 py-3.5">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Type</span>
+                <th className="text-left px-4 py-3 w-[11%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Type</span>
                 </th>
-                <th className="text-right px-4 py-3.5">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Qty</span>
+                <th className="text-left px-4 py-3 w-[12%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Return Status</span>
                 </th>
-                <th className="text-right pl-4 pr-6 py-3.5">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Cost</span>
+                <th className="text-left px-4 py-3 w-[10%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Last Return</span>
+                </th>
+                <th className="text-right px-4 py-3 w-[7%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Qty</span>
+                </th>
+                <th className="text-right pl-4 pr-6 py-3 w-[7%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Total Cost</span>
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/50">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-20">
+                  <td colSpan={9} className="text-center py-20">
                     <div className="inline-flex flex-col items-center gap-3">
                       <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-r-transparent" />
                       <p className="text-sm text-slate-500 font-medium">Loading records...</p>
@@ -257,7 +274,7 @@ export default function InternalUsagePage() {
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-20">
+                  <td colSpan={9} className="text-center py-20">
                     <div className="inline-flex flex-col items-center gap-3">
                       <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
                         <Package className="h-8 w-8 text-slate-400" />
@@ -280,40 +297,40 @@ export default function InternalUsagePage() {
                   return (
                     <tr
                       key={record.id || idx}
-                      className={`border-b border-slate-100 hover:bg-blue-50/40 transition-colors group ${isEven ? 'bg-white' : 'bg-slate-50/50'}`}
+                      className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
                     >
                       {/* Date */}
-                      <td className="pl-6 pr-4 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-slate-800">{formatDate(record.created_at)}</div>
-                        <div className="text-xs text-slate-400 mt-0.5">{formatTime(record.created_at)}</div>
+                      <td className="pl-6 pr-4 py-3.5 whitespace-nowrap">
+                        <div className="text-[12px] font-medium text-slate-900 dark:text-white leading-tight">{formatDate(record.created_at)}</div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{formatTime(record.created_at)}</div>
                       </td>
 
                       {/* Items */}
-                      <td className="px-4 py-4 min-w-[280px]">
-                        <div className="text-sm font-semibold text-slate-900" title={itemNames}>
+                      <td className="px-4 py-3.5">
+                        <div className="text-[13px] font-medium text-slate-900 dark:text-white" title={itemNames}>
                           {itemNames}
                         </div>
                         {record.notes && (
-                          <div className="text-xs text-slate-400 mt-0.5 truncate max-w-[260px]" title={record.notes}>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1" title={record.notes}>
                             {record.notes}
                           </div>
                         )}
                       </td>
 
                       {/* Requested By */}
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <span className="text-[10px] font-bold text-blue-600">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
                               {record.reason?.charAt(0)?.toUpperCase() || '?'}
                             </span>
                           </div>
-                          <span className="text-sm font-medium text-slate-700">{record.reason || '—'}</span>
+                          <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">{record.reason || '—'}</span>
                         </div>
                       </td>
 
                       {/* Department */}
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
                           {/* Department icon */}
                           {(() => {
@@ -329,26 +346,82 @@ export default function InternalUsagePage() {
                               <img src={icon} alt={record.department} className="w-5 h-5 object-contain flex-shrink-0" />
                             ) : null
                           })()}
-                          <span className="text-sm font-semibold text-slate-800">{record.department}</span>
+                          <span className="text-[13px] font-semibold text-slate-800 dark:text-white">{record.department}</span>
                         </div>
                       </td>
 
                       {/* Type Badge */}
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border ${typeInfo.color}`}>
+                      <td className="px-4 py-3.5">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold border ${typeInfo.color}`}>
                           {typeInfo.label}
                         </span>
                       </td>
 
+                      {/* Return Status - Only for demo/display */}
+                      <td className="px-4 py-3.5">
+                        {record.usage_type === 'demo' ? (
+                          (() => {
+                            const returnStatus = record.return_status || 'pending'
+                            const returned_items = record.returned_items || {}
+                            
+                            // Calculate total returned vs total requested
+                            let totalReturned = 0
+                            let totalRequested = 0
+                            for (const item of record.items) {
+                              totalRequested += item.quantity
+                              totalReturned += returned_items[item.itemId]?.returned || 0
+                            }
+
+                            let badgeColor = ''
+                            let badgeText = ''
+                            
+                            if (returnStatus === 'completed' || totalReturned >= totalRequested) {
+                              badgeColor = 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                              badgeText = 'All items returned'
+                            } else if (returnStatus === 'partial') {
+                              badgeColor = 'bg-amber-100 text-amber-700 border-amber-200'
+                              badgeText = `${totalReturned}/${totalRequested} returned`
+                            } else {
+                              badgeColor = 'bg-red-100 text-red-700 border-red-200'
+                              badgeText = `${totalReturned}/${totalRequested} returned`
+                            }
+
+                            return (
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold border ${badgeColor}`}>
+                                {badgeText}
+                              </span>
+                            )
+                          })()
+                        ) : (
+                          <span className="text-[12px] text-slate-400">—</span>
+                        )}
+                      </td>
+
+                      {/* Last Return Date - Only for demo/display */}
+                      <td className="px-4 py-3.5">
+                        {record.usage_type === 'demo' && record.last_return_date ? (
+                          <div>
+                            <div className="text-[12px] font-medium text-slate-900 dark:text-white leading-tight">
+                              {formatDate(record.last_return_date)}
+                            </div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              {formatTime(record.last_return_date)}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[12px] text-slate-400">—</span>
+                        )}
+                      </td>
+
                       {/* Qty */}
-                      <td className="px-4 py-4 text-right">
-                        <span className="text-sm font-bold text-slate-900 tabular-nums">{record.total_qty}</span>
-                        <span className="text-xs text-slate-400 ml-1">units</span>
+                      <td className="px-4 py-3.5 text-right">
+                        <span className="text-[13px] font-bold text-slate-900 dark:text-white tabular-nums">{record.total_qty}</span>
+                        <span className="text-[10px] text-slate-400 ml-1">units</span>
                       </td>
 
                       {/* Cost */}
-                      <td className="pl-4 pr-6 py-4 text-right">
-                        <span className="text-sm font-bold text-red-600 tabular-nums">
+                      <td className="pl-4 pr-6 py-3.5 text-right">
+                        <span className="text-[13px] font-bold text-red-600 dark:text-red-400 tabular-nums">
                           {formatCurrency(record.total_cost || 0)}
                         </span>
                       </td>
@@ -373,12 +446,21 @@ export default function InternalUsagePage() {
         )}
       </Card>
 
-      {/* Modal */}
+      {/* Modals */}
       <UseItemModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSuccess={() => {
           setModalOpen(false)
+          fetchRecords()
+        }}
+      />
+
+      <ReturnDemoItemsModal
+        open={returnModalOpen}
+        onClose={() => setReturnModalOpen(false)}
+        onSuccess={() => {
+          setReturnModalOpen(false)
           fetchRecords()
         }}
       />

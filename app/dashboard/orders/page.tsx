@@ -218,7 +218,7 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-      <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+      <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div className="flex-1 min-w-0">
@@ -322,75 +322,46 @@ export default function OrdersPage() {
         </div>
 
         {/* Filters */}
-        <Card className="border-0 shadow-lg bg-white dark:bg-slate-800/50">
-          <CardContent className="pt-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1 relative group">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                <Input
-                  placeholder="Search orders..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 h-12"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full lg:w-[200px] h-12">
-                  <SelectValue placeholder="Filter Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Orders</SelectItem>
-                  <SelectItem value="active">Active Only</SelectItem>
-                  <SelectItem value="cancelled">Cancelled Only</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex gap-3">
-                <Button 
-                  onClick={exportToExcel} 
-                  size="sm"
-                  className="h-12 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold gap-2 shadow-sm"
-                >
-                  <Download className="h-4 w-4" />
-                  Export Excel
-                </Button>
-                {selectedOrders.length > 0 && (
-                  <Button onClick={handleBulkCancel} variant="destructive" className="gap-2 h-12 px-4 font-semibold">
-                    <XCircle className="h-4 w-4" />
-                    Cancel ({selectedOrders.length})
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          <div className="w-full lg:w-1/2 relative group">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+            <Input
+              placeholder="Search orders..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 h-12 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+            />
+          </div>
+          <div className="flex gap-3 flex-wrap lg:flex-nowrap">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full lg:w-[180px] h-12 border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-colors font-medium">
+                <SelectValue placeholder="Filter Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Orders</SelectItem>
+                <SelectItem value="active">Active Only</SelectItem>
+                <SelectItem value="cancelled">Cancelled Only</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button 
+              onClick={exportToExcel} 
+              size="sm"
+              className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-2 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg"
+            >
+              <Download className="h-4 w-4" />
+              Export Excel
+            </Button>
+            {selectedOrders.length > 0 && (
+              <Button onClick={handleBulkCancel} variant="destructive" className="gap-2 h-10 px-6 font-semibold shadow-md hover:shadow-lg transition-all duration-200 rounded-lg">
+                <XCircle className="h-4 w-4" />
+                Cancel ({selectedOrders.length})
+              </Button>
+            )}
+          </div>
+        </div>
 
         {/* Shopify-Style Table */}
         <Card className="border border-slate-200 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-800 rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-800/50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
-                  <Package className="h-5 w-5 text-white" strokeWidth={2.5} />
-                </div>
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white">Orders</h2>
-              </div>
-              <div className="flex items-center gap-4">
-                <p className="text-xs text-slate-500 dark:text-slate-400">{filteredOrders.length} total orders</p>
-                {selectedOrders.length > 0 && (
-                  <>
-                    <div className="h-4 w-px bg-slate-300 dark:bg-slate-600"></div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{selectedOrders.length} selected</span>
-                      <Button onClick={handleBulkCancel} size="sm" variant="destructive" className="h-8">
-                        <XCircle className="h-3.5 w-3.5 mr-1.5" />
-                        Cancel Selected
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
           <div className="overflow-hidden border border-slate-200/60 dark:border-slate-700/60">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">

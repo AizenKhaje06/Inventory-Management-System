@@ -34,7 +34,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { EnterpriseDateRangePicker } from "@/components/ui/enterprise-date-range-picker"
 import * as XLSX from 'xlsx'
 
-const ITEMS_PER_PAGE = 50
+const ITEMS_PER_PAGE = 10
 
 // Operation type configuration
 const OPERATION_CONFIG = {
@@ -53,6 +53,7 @@ const OPERATION_CONFIG = {
   'demo-display': { label: "Demo/Display", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800", icon: Activity },
   demo: { label: "Demo/Display", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800", icon: Activity },
   internal: { label: "Internal Use", color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800", icon: Package },
+  return: { label: "Returned", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800", icon: RefreshCw },
   warehouse: { label: "Warehouse", color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800", icon: Database },
   'to-be-packed': { label: "To Be Packed", color: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 border border-sky-200 dark:border-sky-800", icon: Package },
   other: { label: "Sale", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800", icon: ShoppingCart }
@@ -160,7 +161,7 @@ export default function LogPage() {
         }
         
         // Only override based on details if operation is still unclear
-        const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'restore', 'uncancel', 'freebie', 'demo', 'internal', 'transfer']
+        const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'restore', 'uncancel', 'freebie', 'demo', 'internal', 'transfer', 'return']
         const isExplicitOperation = explicitOperations.includes(actualOperation)
         
         if (!isExplicitOperation) {
@@ -271,7 +272,7 @@ export default function LogPage() {
     }
     
     // Only override based on details if operation is still unclear
-    const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'uncancel', 'freebie']
+    const explicitOperations = ['create', 'update', 'delete', 'restock', 'transaction-cancelled', 'to-be-packed', 'sale', 'cancel', 'uncancel', 'freebie', 'return']
     const isExplicitOperation = explicitOperations.includes(actualOperation)
     
     if (!isExplicitOperation) {
@@ -343,114 +344,12 @@ export default function LogPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto py-5 px-6 space-y-6">
-      {/* Page Header with Date Filter - Mobile Responsive */}
+      {/* Page Header - Mobile Responsive */}
       <div className="flex flex-col gap-4 mb-6">
         <div>
           <h2 className="text-lg sm:text-2xl md:text-3xl font-bold gradient-text leading-tight">Activity Logs Overview</h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">View all system operations and changes</p>
         </div>
-        
-        {/* Date Range + Export - Mobile Stack */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <Button
-            onClick={exportLogsToExcel}
-            disabled={filteredLogs.length === 0}
-            size="sm"
-            className="w-full sm:w-auto h-9 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold gap-2 shadow-sm disabled:opacity-50"
-          >
-            <Download className="h-4 w-4" />
-            Export Excel
-          </Button>
-          <EnterpriseDateRangePicker
-            startDate={startDate}
-            endDate={endDate}
-            onDateChange={(start, end) => {
-              setStartDate(start)
-              setEndDate(end)
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Statistics Cards - Professional Corporate Design */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        {/* Total Logs - Blue */}
-        <Card className="p-5 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-600 shadow-lg shadow-blue-500/30">
-              <Database className="h-4 w-4 text-white" strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Total Logs</p>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 tabular-nums">{stats.total}</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Today - Green */}
-        <Card className="p-5 border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-green-600 shadow-lg shadow-green-500/30">
-              <Activity className="h-4 w-4 text-white" strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-wider">Today</p>
-              <p className="text-2xl font-bold text-green-900 dark:text-green-100 tabular-nums">{stats.today}</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Creates - Purple */}
-        <Card className="p-5 border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-900/10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-purple-600 shadow-lg shadow-purple-500/30">
-              <Plus className="h-4 w-4 text-white" strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Creates</p>
-              <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 tabular-nums">{stats.creates}</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Updates - Orange */}
-        <Card className="p-5 border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-900/10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-orange-600 shadow-lg shadow-orange-500/30">
-              <Edit className="h-4 w-4 text-white" strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Updates</p>
-              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 tabular-nums">{stats.updates}</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Deletes - Red */}
-        <Card className="p-5 border-0 shadow-lg bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-900/10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-red-600 shadow-lg shadow-red-500/30">
-              <Trash2 className="h-4 w-4 text-white" strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Deletes</p>
-              <p className="text-2xl font-bold text-red-900 dark:text-red-100 tabular-nums">{stats.deletes}</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Cancelled - Amber */}
-        <Card className="p-5 border-0 shadow-lg bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-900/10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-amber-600 shadow-lg shadow-amber-500/30">
-              <X className="h-4 w-4 text-white" strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Cancelled</p>
-              <p className="text-2xl font-bold text-amber-900 dark:text-amber-100 tabular-nums">{stats.cancelled}</p>
-            </div>
-          </div>
-        </Card>
       </div>
 
       {/* Filters Section - SaaS Professional Design */}
@@ -485,43 +384,53 @@ export default function LogPage() {
         </div>
 
         {/* Search and Filters Row */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search - Responsive width */}
-          <div className="relative flex-1 sm:max-w-[450px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Search logs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-10 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-800"
-            />
-          </div>
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          {/* Left side: Search + Operation Filter */}
+          <div className="flex flex-col sm:flex-row gap-3 flex-1">
+            {/* Search - Responsive width */}
+            <div className="relative flex-1 sm:max-w-[450px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Search logs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-11 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-800"
+              />
+            </div>
 
-          {/* Filters Container - Responsive */}
-          <div className="flex gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
             {/* Operation Filter */}
             <Select value={operationFilter} onValueChange={setOperationFilter}>
-              <SelectTrigger className="h-10 flex-1 sm:w-[160px] md:w-[200px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="h-11 w-full sm:w-[160px] md:w-[200px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <SelectValue placeholder="All Operations" />
               </SelectTrigger>
               <SelectContent>
-              <SelectItem value="all">All Operations</SelectItem>
-              <SelectItem value="create">Create</SelectItem>
-              <SelectItem value="update">Update</SelectItem>
-              <SelectItem value="delete">Delete</SelectItem>
-              <SelectItem value="restock">Restock</SelectItem>
-              <SelectItem value="reduce">Reduce</SelectItem>
-              <SelectItem value="sale">Sale</SelectItem>
-              <SelectItem value="freebie">Freebies</SelectItem>
-              <SelectItem value="to-be-packed">To Be Packed</SelectItem>
-              {!isDepartment && <SelectItem value="cancel">Cancelled Orders</SelectItem>}
-              {!isDepartment && <SelectItem value="restore">Restored Orders</SelectItem>}
-              <SelectItem value="demo">Demo / Display</SelectItem>
-              <SelectItem value="internal">Internal Use</SelectItem>
-              <SelectItem value="warehouse">Warehouse</SelectItem>
-            </SelectContent>
-          </Select>
+                <SelectItem value="all">All Operations</SelectItem>
+                <SelectItem value="create">Create</SelectItem>
+                <SelectItem value="update">Update</SelectItem>
+                <SelectItem value="delete">Delete</SelectItem>
+                <SelectItem value="restock">Restock</SelectItem>
+                <SelectItem value="reduce">Reduce</SelectItem>
+                <SelectItem value="sale">Sale</SelectItem>
+                <SelectItem value="freebie">Freebies</SelectItem>
+                {!isDepartment && <SelectItem value="cancel">Cancelled Orders</SelectItem>}
+                {!isDepartment && <SelectItem value="restore">Restored Orders</SelectItem>}
+                <SelectItem value="demo">Demo / Display</SelectItem>
+                <SelectItem value="internal">Internal Use</SelectItem>
+                <SelectItem value="return">Returned Items</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
+          {/* Right side: Date Filter */}
+          <div className="flex-shrink-0">
+            <EnterpriseDateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onDateChange={(start, end) => {
+                setStartDate(start)
+                setEndDate(end)
+              }}
+            />
           </div>
         </div>
       </div>

@@ -1710,7 +1710,7 @@ export default function InventoryPage() {
                               <div className="min-w-0 flex-1">
                                 <p 
                                   className={cn(
-                                    "text-xs font-semibold break-words line-clamp-2",
+                                    "text-[13px] font-semibold break-words line-clamp-2",
                                     isSelected 
                                       ? "text-blue-900 dark:text-blue-100" 
                                       : "text-slate-900 dark:text-white"
@@ -1727,7 +1727,7 @@ export default function InventoryPage() {
                           <td className="py-2 px-3">
                             <span 
                               className={cn(
-                                "text-xs block break-words",
+                                "text-[12px] block break-words",
                                 isSelected 
                                   ? "text-blue-900 dark:text-blue-100 font-medium" 
                                   : "text-slate-600 dark:text-slate-400"
@@ -1996,7 +1996,7 @@ export default function InventoryPage() {
                           {/* Cost - Hidden for department agents (operations role) */}
                           {!isReadOnly && (
                             <td className="py-2 px-3">
-                              <span className="text-xs font-medium text-slate-800 dark:text-slate-200 tabular-nums">
+                              <span className="text-[13px] font-medium text-slate-800 dark:text-slate-200 tabular-nums">
                                 {formatCurrency(item.costPrice)}
                               </span>
                             </td>
@@ -2006,8 +2006,8 @@ export default function InventoryPage() {
                           <td className="py-2 px-3">
                             <span className={
                               isSelected 
-                                ? "text-xs font-semibold tabular-nums text-blue-900 dark:text-blue-100" 
-                                : "text-xs font-semibold tabular-nums text-slate-900 dark:text-white"
+                                ? "text-[13px] font-semibold tabular-nums text-blue-900 dark:text-blue-100" 
+                                : "text-[13px] font-semibold tabular-nums text-slate-900 dark:text-white"
                             }>
                               {formatCurrency(item.sellingPrice)}
                             </span>
@@ -2016,7 +2016,7 @@ export default function InventoryPage() {
                           {/* Profit Margin */}
                           <td className="py-2 px-3">
                             <div className="flex items-center justify-start gap-1">
-                              <span className={`text-xs font-bold tabular-nums ${profitMargin >= 30 ? 'text-green-600' : profitMargin >= 15 ? 'text-amber-600' : 'text-red-600'}`}>
+                              <span className={`text-[12px] font-bold tabular-nums ${profitMargin >= 30 ? 'text-green-600' : profitMargin >= 15 ? 'text-amber-600' : 'text-red-600'}`}>
                                 {profitMargin.toFixed(1)}%
                               </span>
                             </div>

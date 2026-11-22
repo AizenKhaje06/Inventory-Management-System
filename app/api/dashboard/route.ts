@@ -355,7 +355,7 @@ export async function GET(request: Request) {
     const lastMonthQuantity = lastMonthTransactions.reduce((sum, tx) => sum + tx.quantity, 0)
 
     // Sales over time based on period OR date filter
-    let salesOverTime: { date: string; purchases: number; sales: number; quantity: number }[] = []
+    let salesOverTime: { date: string; purchases: number; sales: number; quantity: number; cost: number }[] = []
 
     // If date filter is active, use filtered date range for chart
     if (startDate && endDate) {
@@ -386,8 +386,9 @@ export async function GET(request: Request) {
 
         const sales = dayTransactions.reduce((sum, tx) => sum + tx.totalRevenue, 0)
         const quantity = dayTransactions.reduce((sum, tx) => sum + tx.quantity, 0)
+        const cost = dayTransactions.reduce((sum, tx) => sum + tx.totalCost, 0)
 
-        return { date: dayStr, purchases: 0, sales, quantity }
+        return { date: dayStr, purchases: 0, sales, quantity, cost }
       })
       
       console.log('[Dashboard API] Generated salesOverTime for date range:', {
@@ -415,8 +416,9 @@ export async function GET(request: Request) {
 
         const sales = hourTransactions.reduce((sum, tx) => sum + tx.totalRevenue, 0)
         const quantity = hourTransactions.reduce((sum, tx) => sum + tx.quantity, 0)
+        const cost = hourTransactions.reduce((sum, tx) => sum + tx.totalCost, 0)
 
-        return { date: hourStr, purchases: 0, sales, quantity }
+        return { date: hourStr, purchases: 0, sales, quantity, cost }
       })
     } else if (period === '1W') {
       // Last 7 days - show month and day (Nov 5, Nov 6, etc.)
@@ -440,8 +442,9 @@ export async function GET(request: Request) {
 
         const sales = dayTransactions.reduce((sum, tx) => sum + tx.totalRevenue, 0)
         const quantity = dayTransactions.reduce((sum, tx) => sum + tx.quantity, 0)
+        const cost = dayTransactions.reduce((sum, tx) => sum + tx.totalCost, 0)
 
-        return { date: dayStr, purchases: 0, sales, quantity }
+        return { date: dayStr, purchases: 0, sales, quantity, cost }
       })
     } else if (period === '1M') {
       // Current month
@@ -466,8 +469,9 @@ export async function GET(request: Request) {
 
         const sales = dayTransactions.reduce((sum, tx) => sum + tx.totalRevenue, 0)
         const quantity = dayTransactions.reduce((sum, tx) => sum + tx.quantity, 0)
+        const cost = dayTransactions.reduce((sum, tx) => sum + tx.totalCost, 0)
 
-        return { date: dayStr, purchases: 0, sales, quantity }
+        return { date: dayStr, purchases: 0, sales, quantity, cost }
       })
     }
 

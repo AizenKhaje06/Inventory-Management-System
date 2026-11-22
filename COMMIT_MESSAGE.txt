@@ -1,0 +1,74 @@
+✨ feat: Add return flow for Demo/Display items
+
+Implemented comprehensive return tracking system for demo and display items with automatic inventory management.
+
+## New Features
+- ✅ Return Items button on Internal Usage page
+- ✅ Return modal with person selection and item aggregation
+- ✅ Return Status column with color-coded badges (pending/partial/completed)
+- ✅ Last Return Date column
+- ✅ Automatic inventory updates on return
+- ✅ Full audit trail of return history
+
+## Database Changes
+- Added `returned_items` JSONB column to track quantities
+- Added `return_status` TEXT column for status tracking
+- Added `last_return_date` TIMESTAMP column
+- Added `return_history` JSONB column for audit trail
+
+## API Changes
+- New endpoint: POST `/api/internal-usage/return`
+- Handles multiple records from same person
+- Validates return quantities
+- Updates inventory and creates logs
+
+## UI/UX Improvements
+- Emerald green "Return Items" button
+- Professional return modal with 2-step flow
+- Progress bars showing return completion
+- Badge colors: Red (pending), Yellow (partial), Green (completed)
+- Shows aggregate view of all items per person
+- Supports partial returns across multiple transactions
+
+## Business Logic
+- Only demo/display items can be returned
+- Items automatically added back to inventory
+- Each transaction tracks its own return status
+- Multiple borrowings from same person are aggregated
+- Full validation and error handling
+
+## Files Changed
+- ✨ app/api/internal-usage/return/route.ts (new)
+- ✨ components/internal-usage/return-demo-items-modal.tsx (new)
+- 📝 app/dashboard/internal-usage/page.tsx (updated)
+- 🗃️ ADD_INTERNAL_USAGE_RETURNS.sql (new migration)
+
+## Documentation
+- 📚 RETURN_FLOW_SUMMARY.md - Complete technical overview
+- 📚 RETURN_FLOW_SETUP_INSTRUCTIONS.md - Setup guide
+- 📚 TESTING_GUIDE.md - Comprehensive testing scenarios
+- 📚 QUICK_START.md - 3-minute quick start
+- 📚 RUN_MIGRATION.md - Migration instructions
+
+## Testing
+- ✅ Tested with single transactions
+- ✅ Tested with multiple transactions per person
+- ✅ Tested partial returns
+- ✅ Tested complete returns
+- ✅ Tested inventory updates
+- ✅ Tested edge cases and validation
+- ✅ No TypeScript errors
+
+## Migration Required
+⚠️ Run ADD_INTERNAL_USAGE_RETURNS.sql in Supabase before using
+
+## Breaking Changes
+None - backward compatible with existing data
+
+## Dependencies
+No new dependencies added
+
+---
+
+Resolves: Return tracking for demo/display items
+Related: Internal usage management, inventory tracking
