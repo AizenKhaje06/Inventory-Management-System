@@ -125,23 +125,23 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[85vh] p-0 gap-0 bg-white rounded-lg overflow-hidden border shadow-xl" hideCloseButton>
+      <DialogContent className="max-w-4xl h-[75vh] p-0 gap-0 bg-white rounded-lg overflow-hidden border shadow-xl" hideCloseButton>
         {/* Header */}
-        <div className="relative bg-slate-800 px-6 py-4 border-b border-slate-700 flex items-center">
+        <div className="relative bg-slate-800 px-6 py-3 border-b border-slate-700 flex items-center">
           <div className="flex items-center gap-3 pr-8">
-            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <Users className="h-5 w-5 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <Users className="h-4 w-4 text-white" />
             </div>
             <div className="flex-1">
-              <h2 className="text-base font-bold" style={{ color: '#ffffff' }}>Employee Management</h2>
-              <p className="text-xs mt-0.5" style={{ color: '#d1d5db' }}>
+              <h2 className="text-sm font-bold" style={{ color: '#ffffff' }}>Employee Management</h2>
+              <p className="text-[11px] mt-0.5" style={{ color: '#d1d5db' }}>
                 Manage employees for internal usage tracking
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition-colors"
+            className="absolute top-2.5 right-3 w-7 h-7 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition-colors"
           >
             <X className="h-4 w-4 text-white" />
           </button>
@@ -151,8 +151,8 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
         <div className="flex flex-1 overflow-hidden">
           
           {/* LEFT SIDE - Add Employee Form */}
-          <div className="w-[400px] border-r border-slate-200 p-6 space-y-4 overflow-y-auto bg-slate-50">
-            <div className="space-y-1 mb-4">
+          <div className="w-[320px] border-r border-slate-200 p-5 space-y-3 overflow-y-auto bg-slate-50">
+            <div className="space-y-1 mb-3">
               <h3 className="text-sm font-bold text-slate-900">
                 {editingId ? 'Edit Employee' : 'Add Employee'}
               </h3>
@@ -168,7 +168,7 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter full name"
-                className="h-10 mt-1.5 bg-white"
+                className="h-9 mt-1 bg-white"
                 autoFocus
               />
             </div>
@@ -180,7 +180,7 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
                 value={formData.department || undefined} 
                 onValueChange={val => setFormData({ ...formData, department: val })}
               >
-                <SelectTrigger className="h-10 mt-1.5 bg-white">
+                <SelectTrigger className="h-9 mt-1 bg-white">
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
@@ -198,18 +198,18 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
                 value={formData.position}
                 onChange={e => setFormData({ ...formData, position: e.target.value })}
                 placeholder="Job title (optional)"
-                className="h-10 mt-1.5 bg-white"
+                className="h-9 mt-1 bg-white"
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-1">
               {editingId && (
                 <Button 
                   variant="outline" 
                   onClick={resetForm} 
                   disabled={loading}
-                  className="flex-1 h-10"
+                  className="flex-1 h-9"
                 >
                   Cancel
                 </Button>
@@ -217,7 +217,7 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
               <Button 
                 onClick={handleSubmit} 
                 disabled={loading || !formData.name.trim()} 
-                className={`h-10 bg-blue-600 hover:bg-blue-700 text-white shadow-sm ${editingId ? 'flex-1' : 'w-full'}`}
+                className={`h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-sm text-sm ${editingId ? 'flex-1' : 'w-full'}`}
               >
                 {loading ? (
                   <>
@@ -238,20 +238,20 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
           <div className="flex-1 flex flex-col overflow-hidden bg-white">
             
             {/* Search Bar */}
-            <div className="px-6 py-4 border-b border-slate-200 bg-white">
+            <div className="px-5 py-3 border-b border-slate-200 bg-white">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Search employees..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="pl-9 h-10 bg-slate-50 border-slate-200"
+                  className="pl-9 h-9 bg-slate-50 border-slate-200 text-sm"
                 />
               </div>
             </div>
 
             {/* Employee List */}
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="flex-1 overflow-y-auto px-5 py-3">
               <div className="space-y-2">
                 {loading && !employees.length ? (
                   <div className="text-center py-16 text-slate-500">
@@ -326,10 +326,10 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
         </div>
 
         {/* Footer */}
-        <div className="border-t bg-slate-50 px-6 py-4">
+        <div className="border-t bg-slate-50 px-5 py-3">
           <Button
             variant="outline"
-            className="w-full h-10 rounded-lg font-semibold"
+            className="w-full h-9 rounded-lg font-semibold text-sm"
             onClick={onClose}
           >
             Close

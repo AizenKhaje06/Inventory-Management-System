@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, DollarSign, Clock, CheckCircle, XCircle } from "lucide-react"
+import { Plus, DollarSign, Clock, CheckCircle, XCircle, Users } from "lucide-react"
 import { NewPurchaseModal } from "@/components/employee-purchases/new-purchase-modal"
 import { PurchasesTable } from "@/components/employee-purchases/purchases-table"
+import { EmployeeManagementModal } from "@/components/internal-usage/employee-management-modal"
 
 export default function EmployeePurchasesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [employeeModalOpen, setEmployeeModalOpen] = useState(false)
   const [purchases, setPurchases] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -54,14 +56,23 @@ export default function EmployeePurchasesPage() {
             Manage salary deductions and employee credit purchases
           </p>
         </div>
-        <Button 
-          size="lg" 
-          onClick={() => setIsModalOpen(true)}
-          className="shadow-lg"
-        >
-          <Plus className="mr-2 h-5 w-5" />
-          New Purchase
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={() => setEmployeeModalOpen(true)} 
+            className="h-10 px-5 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Employees
+          </Button>
+          <Button 
+            size="lg" 
+            onClick={() => setIsModalOpen(true)}
+            className="shadow-lg"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            New Purchase
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -170,6 +181,12 @@ export default function EmployeePurchasesPage() {
           setIsModalOpen(false)
           fetchPurchases()
         }}
+      />
+
+      {/* Employee Management Modal */}
+      <EmployeeManagementModal
+        open={employeeModalOpen}
+        onClose={() => setEmployeeModalOpen(false)}
       />
     </div>
   )

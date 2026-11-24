@@ -54,9 +54,10 @@ interface ReturnDemoItemsModalProps {
   open: boolean
   onClose: () => void
   onSuccess: () => void
+  preselectedRecord?: UsageRecord | null
 }
 
-export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoItemsModalProps) {
+export function ReturnDemoItemsModal({ open, onClose, onSuccess, preselectedRecord }: ReturnDemoItemsModalProps) {
   const [records, setRecords] = useState<UsageRecord[]>([])
   const [selectedPerson, setSelectedPerson] = useState("")
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedItem[]>([])
@@ -66,13 +67,21 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
 
   useEffect(() => {
     if (open) {
-      fetchRecords()
-      setSelectedPerson("")
-      setAggregatedItems([])
-      setSelectedItems(new Set())
-      setQuantities({})
+      if (preselectedRecord) {
+        // If preselected record is provided, use it directly
+        setRecords([preselectedRecord])
+        setSelectedPerson(preselectedRecord.reason)
+        processRecordsForPerson([preselectedRecord], preselectedRecord.reason)
+      } else {
+        // Otherwise fetch all records
+        fetchRecords()
+        setSelectedPerson("")
+        setAggregatedItems([])
+        setSelectedItems(new Set())
+        setQuantities({})
+      }
     }
-  }, [open])
+  }, [open, preselectedRecord])
 
   const fetchRecords = async () => {
     try {
@@ -82,6 +91,56 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
     } catch (error) {
       toast.error("Failed to load records")
     }
+  }
+
+  // Process records for a person and populate items
+  const processRecordsForPerson = (personRecords: UsageRecord[], person: string) => {
+    const itemMap = new Map<string, AggregatedItem>()
+
+    for (const record of personRecords) {
+      for (const item of record.items) {
+        const returned_items = record.returned_items || {}
+        const returnedQty = returned_items[item.itemId]?.returned || 0
+        const available = item.quantity - returnedQty
+
+        if (!itemMap.has(item.itemId)) {
+          itemMap.set(item.itemId, {
+            itemId: item.itemId,
+            itemName: item.itemName,
+            totalRequested: 0,
+            totalReturned: 0,
+            available: 0,
+            costPrice: item.costPrice,
+            imageUrl: item.imageUrl,
+            records: []
+          })
+        }
+
+        const aggItem = itemMap.get(item.itemId)!
+        aggItem.totalRequested += item.quantity
+        aggItem.totalReturned += returnedQty
+        aggItem.available += available
+        aggItem.records.push({
+          recordId: record.id,
+          requested: item.quantity,
+          returned: returnedQty
+        })
+      }
+    }
+
+    // Only show items that have available quantity to return
+    const items = Array.from(itemMap.values()).filter(item => item.available > 0)
+    setAggregatedItems(items)
+
+    // Initialize quantities - select all items and set max quantity by default
+    const initialQty: Record<string, number> = {}
+    const initialSelection = new Set<string>()
+    items.forEach(item => {
+      initialQty[item.itemId] = item.available
+      initialSelection.add(item.itemId)
+    })
+    setQuantities(initialQty)
+    setSelectedItems(initialSelection)
   }
 
   // Get unique person names (from reason field)
@@ -239,49 +298,66 @@ export function ReturnDemoItemsModal({ open, onClose, onSuccess }: ReturnDemoIte
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Step 1: Select Person */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
-                1
+          {/* Step 1: Select Person - Only show if no preselected record */}
+          {!preselectedRecord && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
+                  1
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">Select Person</h3>
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Select Person</h3>
-            </div>
-            <Select value={selectedPerson} onValueChange={setSelectedPerson}>
-              <SelectTrigger className="h-10 bg-white border-slate-300">
-                <SelectValue placeholder="Choose who is returning items..." />
-              </SelectTrigger>
-              <SelectContent>
-                {personNames.length === 0 ? (
-                  <div className="px-3 py-2 text-xs text-slate-500">No demo/display records found</div>
-                ) : (
-                  personNames.map(name => {
-                    const personRecords = records.filter(r => r.reason === name)
-                    
-                    // Calculate unreturned items count (not total qty)
-                    let unreturnedCount = 0
-                    personRecords.forEach(record => {
-                      record.items.forEach(item => {
-                        const returned_items = record.returned_items || {}
-                        const returnedQty = returned_items[item.itemId]?.returned || 0
-                        const available = item.quantity - returnedQty
-                        unreturnedCount += available
+              <Select value={selectedPerson} onValueChange={setSelectedPerson}>
+                <SelectTrigger className="h-10 bg-white border-slate-300">
+                  <SelectValue placeholder="Choose who is returning items..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {personNames.length === 0 ? (
+                    <div className="px-3 py-2 text-xs text-slate-500">No demo/display records found</div>
+                  ) : (
+                    personNames.map(name => {
+                      const personRecords = records.filter(r => r.reason === name)
+                      
+                      // Calculate unreturned items count (not total qty)
+                      let unreturnedCount = 0
+                      personRecords.forEach(record => {
+                        record.items.forEach(item => {
+                          const returned_items = record.returned_items || {}
+                          const returnedQty = returned_items[item.itemId]?.returned || 0
+                          const available = item.quantity - returnedQty
+                          unreturnedCount += available
+                        })
                       })
+                      
+                      return (
+                        <SelectItem key={name} value={name}>
+                          <div className="flex items-center justify-between gap-4 w-full">
+                            <span className="font-medium">{name}</span>
+                            <span className="text-xs text-slate-500">{unreturnedCount} items</span>
+                          </div>
+                        </SelectItem>
+                      )
                     })
-                    
-                    return (
-                      <SelectItem key={name} value={name}>
-                        <div className="flex items-center justify-between gap-4 w-full">
-                          <span className="font-medium">{name}</span>
-                          <span className="text-xs text-slate-500">{unreturnedCount} items</span>
-                        </div>
-                      </SelectItem>
-                    )
-                  })
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Info banner when preselected */}
+          {preselectedRecord && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Returning items for: {preselectedRecord.reason}</p>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    {preselectedRecord.department} • {new Date(preselectedRecord.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Step 2: Select Items */}
           {selectedPerson && (

@@ -6,12 +6,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Package, TrendingDown, Building2, Search, RefreshCw, RotateCcw, Users } from "lucide-react"
+import { Plus, Package, TrendingDown, Building2, Search, RefreshCw, RotateCcw } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
-import { apiGet } from "@/lib/api-client"
+import { apiGet, apiPost } from "@/lib/api-client"
 import { UseItemModal } from "@/components/internal-usage/use-item-modal"
 import { ReturnDemoItemsModal } from "@/components/internal-usage/return-demo-items-modal"
-import { EmployeeManagementModal } from "@/components/internal-usage/employee-management-modal"
 import { toast } from "sonner"
 
 interface UsageRecord {
@@ -46,7 +45,7 @@ export default function InternalUsagePage() {
   const [loading, setLoading]       = useState(true)
   const [modalOpen, setModalOpen]   = useState(false)
   const [returnModalOpen, setReturnModalOpen] = useState(false)
-  const [employeeModalOpen, setEmployeeModalOpen] = useState(false)
+  const [selectedRecordForReturn, setSelectedRecordForReturn] = useState<UsageRecord | null>(null)
   const [search, setSearch]         = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
 
@@ -65,6 +64,11 @@ export default function InternalUsagePage() {
   }
 
   useEffect(() => { fetchRecords() }, [])
+
+  const handleReturnClick = (record: UsageRecord) => {
+    setSelectedRecordForReturn(record)
+    setReturnModalOpen(true)
+  }
 
   const filteredRecords = records.filter(r => {
     const matchesSearch =
@@ -106,20 +110,6 @@ export default function InternalUsagePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button 
-            onClick={() => setEmployeeModalOpen(true)} 
-            className="h-10 px-5 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-          >
-            <Users className="mr-2 h-4 w-4" />
-            Employees
-          </Button>
-          <Button 
-            onClick={() => setReturnModalOpen(true)} 
-            className="h-10 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Return Items
-          </Button>
           <Button 
             onClick={() => setModalOpen(true)} 
             className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
@@ -248,39 +238,42 @@ export default function InternalUsagePage() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black border-b border-slate-700/50">
-                <th className="text-left pl-6 pr-4 py-3 w-[10%]">
+                <th className="text-left pl-6 pr-4 py-3 w-[9%]">
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Date & Time</span>
                 </th>
-                <th className="text-left px-4 py-3 w-[22%]">
+                <th className="text-left px-4 py-3 w-[20%]">
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Items</span>
                 </th>
-                <th className="text-left px-4 py-3 w-[11%]">
+                <th className="text-left px-4 py-3 w-[10%]">
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Requested By</span>
                 </th>
-                <th className="text-left px-4 py-3 w-[10%]">
+                <th className="text-left px-4 py-3 w-[9%]">
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Department</span>
                 </th>
-                <th className="text-left px-4 py-3 w-[11%]">
+                <th className="text-left px-4 py-3 w-[10%]">
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Type</span>
                 </th>
-                <th className="text-left px-4 py-3 w-[12%]">
+                <th className="text-left px-4 py-3 w-[11%]">
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Return Status</span>
                 </th>
-                <th className="text-left px-4 py-3 w-[10%]">
+                <th className="text-left px-4 py-3 w-[9%]">
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Last Return</span>
                 </th>
-                <th className="text-right px-4 py-3 w-[7%]">
+                <th className="text-right px-4 py-3 w-[6%]">
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Qty</span>
                 </th>
-                <th className="text-right pl-4 pr-6 py-3 w-[7%]">
+                <th className="text-right px-4 py-3 w-[7%]">
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Total Cost</span>
+                </th>
+                <th className="text-center pl-4 pr-6 py-3 w-[9%]">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Actions</span>
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/50">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-20">
+                  <td colSpan={10} className="text-center py-20">
                     <div className="inline-flex flex-col items-center gap-3">
                       <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-r-transparent" />
                       <p className="text-sm text-slate-500 font-medium">Loading records...</p>
@@ -289,7 +282,7 @@ export default function InternalUsagePage() {
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-20">
+                  <td colSpan={10} className="text-center py-20">
                     <div className="inline-flex flex-col items-center gap-3">
                       <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
                         <Package className="h-8 w-8 text-slate-400" />
@@ -435,10 +428,41 @@ export default function InternalUsagePage() {
                       </td>
 
                       {/* Cost */}
-                      <td className="pl-4 pr-6 py-3.5 text-right">
+                      <td className="px-4 py-3.5 text-right">
                         <span className="text-[13px] font-bold text-red-600 dark:text-red-400 tabular-nums">
                           {formatCurrency(record.total_cost || 0)}
                         </span>
+                      </td>
+
+                      {/* Actions - Only for demo/display that haven't been fully returned */}
+                      <td className="pl-4 pr-6 py-3.5 text-center">
+                        {record.usage_type === 'demo' ? (
+                          (() => {
+                            const returned_items = record.returned_items || {}
+                            const allReturned = record.items.every(item => {
+                              const returnInfo = returned_items[item.itemId]
+                              return returnInfo && returnInfo.returned >= item.quantity
+                            })
+
+                            if (allReturned) {
+                              return <span className="text-[11px] text-slate-400">—</span>
+                            }
+
+                            return (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleReturnClick(record)}
+                                className="h-7 px-3 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 hover:border-emerald-300 font-semibold"
+                              >
+                                <RotateCcw className="h-3 w-3 mr-1.5" />
+                                Return
+                              </Button>
+                            )
+                          })()
+                        ) : (
+                          <span className="text-[11px] text-slate-400">—</span>
+                        )}
                       </td>
                     </tr>
                   )
@@ -471,19 +495,22 @@ export default function InternalUsagePage() {
         }}
       />
 
-      <ReturnDemoItemsModal
-        open={returnModalOpen}
-        onClose={() => setReturnModalOpen(false)}
-        onSuccess={() => {
-          setReturnModalOpen(false)
-          fetchRecords()
-        }}
-      />
-
-      <EmployeeManagementModal
-        open={employeeModalOpen}
-        onClose={() => setEmployeeModalOpen(false)}
-      />
+      {/* Return Modal - Opens for specific record */}
+      {selectedRecordForReturn && (
+        <ReturnDemoItemsModal
+          open={returnModalOpen}
+          onClose={() => {
+            setReturnModalOpen(false)
+            setSelectedRecordForReturn(null)
+          }}
+          onSuccess={() => {
+            setReturnModalOpen(false)
+            setSelectedRecordForReturn(null)
+            fetchRecords()
+          }}
+          preselectedRecord={selectedRecordForReturn}
+        />
+      )}
     </div>
   )
 }
