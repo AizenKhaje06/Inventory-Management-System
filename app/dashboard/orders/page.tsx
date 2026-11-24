@@ -247,9 +247,9 @@ export default function OrdersPage() {
                 <ShoppingCart className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Total Orders</p>
-                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 tabular-nums">{stats.total}</p>
-                <p className="text-xs text-blue-600 dark:text-blue-500 mt-0.5">All time</p>
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Orders</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{stats.total}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">All time</p>
               </div>
             </div>
           </Card>
@@ -261,9 +261,9 @@ export default function OrdersPage() {
                 <CheckCircle className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Active</p>
-                <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 tabular-nums">{stats.active}</p>
-                <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-0.5">In transit</p>
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{stats.active}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">In transit</p>
               </div>
             </div>
           </Card>
@@ -275,9 +275,9 @@ export default function OrdersPage() {
                 <XCircle className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Cancelled</p>
-                <p className="text-2xl font-bold text-red-900 dark:text-red-100 tabular-nums">{stats.cancelled}</p>
-                <p className="text-xs text-red-600 dark:text-red-500 mt-0.5">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cancelled</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{stats.cancelled}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   {stats.cancelled > 0 ? (
                     <><AlertCircle className="h-3 w-3 inline mr-0.5" />Restocked</>
                   ) : 'No cancellations'}
@@ -293,9 +293,9 @@ export default function OrdersPage() {
                 <Calendar className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Today</p>
-                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 tabular-nums">{stats.todayCount}</p>
-                <p className="text-xs text-purple-600 dark:text-purple-500 mt-0.5">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Today</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{stats.todayCount}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   {stats.todayCount > 0 ? 'Orders dispatched' : 'No orders yet'}
                 </p>
               </div>
@@ -309,9 +309,9 @@ export default function OrdersPage() {
                 <DollarSign className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Revenue</p>
-                <p className="text-xl font-bold text-amber-900 dark:text-amber-100 tabular-nums">{formatCurrency(stats.totalRevenue)}</p>
-                <p className="text-xs text-amber-700 dark:text-amber-600 mt-0.5">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Revenue</p>
+                <p className="text-xl font-bold text-slate-900 dark:text-white tabular-nums">{formatCurrency(stats.totalRevenue)}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   {stats.totalRevenue > 0 ? (
                     <><TrendingUp className="h-3 w-3 inline mr-0.5" />Total earnings</>
                   ) : 'No revenue yet'}

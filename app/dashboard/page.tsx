@@ -240,14 +240,14 @@ export default function DashboardPage() {
               <ShoppingCart className="h-5 w-5 text-white" strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider" id="kpi-total-sold-label">Total Sold</p>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider" id="kpi-total-sold-label">Total Sold</p>
               <div className="flex items-center gap-1">
-                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 tabular-nums" aria-labelledby="kpi-total-sold-label">
+                <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums" aria-labelledby="kpi-total-sold-label">
                   <AnimatedNumber value={stats?.totalSales || 0} duration={1500} />
                 </p>
                 <ComparisonBadge pct={salesChange} />
               </div>
-              <p className="text-xs text-blue-600 dark:text-blue-500 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                 {stats?.itemsSoldToday !== undefined && stats.itemsSoldToday > 0
                   ? `${stats.itemsSoldToday} units today`
                   : 'All-time quantity'}
@@ -263,14 +263,14 @@ export default function DashboardPage() {
               <TrendingUp className="h-5 w-5 text-white" strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-wider">Total Revenue</p>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Revenue</p>
               <div className="flex items-center gap-1">
-                <p className="text-2xl font-bold text-green-900 dark:text-green-100 tabular-nums">
+                <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                   ₱<AnimatedNumber value={stats?.totalRevenue || 0} duration={1500} />
                 </p>
                 {!startDate && !endDate && <ComparisonBadge pct={revenueChange} />}
               </div>
-              <p className="text-xs text-green-600 dark:text-green-500 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                 {startDate || endDate ? (
                   stats?.totalRevenue && stats.totalRevenue > 0 ? (
                     <><ArrowUpRight className="h-3 w-3" />Filtered period</>
@@ -292,11 +292,11 @@ export default function DashboardPage() {
               <DollarSign className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Gross Profit</p>
-              <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 tabular-nums">
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Gross Profit</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                 ₱<AnimatedNumber value={netProfit} duration={1500} />
               </p>
-              <p className="text-xs text-purple-600 dark:text-purple-500 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                 {stats?.returnValue !== undefined && stats.returnValue > 0 ? (
                   <>
                     <ArrowDownRight className="h-3 w-3" />
@@ -317,11 +317,11 @@ export default function DashboardPage() {
               <Percent className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Profit Margin</p>
-              <p className="text-2xl font-bold text-amber-900 dark:text-amber-100 tabular-nums">
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Profit Margin</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                 <AnimatedNumber value={stats?.profitMargin || 0} decimals={1} duration={1500} />%
               </p>
-              <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                 {(stats?.profitMargin || 0) >= 30 ? (
                   "🏆 Excellent!"
                 ) : (stats?.profitMargin || 0) >= 15 ? (
@@ -344,11 +344,11 @@ export default function DashboardPage() {
               <Package className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Total Products</p>
-              <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100 tabular-nums">
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Products</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                 <AnimatedNumber value={allItems.length || 0} duration={1500} />
               </p>
-              <p className="text-xs text-indigo-600 dark:text-indigo-500 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                 Active inventory items
               </p>
             </div>
@@ -362,11 +362,11 @@ export default function DashboardPage() {
               <PackageOpen className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Low Stock Alert</p>
-              <p className="text-2xl font-bold text-amber-900 dark:text-amber-100 tabular-nums">
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Low Stock Alert</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                 <AnimatedNumber value={lowStockCount} duration={1500} />
               </p>
-              <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                 {lowStockCount > 0 ? (
                   <>
                     <AlertTriangle className="h-3 w-3" />
@@ -387,11 +387,11 @@ export default function DashboardPage() {
               <PackageX className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">Out of Stock</p>
-              <p className="text-2xl font-bold text-rose-900 dark:text-rose-100 tabular-nums">
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Out of Stock</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                 <AnimatedNumber value={outOfStockCount} duration={1500} />
               </p>
-              <p className="text-xs text-rose-600 dark:text-rose-500 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                 {outOfStockCount > 0 ? (
                   <>
                     <AlertCircle className="h-3 w-3" />
@@ -412,11 +412,11 @@ export default function DashboardPage() {
               <AlertTriangle className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Total Bad Stock</p>
-              <p className="text-2xl font-bold text-red-900 dark:text-red-100 tabular-nums">
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Bad Stock</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                 <AnimatedNumber value={totalBadQty} duration={1500} /> units
               </p>
-              <p className="text-xs text-red-600 dark:text-red-500 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                 {totalBadQty > 0 ? "Damaged or unusable" : "No bad stock"}
               </p>
             </div>
