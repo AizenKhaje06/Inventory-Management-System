@@ -22,6 +22,14 @@ interface Employee {
 
 const DEPARTMENTS = ['Facebook', 'TikTok', 'Shopee', 'Lazada', 'Office']
 
+const DEPARTMENT_ICONS: Record<string, string> = {
+  'Facebook': '/facebook.png',
+  'TikTok': '/tiktok.png',
+  'Shopee': '/Shopee.png',
+  'Lazada': '/Lazada.png',
+  'Office': '/Corporate Building.png'
+}
+
 interface EmployeeManagementModalProps {
   open: boolean
   onClose: () => void
@@ -181,11 +189,23 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
                 onValueChange={val => setFormData({ ...formData, department: val })}
               >
                 <SelectTrigger className="h-9 mt-1 bg-white">
-                  <SelectValue placeholder="Select department" />
+                  {formData.department ? (
+                    <div className="flex items-center gap-2">
+                      <img src={DEPARTMENT_ICONS[formData.department]} alt={formData.department} className="w-4 h-4 object-contain" />
+                      <span className="text-sm">{formData.department}</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select department" />
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   {DEPARTMENTS.map(dept => (
-                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                    <SelectItem key={dept} value={dept}>
+                      <div className="flex items-center gap-2">
+                        <img src={DEPARTMENT_ICONS[dept]} alt={dept} className="w-4 h-4 object-contain" />
+                        <span className="text-sm">{dept}</span>
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -238,7 +258,7 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
           <div className="flex-1 flex flex-col overflow-hidden bg-white">
             
             {/* Search Bar */}
-            <div className="px-5 py-3 border-b border-slate-200 bg-white">
+            <div className="px-4 py-3 border-b border-slate-200 bg-white">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
@@ -251,7 +271,7 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
             </div>
 
             {/* Employee List */}
-            <div className="flex-1 overflow-y-auto px-5 py-3">
+            <div className="flex-1 overflow-y-auto px-4 py-3">
               <div className="space-y-2">
                 {loading && !employees.length ? (
                   <div className="text-center py-16 text-slate-500">
@@ -272,35 +292,37 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
                   filteredEmployees.map(employee => (
                     <div
                       key={employee.id}
-                      className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50/50 transition-all"
+                      className="flex items-center justify-between px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50/50 transition-all"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-semibold text-slate-900 truncate">{employee.name}</h4>
                           {employee.status === 'inactive' && (
-                            <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200 flex-shrink-0">
+                            <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200 flex-shrink-0 px-1.5 py-0">
                               Inactive
                             </Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 mt-1">
-                          {employee.department && (
-                            <span className="text-xs text-slate-600">{employee.department}</span>
-                          )}
-                          {employee.position && (
-                            <>
-                              {employee.department && <span className="text-xs text-slate-400">•</span>}
-                              <span className="text-xs text-slate-500">{employee.position}</span>
-                            </>
-                          )}
-                        </div>
+                        {(employee.department || employee.position) && (
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {employee.department && (
+                              <span className="text-xs text-slate-600">{employee.department}</span>
+                            )}
+                            {employee.position && (
+                              <>
+                                {employee.department && <span className="text-xs text-slate-400">•</span>}
+                                <span className="text-xs text-slate-500 truncate">{employee.position}</span>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1 ml-3">
+                      <div className="flex items-center gap-1 ml-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(employee)}
-                          className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                          className="h-7 w-7 p-0 hover:bg-blue-100 hover:text-blue-600"
                           title="Edit employee"
                         >
                           <Edit className="h-3.5 w-3.5" />
@@ -310,7 +332,7 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(employee.id, employee.name)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                             title="Mark as inactive"
                           >
                             <Trash2 className="h-3.5 w-3.5" />

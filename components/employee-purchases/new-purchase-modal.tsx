@@ -48,6 +48,14 @@ interface Product {
   category?: string
 }
 
+interface Employee {
+  id: string
+  name: string
+  department?: string
+  position?: string
+  status: string
+}
+
 interface NewPurchaseModalProps {
   open: boolean
   onClose: () => void
@@ -56,6 +64,7 @@ interface NewPurchaseModalProps {
 
 export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalProps) {
   const [employeeName, setEmployeeName] = useState<string>("")
+  const [employees, setEmployees] = useState<Employee[]>([])
   const [deductionDate, setDeductionDate] = useState<Date>(getNextPayrollDate())
   const [cart, setCart] = useState<CartItem[]>([])
   const [search, setSearch] = useState("")
@@ -79,6 +88,7 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
       }
       
       fetchProducts()
+      fetchEmployees()
       setEmployeeName("")
       setCart([])
       setDeductionDate(getNextPayrollDate())
@@ -87,6 +97,16 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
       setSelectedProduct(null)
     }
   }, [open])
+
+  const fetchEmployees = async () => {
+    try {
+      const data = await apiGet<Employee[]>('/api/employees?status=active')
+      setEmployees(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.error('Failed to load employees:', error)
+      // Don't show error toast, just log it
+    }
+  }
 
   const fetchProducts = async () => {
     try {
@@ -418,15 +438,29 @@ export function NewPurchaseModal({ open, onClose, onSuccess }: NewPurchaseModalP
                   <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
                     Employee Name <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      placeholder="Enter employee name..."
-                      value={employeeName}
-                      onChange={(e) => setEmployeeName(e.target.value)}
-                      className="pl-10 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                    />
-                  </div>
+                  <Select value={employeeName} onValueChange={setEmployeeName}>
+                    <SelectTrigger className="bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
+                      <SelectValue placeholder="Select employee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.length === 0 ? (
+                        <div className="px-3 py-2 text-xs text-slate-500 text-center">
+                          No active employees found.<br/>Add employees first.
+                        </div>
+                      ) : (
+                        employees.map(emp => (
+                          <SelectItem key={emp.id} value={emp.name}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">{emp.name}</span>
+                              {emp.department && (
+                                <span className="text-xs text-slate-500">- {emp.department}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Purchase Date */}

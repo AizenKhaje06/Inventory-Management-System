@@ -65,11 +65,10 @@ export default function EmployeePurchasesPage() {
             Employees
           </Button>
           <Button 
-            size="lg" 
             onClick={() => setIsModalOpen(true)}
-            className="shadow-lg"
+            className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
           >
-            <Plus className="mr-2 h-5 w-5" />
+            <Plus className="mr-2 h-4 w-4" />
             New Purchase
           </Button>
         </div>
