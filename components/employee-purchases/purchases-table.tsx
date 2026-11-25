@@ -13,6 +13,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Table,
   TableBody,
   TableCell,
@@ -20,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, CheckCircle, XCircle, Eye, FileDown, Package, Calendar, User, DollarSign, AlertCircle } from "lucide-react"
+import { Search, CheckCircle, XCircle, Eye, FileDown, Package, Calendar, User, DollarSign, AlertCircle, MoreVertical, Trash2 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import {
@@ -65,7 +72,7 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
   const [statusFilter, setStatusFilter] = useState("all")
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
-    type: 'paid' | 'cancel' | null
+    type: 'paid' | 'cancel' | 'delete' | null
     purchaseId: string | null
     employeeName: string
   }>({
@@ -168,6 +175,16 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
     })
     setCancelReason("")
   }
+
+  // Handle delete
+  const handleDelete = async (id: string, employeeName: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'delete',
+      purchaseId: id,
+      employeeName
+    })
+  }
   
   // Confirm action
   const handleConfirmAction = async () => {
@@ -180,24 +197,37 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
     setIsProcessing(true)
 
     try {
-      const body: any = {
-        status: confirmDialog.type === 'paid' ? 'paid' : 'cancelled'
-      }
-      
-      if (confirmDialog.type === 'cancel') {
-        body.notes = cancelReason.trim()
-      }
+      if (confirmDialog.type === 'delete') {
+        // DELETE request
+        const response = await fetch(`/api/employee-purchases/${confirmDialog.purchaseId}`, {
+          method: 'DELETE'
+        })
 
-      const response = await fetch(`/api/employee-purchases/${confirmDialog.purchaseId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      })
+        if (response.ok) {
+          onRefresh()
+          setConfirmDialog({ open: false, type: null, purchaseId: null, employeeName: '' })
+        }
+      } else {
+        // PATCH request for paid/cancel
+        const body: any = {
+          status: confirmDialog.type === 'paid' ? 'paid' : 'cancelled'
+        }
+        
+        if (confirmDialog.type === 'cancel') {
+          body.notes = cancelReason.trim()
+        }
 
-      if (response.ok) {
-        onRefresh()
-        setConfirmDialog({ open: false, type: null, purchaseId: null, employeeName: '' })
-        setCancelReason("")
+        const response = await fetch(`/api/employee-purchases/${confirmDialog.purchaseId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        })
+
+        if (response.ok) {
+          onRefresh()
+          setConfirmDialog({ open: false, type: null, purchaseId: null, employeeName: '' })
+          setCancelReason("")
+        }
       }
     } catch (error) {
       console.error('Error updating purchase:', error)
@@ -326,40 +356,40 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50 hover:bg-slate-50 border-b-2 border-slate-200">
-                  <TableHead className="font-bold text-slate-700 py-4 pl-6 w-[160px]">
+                  <TableHead className="font-bold text-slate-700 py-4 pl-6 w-[140px]">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       Purchase Date
                     </div>
                   </TableHead>
-                  <TableHead className="font-bold text-slate-700 w-[180px]">
+                  <TableHead className="font-bold text-slate-700 w-[150px]">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       Employee
                     </div>
                   </TableHead>
-                  <TableHead className="font-bold text-slate-700 w-[220px]">
+                  <TableHead className="font-bold text-slate-700 w-[200px]">
                     <div className="flex items-center gap-2">
                       <Package className="h-4 w-4" />
                       Items
                     </div>
                   </TableHead>
-                  <TableHead className="font-bold text-slate-700 text-center w-[90px]">
+                  <TableHead className="font-bold text-slate-700 text-center w-[70px]">
                     Qty
                   </TableHead>
-                  <TableHead className="font-bold text-slate-700 text-right w-[130px] pr-8">
+                  <TableHead className="font-bold text-slate-700 text-right w-[110px]">
                     Amount
                   </TableHead>
-                  <TableHead className="font-bold text-slate-700 w-[160px] pl-8">
+                  <TableHead className="font-bold text-slate-700 w-[140px]">
                     Deduction Date
                   </TableHead>
-                  <TableHead className="font-bold text-slate-700 w-[110px]">
+                  <TableHead className="font-bold text-slate-700 w-[100px]">
                     Status
                   </TableHead>
                   <TableHead className="font-bold text-slate-700 w-[130px]">
                     Paid Date
                   </TableHead>
-                  <TableHead className="font-bold text-slate-700 text-right pr-6 w-[180px]">
+                  <TableHead className="font-bold text-slate-700 text-center pr-6 w-[80px]">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -393,23 +423,19 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                         </div>
                       </TableCell>
                       <TableCell className="py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
-                            <span className="text-white font-bold text-xs">
-                              {purchase.employee_name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-slate-900 text-sm truncate">{purchase.employee_name}</p>
-                            <p className="text-xs text-slate-500">Employee</p>
-                          </div>
+                        <div>
+                          <p className="font-bold text-slate-900 text-sm">{purchase.employee_name}</p>
+                          <p className="text-xs text-slate-500">Employee</p>
                         </div>
                       </TableCell>
                       <TableCell className="py-3.5">
                         <div className="flex flex-col gap-1">
-                          <div className="flex items-start gap-1.5">
+                          <div 
+                            className="flex items-start gap-1.5"
+                            title={items.map(item => `${item.name} (${item.quantity}x)${item.isFreebie ? ' [Freebie]' : ''}`).join(', ')}
+                          >
                             <Package className="h-3.5 w-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
-                            <span className="font-semibold text-slate-900 text-sm line-clamp-1">{itemsSummary}</span>
+                            <span className="font-semibold text-slate-900 text-sm line-clamp-1 cursor-help">{itemsSummary}</span>
                           </div>
                           {items.length > 1 && (
                             <span className="text-xs text-slate-500 ml-5">
@@ -428,12 +454,12 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                           {totalQty}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right py-3.5 pr-8">
+                      <TableCell className="text-right py-3.5">
                         <span className="text-sm font-bold text-slate-900">
                           ₱{purchase.amount.toLocaleString()}
                         </span>
                       </TableCell>
-                      <TableCell className="py-3.5 pl-8">
+                      <TableCell className="py-3.5">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
                           <span className="font-semibold text-slate-900 text-sm whitespace-nowrap">
@@ -474,36 +500,59 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                           <span className="text-slate-400 text-sm whitespace-nowrap">Not paid yet</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right py-3.5 pr-6">
-                        <div className="flex items-center justify-end gap-2.5">
-                          {purchase.status === 'pending' && (
-                            <>
-                              <button
-                                onClick={() => handleMarkAsPaid(purchase.id, purchase.employee_name)}
-                                className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm transition-colors flex items-center gap-1"
+                      <TableCell className="text-center py-3.5 pr-6">
+                        <div className="flex items-center justify-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 hover:bg-slate-100"
                               >
-                                <CheckCircle className="h-3.5 w-3.5" />
-                                Mark Paid
-                              </button>
-                              <span className="text-slate-300">|</span>
-                              <button
-                                onClick={() => handleCancel(purchase.id, purchase.employee_name)}
-                                className="text-red-600 hover:text-red-700 font-semibold text-sm transition-colors flex items-center gap-1"
+                                <MoreVertical className="h-4 w-4 text-slate-600" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              {purchase.status === 'pending' && (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => handleMarkAsPaid(purchase.id, purchase.employee_name)}
+                                    className="cursor-pointer"
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-2 text-emerald-600" />
+                                    <span className="font-medium">Mark as Paid</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleCancel(purchase.id, purchase.employee_name)}
+                                    className="cursor-pointer"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2 text-amber-600" />
+                                    <span className="font-medium">Cancel</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                              {purchase.status !== 'pending' && (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => handleViewDetails(purchase)}
+                                    className="cursor-pointer"
+                                  >
+                                    <Eye className="h-4 w-4 mr-2 text-blue-600" />
+                                    <span className="font-medium">View Details</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(purchase.id, purchase.employee_name)}
+                                className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
                               >
-                                <XCircle className="h-3.5 w-3.5" />
-                                Cancel
-                              </button>
-                            </>
-                          )}
-                          {purchase.status !== 'pending' && (
-                            <button
-                              onClick={() => handleViewDetails(purchase)}
-                              className="text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors flex items-center gap-1"
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                              View Details
-                            </button>
-                          )}
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                <span className="font-medium">Delete</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -584,12 +633,78 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                 </Button>
               </DialogFooter>
             </>
+          ) : confirmDialog.type === 'delete' ? (
+            <>
+              {/* Delete Purchase Dialog */}
+              <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-red-50 to-rose-50 border-b">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-12 w-12 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
+                    <Trash2 className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-xl font-bold text-slate-900">
+                      Delete Purchase Record
+                    </DialogTitle>
+                    <DialogDescription className="text-sm text-slate-600 mt-0.5">
+                      This action cannot be undone
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+              
+              <div className="px-6 py-5">
+                <div className="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
+                  <p className="text-sm text-slate-600 mb-2">Employee:</p>
+                  <p className="text-base font-bold text-slate-900">{confirmDialog.employeeName}</p>
+                </div>
+                
+                <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-900 mb-1">
+                      Permanently delete this purchase record?
+                    </p>
+                    <p className="text-xs text-red-700">
+                      This will permanently remove the purchase record from the database. This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="px-6 py-4 bg-slate-50 border-t flex-row gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={handleCloseDialog}
+                  disabled={isProcessing}
+                  className="border-slate-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmAction}
+                  disabled={isProcessing}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Permanently
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </>
           ) : (
             <>
               {/* Cancel Purchase Dialog */}
-              <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-red-50 to-orange-50 border-b">
+              <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="h-12 w-12 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
+                  <div className="h-12 w-12 rounded-full bg-amber-600 flex items-center justify-center shadow-lg">
                     <XCircle className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -617,7 +732,7 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                     placeholder="Enter the reason for cancelling this purchase..."
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
-                    className="min-h-[100px] resize-none bg-white border-slate-300 focus:border-red-500 focus:ring-red-500"
+                    className="min-h-[100px] resize-none bg-white border-slate-300 focus:border-amber-500 focus:ring-amber-500"
                     disabled={isProcessing}
                   />
                   {!cancelReason.trim() && (
@@ -627,13 +742,13 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                   )}
                 </div>
                 
-                <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
-                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-red-900 mb-1">
+                    <p className="text-sm font-semibold text-amber-900 mb-1">
                       This will cancel the purchase order
                     </p>
-                    <p className="text-xs text-red-700">
+                    <p className="text-xs text-amber-700">
                       The purchase will be marked as cancelled and will not be deducted from the employee's salary.
                     </p>
                   </div>
@@ -652,7 +767,7 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                 <Button
                   onClick={handleConfirmAction}
                   disabled={isProcessing || !cancelReason.trim()}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
                 >
                   {isProcessing ? (
                     <>

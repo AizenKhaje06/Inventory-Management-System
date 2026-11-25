@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       `${item.name} (${item.quantity}x)${item.isFreebie ? ' [Freebie]' : ''}`
     ).join(', ')
 
-    // Create single purchase record with items stored as JSON
+    // 1. Create purchase record with items stored as JSON
     const purchaseRecord = {
       employee_name: employee_name.trim(),
       items: JSON.stringify(items), // Store items as JSON array
@@ -73,9 +73,59 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
+    // 2. Deduct items from inventory
+    for (const item of items) {
+      const { data: inventoryItem, error: fetchError } = await supabaseAdmin
+        .from('inventory')
+        .select('*')
+        .eq('id', item.id)
+        .single()
+
+      if (fetchError || !inventoryItem) {
+        console.error(`[Employee Purchases API] Item ${item.id} not found in inventory`)
+        continue
+      }
+
+      // Check if sufficient stock
+      if (inventoryItem.quantity < item.quantity) {
+        console.warn(`[Employee Purchases API] Insufficient stock for ${item.name}. Available: ${inventoryItem.quantity}, Requested: ${item.quantity}`)
+        // Continue anyway - purchase was already recorded
+      }
+
+      // Deduct from inventory
+      const newQuantity = Math.max(0, inventoryItem.quantity - item.quantity)
+      const { error: updateError } = await supabaseAdmin
+        .from('inventory')
+        .update({ quantity: newQuantity })
+        .eq('id', item.id)
+
+      if (updateError) {
+        console.error(`[Employee Purchases API] Error updating inventory for ${item.name}:`, updateError)
+      }
+    }
+
+    // 3. Create activity log
+    const logId = `LOG-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+    const { error: logError } = await supabaseAdmin
+      .from('logs')
+      .insert({
+        id: logId,
+        operation: 'Employee Purchase',
+        item_name: itemsSummary,
+        details: `Employee purchase by ${employee_name}. Items: ${itemsSummary}. Total: ₱${calculatedTotal.toLocaleString()}. Deduction Date: ${new Date(deduction_date).toLocaleDateString()}`,
+        timestamp: new Date().toISOString(),
+        staff_name: employee_name,
+        quantity: totalQuantity,
+        status: 'completed'
+      })
+
+    if (logError) {
+      console.error('[Employee Purchases API] Error creating log:', logError)
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Purchase created successfully',
+      message: 'Purchase created successfully and inventory updated',
       purchase: created
     })
   } catch (error) {
