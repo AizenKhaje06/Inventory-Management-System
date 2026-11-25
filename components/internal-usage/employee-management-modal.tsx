@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, X, Plus, Edit, Trash2, Search } from "lucide-react"
+import { Users, X, Plus, Edit, Trash2, Search, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api-client"
 import { Badge } from "@/components/ui/badge"
@@ -40,8 +40,9 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
-  
-  // Form state
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
   const [formData, setFormData] = useState({
     name: '',
     department: '',
@@ -86,15 +87,12 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
       toast.error('Employee name is required')
       return
     }
-
     setLoading(true)
     try {
       if (editingId) {
-        // Update
         await apiPut(`/api/employees/${editingId}`, formData)
         toast.success('Employee updated successfully')
       } else {
-        // Create
         await apiPost('/api/employees', formData)
         toast.success('Employee added successfully')
       }
@@ -108,17 +106,21 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
   }
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Mark "${name}" as inactive?`)) return
+    setDeleteTarget({ id, name })
+  }
 
-    setLoading(true)
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      await apiDelete(`/api/employees/${id}`)
-      toast.success('Employee marked as inactive')
+      await apiDelete(`/api/employees/${deleteTarget.id}`)
+      toast.success('Employee deleted successfully')
       await fetchEmployees()
+      setDeleteTarget(null)
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete employee')
     } finally {
-      setLoading(false)
+      setDeleting(false)
     }
   }
 
@@ -128,202 +130,225 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
     emp.position?.toLowerCase().includes(search.toLowerCase())
   )
 
-  const activeCount = employees.filter(e => e.status === 'active').length
-  const inactiveCount = employees.filter(e => e.status === 'inactive').length
-
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[75vh] p-0 gap-0 bg-white rounded-lg overflow-hidden border shadow-xl" hideCloseButton>
-        {/* Header */}
-        <div className="relative bg-slate-800 px-6 py-3 border-b border-slate-700 flex items-center">
-          <div className="flex items-center gap-3 pr-8">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <Users className="h-4 w-4 text-white" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-sm font-bold" style={{ color: '#ffffff' }}>Employee Management</h2>
-              <p className="text-[11px] mt-0.5" style={{ color: '#d1d5db' }}>
-                Manage employees for internal usage tracking
-              </p>
-            </div>
+      <DialogContent
+        className="max-w-3xl h-[72vh] p-0 gap-0 flex flex-col bg-white rounded-xl overflow-hidden border-0 shadow-2xl"
+        hideCloseButton
+      >
+        {/* ── Header ── compact, no extra vertical padding */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '8px 16px',
+            background: '#1e293b',
+            borderBottom: '1px solid #334155',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{
+            width: 28, height: 28, borderRadius: 6,
+            background: '#2563eb',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <Users style={{ width: 14, height: 14, color: '#fff' }} />
           </div>
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#fff' }}>
+            Employee Management
+            <span style={{ display: 'block', fontSize: 11, fontWeight: 400, color: '#94a3b8', marginTop: 1 }}>
+              Manage employees for purchase tracking and salary deductions
+            </span>
+          </span>
           <button
             onClick={onClose}
-            className="absolute top-2.5 right-3 w-7 h-7 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition-colors"
+            style={{
+              width: 24, height: 24, borderRadius: 5,
+              background: '#334155',
+              border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#475569')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#334155')}
           >
-            <X className="h-4 w-4 text-white" />
+            <X style={{ width: 13, height: 13, color: '#fff' }} />
           </button>
         </div>
 
-        {/* Body - Left/Right Layout */}
-        <div className="flex flex-1 overflow-hidden">
-          
-          {/* LEFT SIDE - Add Employee Form */}
-          <div className="w-[320px] border-r border-slate-200 p-5 space-y-3 overflow-y-auto bg-slate-50">
-            <div className="space-y-1 mb-3">
-              <h3 className="text-sm font-bold text-slate-900">
+        {/* ── Body ── */}
+        <div className="flex flex-1 overflow-hidden min-h-0">
+
+          {/* LEFT — Form */}
+          <div className="w-[300px] flex-shrink-0 border-r border-slate-200 flex flex-col bg-slate-50">
+            <div className="px-5 pt-4 pb-3 border-b border-slate-200">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 {editingId ? 'Edit Employee' : 'Add Employee'}
-              </h3>
-              <p className="text-xs text-slate-600">
-                {editingId ? 'Update employee information' : 'Enter employee details below'}
               </p>
             </div>
 
-            {/* Name Input */}
-            <div>
-              <Label className="text-xs font-semibold text-slate-700">Employee Name *</Label>
-              <Input
-                value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter full name"
-                className="h-9 mt-1 bg-white"
-                autoFocus
-              />
-            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {/* Name */}
+              <div>
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                  Employee Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter full name"
+                  className="h-10 bg-white border-slate-200 text-slate-900"
+                  autoFocus
+                />
+              </div>
 
-            {/* Department */}
-            <div>
-              <Label className="text-xs font-semibold text-slate-700">Department</Label>
-              <Select 
-                value={formData.department || undefined} 
-                onValueChange={val => setFormData({ ...formData, department: val })}
-              >
-                <SelectTrigger className="h-9 mt-1 bg-white">
-                  {formData.department ? (
-                    <div className="flex items-center gap-2">
-                      <img src={DEPARTMENT_ICONS[formData.department]} alt={formData.department} className="w-4 h-4 object-contain" />
-                      <span className="text-sm">{formData.department}</span>
-                    </div>
-                  ) : (
-                    <SelectValue placeholder="Select department" />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  {DEPARTMENTS.map(dept => (
-                    <SelectItem key={dept} value={dept}>
+              {/* Department */}
+              <div>
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                  Department
+                </Label>
+                <Select
+                  value={formData.department || undefined}
+                  onValueChange={val => setFormData({ ...formData, department: val })}
+                >
+                  <SelectTrigger className="h-10 bg-white border-slate-200">
+                    {formData.department ? (
                       <div className="flex items-center gap-2">
-                        <img src={DEPARTMENT_ICONS[dept]} alt={dept} className="w-4 h-4 object-contain" />
-                        <span className="text-sm">{dept}</span>
+                        <img src={DEPARTMENT_ICONS[formData.department]} alt={formData.department} className="w-4 h-4 object-contain" />
+                        <span className="text-sm">{formData.department}</span>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    ) : (
+                      <SelectValue placeholder="Select department" />
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEPARTMENTS.map(dept => (
+                      <SelectItem key={dept} value={dept}>
+                        <div className="flex items-center gap-2">
+                          <img src={DEPARTMENT_ICONS[dept]} alt={dept} className="w-4 h-4 object-contain" />
+                          <span className="text-sm">{dept}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Position */}
+              <div>
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                  Position <span className="normal-case font-normal text-slate-400">(optional)</span>
+                </Label>
+                <Input
+                  value={formData.position}
+                  onChange={e => setFormData({ ...formData, position: e.target.value })}
+                  placeholder="Job title"
+                  className="h-10 bg-white border-slate-200 text-slate-900"
+                />
+              </div>
             </div>
 
-            {/* Position */}
-            <div>
-              <Label className="text-xs font-semibold text-slate-700">Position</Label>
-              <Input
-                value={formData.position}
-                onChange={e => setFormData({ ...formData, position: e.target.value })}
-                placeholder="Job title (optional)"
-                className="h-9 mt-1 bg-white"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-1">
+            {/* Form Buttons */}
+            <div className="px-5 py-4 border-t border-slate-200 flex gap-2">
               {editingId && (
-                <Button 
-                  variant="outline" 
-                  onClick={resetForm} 
+                <Button
+                  variant="outline"
+                  onClick={resetForm}
                   disabled={loading}
-                  className="flex-1 h-9"
+                  className="flex-1 h-10 rounded-md border-slate-300 text-slate-600 font-semibold text-sm hover:bg-slate-100"
                 >
                   Cancel
                 </Button>
               )}
-              <Button 
-                onClick={handleSubmit} 
-                disabled={loading || !formData.name.trim()} 
-                className={`h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-sm text-sm ${editingId ? 'flex-1' : 'w-full'}`}
+              <Button
+                onClick={handleSubmit}
+                disabled={loading || !formData.name.trim()}
+                className={`h-10 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm ${editingId ? 'flex-1' : 'w-full'}`}
               >
                 {loading ? (
-                  <>
-                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-r-transparent" />
-                    {editingId ? 'Updating...' : 'Adding...'}
-                  </>
+                  <><div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-r-transparent" />{editingId ? 'Updating...' : 'Adding...'}</>
                 ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {editingId ? 'Update Employee' : 'Add Employee'}
-                  </>
+                  <><Plus className="h-4 w-4 mr-1.5" />{editingId ? 'Update Employee' : 'Add Employee'}</>
                 )}
               </Button>
             </div>
           </div>
 
-          {/* RIGHT SIDE - Employee List */}
+          {/* RIGHT — Employee List */}
           <div className="flex-1 flex flex-col overflow-hidden bg-white">
-            
-            {/* Search Bar */}
-            <div className="px-4 py-3 border-b border-slate-200 bg-white">
+
+            {/* Search */}
+            <div className="px-5 py-4 border-b border-slate-200">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Search employees..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="pl-9 h-9 bg-slate-50 border-slate-200 text-sm"
+                  className="pl-9 h-10 bg-slate-50 border-slate-200 text-sm"
                 />
               </div>
             </div>
 
-            {/* Employee List */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              <div className="space-y-2">
-                {loading && !employees.length ? (
-                  <div className="text-center py-16 text-slate-500">
-                    <div className="h-8 w-8 mx-auto mb-3 animate-spin rounded-full border-3 border-slate-300 border-r-transparent" />
-                    <p className="text-sm">Loading employees...</p>
-                  </div>
-                ) : filteredEmployees.length === 0 ? (
-                  <div className="text-center py-16 text-slate-400">
-                    <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm font-medium">
-                      {search ? 'No employees found' : 'No employees yet'}
-                    </p>
-                    <p className="text-xs mt-1">
-                      {search ? 'Try a different search term' : 'Add your first employee using the form'}
-                    </p>
-                  </div>
-                ) : (
-                  filteredEmployees.map(employee => (
+            {/* List */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {loading && !employees.length ? (
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                  <div className="h-8 w-8 mb-3 animate-spin rounded-full border-2 border-slate-300 border-r-transparent" />
+                  <p className="text-sm">Loading employees...</p>
+                </div>
+              ) : filteredEmployees.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                  <Users className="h-10 w-10 mb-3 opacity-20" />
+                  <p className="text-sm font-medium text-slate-500">
+                    {search ? 'No employees found' : 'No employees yet'}
+                  </p>
+                  <p className="text-xs mt-1 text-slate-400">
+                    {search ? 'Try a different search term' : 'Add your first employee using the form'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredEmployees.map(employee => (
                     <div
                       key={employee.id}
-                      className="flex items-center justify-between px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50/50 transition-all"
+                      className="flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50/30 transition-all"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-slate-900 truncate">{employee.name}</h4>
+                          <p className="text-sm font-semibold text-slate-900 truncate">{employee.name}</p>
                           {employee.status === 'inactive' && (
-                            <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200 flex-shrink-0 px-1.5 py-0">
+                            <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200 px-1.5 py-0 flex-shrink-0">
                               Inactive
                             </Badge>
                           )}
                         </div>
                         {(employee.department || employee.position) && (
-                          <div className="flex items-center gap-2 mt-0.5">
+                          <div className="flex items-center gap-1.5 mt-0.5">
                             {employee.department && (
-                              <span className="text-xs text-slate-600">{employee.department}</span>
+                              <div className="flex items-center gap-1">
+                                <img src={DEPARTMENT_ICONS[employee.department]} alt={employee.department} className="w-3 h-3 object-contain" />
+                                <span className="text-xs text-slate-500">{employee.department}</span>
+                              </div>
                             )}
                             {employee.position && (
                               <>
-                                {employee.department && <span className="text-xs text-slate-400">•</span>}
-                                <span className="text-xs text-slate-500 truncate">{employee.position}</span>
+                                {employee.department && <span className="text-xs text-slate-300">•</span>}
+                                <span className="text-xs text-slate-400 truncate">{employee.position}</span>
                               </>
                             )}
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 ml-2">
+                      <div className="flex items-center gap-1 ml-3 flex-shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(employee)}
-                          className="h-7 w-7 p-0 hover:bg-blue-100 hover:text-blue-600"
-                          title="Edit employee"
+                          className="h-7 w-7 p-0 hover:bg-blue-100 hover:text-blue-600 rounded-md"
                         >
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
@@ -332,32 +357,107 @@ export function EmployeeManagementModal({ open, onClose }: EmployeeManagementMod
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(employee.id, employee.name)}
-                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            title="Mark as inactive"
+                            className="h-7 w-7 p-0 hover:bg-red-100 hover:text-red-600 rounded-md text-slate-400"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t bg-slate-50 px-5 py-3">
+        <div className="border-t border-slate-200 bg-slate-50 px-6 py-3 flex-shrink-0">
           <Button
             variant="outline"
-            className="w-full h-9 rounded-lg font-semibold text-sm"
             onClick={onClose}
+            className="w-full h-9 rounded-md border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-100"
           >
             Close
           </Button>
         </div>
+
       </DialogContent>
     </Dialog>
+
+    {/* Delete Confirmation Modal */}
+    <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+      <DialogContent className="max-w-[420px] p-0 gap-0 rounded-xl border-0 shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 16px', background: '#1e293b',
+          borderBottom: '1px solid #334155', flexShrink: 0,
+        }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: 6, background: '#dc2626',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <Trash2 style={{ width: 14, height: 14, color: '#fff' }} />
+          </div>
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#fff' }}>
+            Delete Employee
+          </span>
+          <button
+            onClick={() => setDeleteTarget(null)}
+            style={{
+              width: 24, height: 24, borderRadius: 5, background: '#334155',
+              border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#475569')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#334155')}
+          >
+            <X style={{ width: 13, height: 13, color: '#fff' }} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-5 bg-white space-y-4">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+            <p className="text-xs text-slate-500 mb-0.5">Employee</p>
+            <p className="text-sm font-bold text-slate-900">{deleteTarget?.name}</p>
+          </div>
+          <div className="flex items-start gap-3 p-3.5 bg-red-50 border border-red-200 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-red-900 mb-0.5">This action cannot be undone</p>
+              <p className="text-xs text-red-700 leading-relaxed">
+                This employee will be permanently deleted from the database.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setDeleteTarget(null)}
+            disabled={deleting}
+            className="h-9 px-4 rounded-md border-slate-300 text-slate-600 font-semibold text-sm hover:bg-slate-100"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDelete}
+            disabled={deleting}
+            className="h-9 px-4 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-sm shadow-sm"
+          >
+            {deleting ? (
+              <><div className="h-3.5 w-3.5 mr-2 animate-spin rounded-full border-2 border-white border-r-transparent" />Deleting...</>
+            ) : (
+              <><Trash2 className="h-3.5 w-3.5 mr-1.5" />Delete Employee</>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  </>
   )
 }

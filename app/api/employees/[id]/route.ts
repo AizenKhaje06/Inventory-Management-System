@@ -66,7 +66,7 @@ export const PUT = withAuth(async (request, { user, params }) => {
   }
 })
 
-// ─── DELETE: Soft delete (mark as inactive) ─────────────────────────────────
+// ─── DELETE: Hard delete employee ───────────────────────────────────────────
 export const DELETE = withAuth(async (request, { user, params }) => {
   try {
     const id = params?.id
@@ -74,28 +74,19 @@ export const DELETE = withAuth(async (request, { user, params }) => {
       return NextResponse.json({ error: 'Employee ID is required' }, { status: 400 })
     }
 
-    // Soft delete: mark as inactive instead of deleting
-    const { data, error } = await supabase
+    // Hard delete the employee
+    const { error } = await supabase
       .from('employees')
-      .update({
-        status: 'inactive',
-        updated_at: new Date().toISOString()
-      })
+      .delete()
       .eq('id', id)
-      .select()
-      .single()
 
     if (error) {
       console.error('[Employees DELETE] Error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    if (!data) {
-      return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
-    }
-
-    console.log(`[Employees DELETE] ✅ Deactivated: ${id}`)
-    return NextResponse.json({ success: true, message: 'Employee marked as inactive' })
+    console.log(`[Employees DELETE] ✅ Deleted: ${id}`)
+    return NextResponse.json({ success: true, message: 'Employee deleted successfully' })
 
   } catch (error: any) {
     console.error('[Employees DELETE] Exception:', error)

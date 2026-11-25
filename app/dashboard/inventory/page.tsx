@@ -2372,7 +2372,7 @@ export default function InventoryPage() {
                           <Button
                             onClick={handleEditCategory}
                             disabled={submitting || !editCategoryValue.trim()}
-                            className="h-9 px-4 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm flex-shrink-0"
+                            className="h-9 px-4 ml-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm flex-shrink-0"
                           >
                             {submitting ? <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-r-transparent" /> : "Save"}
                           </Button>
