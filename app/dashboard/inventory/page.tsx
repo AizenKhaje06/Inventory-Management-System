@@ -1307,54 +1307,54 @@ export default function InventoryPage() {
                         /* Normal Table Headers - No Sticky on Mobile and Desktop */
                         <>
                           {/* Image Column - Regular (No Sticky) */}
-                          <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black w-[7%]">
+                          <th className="py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black w-[7%]">
                             Image
                           </th>
                           {/* Product Name - Regular (No Sticky) */}
                           <th className={cn(
-                            "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black",
+                            "py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black",
                             !isReadOnly ? "w-[20%]" : "w-[24%]"
                           )}>
                             Product
                           </th>
                           <th className={cn(
-                            "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
+                            "py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
                             !isReadOnly ? "w-[12%]" : "w-[14%]"
                           )}>
                             Category
                           </th>
                           <th className={cn(
-                            "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
+                            "py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
                             !isReadOnly ? "w-[12%]" : "w-[14%]"
                           )}>
                             Status
                           </th>
                           <th className={cn(
-                            "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
+                            "py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
                             !isReadOnly ? "w-[11%]" : "w-[14%]"
                           )}>
                             Stock
                           </th>
                           {/* Hide Cost column for department agents (operations role) */}
                           {!isReadOnly && (
-                            <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[11%]">
+                            <th className="py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50 w-[11%]">
                               Cost
                             </th>
                           )}
                           <th className={cn(
-                            "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
+                            "py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
                             !isReadOnly ? "w-[11%]" : "w-[12%]"
                           )}>
                             Price
                           </th>
                           <th className={cn(
-                            "py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
+                            "py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700/50",
                             isReadOnly ? "w-[12%]" : "w-[10%]"
                           )}>
                             Margin
                           </th>
                           {!isReadOnly && (
-                            <th className="py-2.5 px-3 text-left text-[10px] font-bold text-white uppercase tracking-wider md:sticky md:right-0 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[13%]">
+                            <th className="py-2.5 px-3 text-center text-[10px] font-bold text-white uppercase tracking-wider md:sticky md:right-0 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black md:z-20 w-[13%]">
                               Actions
                             </th>
                           )}
@@ -1706,8 +1706,8 @@ export default function InventoryPage() {
                           
                           {/* Product Name - Regular (No Sticky) */}
                           <td className="py-2 px-3 bg-white dark:bg-slate-900">
-                            <div className="flex items-center gap-2">
-                              <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="min-w-0 flex-1 text-center">
                                 <p 
                                   className={cn(
                                     "text-[13px] font-semibold break-words line-clamp-2",
@@ -1724,10 +1724,10 @@ export default function InventoryPage() {
                           </td>
 
                           {/* Category */}
-                          <td className="py-2 px-3">
+                          <td className="py-2 px-3 text-center">
                             <span 
                               className={cn(
-                                "text-[12px] block break-words",
+                                "text-[12px] break-words",
                                 isSelected 
                                   ? "text-blue-900 dark:text-blue-100 font-medium" 
                                   : "text-slate-600 dark:text-slate-400"
@@ -1739,7 +1739,7 @@ export default function InventoryPage() {
                           </td>
 
                           {/* Stock Status - CONDITIONAL DISPLAY */}
-                          <td className="py-2 px-3">
+                          <td className="py-2 px-3 text-center">
                             {(() => {
                               const badQty = item.bad_item_quantity || 0
                               const goodQty = item.quantity // item.quantity is GOOD stock only
@@ -1832,11 +1832,11 @@ export default function InventoryPage() {
                                 }
                                 
                                 return (
-                                  <div className="flex flex-col gap-1 items-start">
+                                  <div className="flex flex-col gap-1 items-center">
                                     {/* Show good items bar if exists */}
                                     {goodQty > 0 && (
                                       <div className="flex items-center gap-2 w-full max-w-[160px]">
-                                        <span className="text-[10px] font-semibold text-green-700 dark:text-green-400 min-w-[35px] text-left tabular-nums">
+                                        <span className="text-[10px] font-semibold text-green-700 dark:text-green-400 min-w-[35px] text-right tabular-nums">
                                           {formatNumber(goodQty)}
                                         </span>
                                         <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -1909,7 +1909,7 @@ export default function InventoryPage() {
                               const badPercent = totalItems > 0 ? (badQty / totalItems) * 100 : 0
                               
                               return (
-                                <div className="flex flex-col gap-1 items-start">
+                                <div className="flex flex-col gap-1 items-center">
                                   {hasBadItems ? (
                                     <>
                                       {/* Green bar - Good items */}
@@ -1995,7 +1995,7 @@ export default function InventoryPage() {
 
                           {/* Cost - Hidden for department agents (operations role) */}
                           {!isReadOnly && (
-                            <td className="py-2 px-3">
+                            <td className="py-2 px-3 text-center">
                               <span className="text-[13px] font-medium text-slate-800 dark:text-slate-200 tabular-nums">
                                 {formatCurrency(item.costPrice)}
                               </span>
@@ -2003,7 +2003,7 @@ export default function InventoryPage() {
                           )}
 
                           {/* Price */}
-                          <td className="py-2 px-3">
+                          <td className="py-2 px-3 text-center">
                             <span className={
                               isSelected 
                                 ? "text-[13px] font-semibold tabular-nums text-blue-900 dark:text-blue-100" 
@@ -2014,8 +2014,8 @@ export default function InventoryPage() {
                           </td>
 
                           {/* Profit Margin */}
-                          <td className="py-2 px-3">
-                            <div className="flex items-center justify-start gap-1">
+                          <td className="py-2 px-3 text-center">
+                            <div className="flex items-center justify-center gap-1">
                               <span className={`text-[12px] font-bold tabular-nums ${profitMargin >= 30 ? 'text-green-600' : profitMargin >= 15 ? 'text-amber-600' : 'text-red-600'}`}>
                                 {profitMargin.toFixed(1)}%
                               </span>
@@ -2041,7 +2041,9 @@ export default function InventoryPage() {
                                           <PackagePlus className="h-3.5 w-3.5" />
                                         </Button>
                                       </TooltipTrigger>
-                                      <TooltipContent><p>Adjust Stock</p></TooltipContent>
+                                      <TooltipContent side="top" className="text-xs font-semibold">
+                                        Adjust Stock
+                                      </TooltipContent>
                                     </Tooltip>
                                   )}
 
@@ -2058,7 +2060,9 @@ export default function InventoryPage() {
                                           <Pencil className="h-3.5 w-3.5" />
                                         </Button>
                                       </TooltipTrigger>
-                                      <TooltipContent><p>Edit</p></TooltipContent>
+                                      <TooltipContent side="top" className="text-xs font-semibold">
+                                        Edit Product
+                                      </TooltipContent>
                                     </Tooltip>
                                   )}
 
@@ -2075,7 +2079,9 @@ export default function InventoryPage() {
                                           <Trash2 className="h-3.5 w-3.5" />
                                         </Button>
                                       </TooltipTrigger>
-                                      <TooltipContent><p>Delete</p></TooltipContent>
+                                      <TooltipContent side="top" className="text-xs font-semibold">
+                                        Delete Product
+                                      </TooltipContent>
                                     </Tooltip>
                                   )}
 

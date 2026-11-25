@@ -566,58 +566,60 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
 
       {/* Professional Confirmation Dialog */}
       <Dialog open={confirmDialog.open} onOpenChange={handleCloseDialog}>
-        <DialogContent className="sm:max-w-[500px] p-0 gap-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden rounded-xl border-0 shadow-2xl">
           {confirmDialog.type === 'paid' ? (
             <>
               {/* Mark as Paid Dialog */}
-              <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-emerald-50 to-green-50 border-b">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="h-12 w-12 rounded-full bg-emerald-600 flex items-center justify-center shadow-lg">
+              <DialogHeader className="px-6 pt-6 pb-5 bg-white border-b border-slate-200">
+                <div className="flex items-start gap-4">
+                  <div className="h-11 w-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-md flex-shrink-0">
                     <CheckCircle className="h-6 w-6 text-white" />
                   </div>
-                  <div>
-                    <DialogTitle className="text-xl font-bold text-slate-900">
-                      Confirm Payment
+                  <div className="flex-1">
+                    <DialogTitle className="text-lg font-bold text-slate-900 mb-1">
+                      Mark as Paid
                     </DialogTitle>
-                    <DialogDescription className="text-sm text-slate-600 mt-0.5">
-                      Mark this purchase as paid
+                    <DialogDescription className="text-sm text-slate-600">
+                      Confirm that this purchase has been deducted
                     </DialogDescription>
                   </div>
                 </div>
               </DialogHeader>
               
-              <div className="px-6 py-5">
-                <div className="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
-                  <p className="text-sm text-slate-600 mb-2">Employee:</p>
+              <div className="px-6 py-5 bg-slate-50">
+                <div className="bg-white rounded-lg p-4 mb-4 border border-slate-200 shadow-sm">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Employee</p>
                   <p className="text-base font-bold text-slate-900">{confirmDialog.employeeName}</p>
                 </div>
                 
                 <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-                  <AlertCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                  <div>
+                  <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="h-4 w-4 text-emerald-700" />
+                  </div>
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-emerald-900 mb-1">
-                      This action will mark the purchase as paid
+                      Payment Confirmation
                     </p>
-                    <p className="text-xs text-emerald-700">
-                      The paid date will be recorded as today's date. This action can be reviewed but not easily reversed.
+                    <p className="text-xs text-emerald-700 leading-relaxed">
+                      This will record today's date as the paid date. The purchase status will be updated to "Paid".
                     </p>
                   </div>
                 </div>
               </div>
 
-              <DialogFooter className="px-6 py-4 bg-slate-50 border-t flex-row gap-2 justify-end">
+              <DialogFooter className="px-6 py-4 bg-white border-t border-slate-200 flex-row gap-3 justify-end">
                 <Button
                   variant="outline"
                   onClick={handleCloseDialog}
                   disabled={isProcessing}
-                  className="border-slate-300"
+                  className="h-10 px-5 border-slate-300 hover:bg-slate-50"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleConfirmAction}
                   disabled={isProcessing}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="h-10 px-5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
                 >
                   {isProcessing ? (
                     <>
@@ -636,54 +638,56 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
           ) : confirmDialog.type === 'delete' ? (
             <>
               {/* Delete Purchase Dialog */}
-              <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-red-50 to-rose-50 border-b">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="h-12 w-12 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
+              <DialogHeader className="px-6 pt-6 pb-5 bg-white border-b border-slate-200">
+                <div className="flex items-start gap-4">
+                  <div className="h-11 w-11 rounded-xl bg-red-600 flex items-center justify-center shadow-md flex-shrink-0">
                     <Trash2 className="h-6 w-6 text-white" />
                   </div>
-                  <div>
-                    <DialogTitle className="text-xl font-bold text-slate-900">
-                      Delete Purchase Record
+                  <div className="flex-1">
+                    <DialogTitle className="text-lg font-bold text-slate-900 mb-1">
+                      Delete Purchase
                     </DialogTitle>
-                    <DialogDescription className="text-sm text-slate-600 mt-0.5">
+                    <DialogDescription className="text-sm text-slate-600">
                       This action cannot be undone
                     </DialogDescription>
                   </div>
                 </div>
               </DialogHeader>
               
-              <div className="px-6 py-5">
-                <div className="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
-                  <p className="text-sm text-slate-600 mb-2">Employee:</p>
+              <div className="px-6 py-5 bg-slate-50">
+                <div className="bg-white rounded-lg p-4 mb-4 border border-slate-200 shadow-sm">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Employee</p>
                   <p className="text-base font-bold text-slate-900">{confirmDialog.employeeName}</p>
                 </div>
                 
                 <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
-                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <div>
+                  <div className="h-8 w-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="h-4 w-4 text-red-700" />
+                  </div>
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-red-900 mb-1">
-                      Permanently delete this purchase record?
+                      Permanent Deletion
                     </p>
-                    <p className="text-xs text-red-700">
-                      This will permanently remove the purchase record from the database. This action cannot be undone.
+                    <p className="text-xs text-red-700 leading-relaxed">
+                      This purchase record will be permanently removed from the database. This action cannot be undone.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <DialogFooter className="px-6 py-4 bg-slate-50 border-t flex-row gap-2 justify-end">
+              <DialogFooter className="px-6 py-4 bg-white border-t border-slate-200 flex-row gap-3 justify-end">
                 <Button
                   variant="outline"
                   onClick={handleCloseDialog}
                   disabled={isProcessing}
-                  className="border-slate-300"
+                  className="h-10 px-5 border-slate-300 hover:bg-slate-50"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleConfirmAction}
                   disabled={isProcessing}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="h-10 px-5 bg-red-600 hover:bg-red-700 text-white shadow-sm"
                 >
                   {isProcessing ? (
                     <>
@@ -702,25 +706,25 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
           ) : (
             <>
               {/* Cancel Purchase Dialog */}
-              <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="h-12 w-12 rounded-full bg-amber-600 flex items-center justify-center shadow-lg">
+              <DialogHeader className="px-6 pt-6 pb-5 bg-white border-b border-slate-200">
+                <div className="flex items-start gap-4">
+                  <div className="h-11 w-11 rounded-xl bg-amber-600 flex items-center justify-center shadow-md flex-shrink-0">
                     <XCircle className="h-6 w-6 text-white" />
                   </div>
-                  <div>
-                    <DialogTitle className="text-xl font-bold text-slate-900">
+                  <div className="flex-1">
+                    <DialogTitle className="text-lg font-bold text-slate-900 mb-1">
                       Cancel Purchase
                     </DialogTitle>
-                    <DialogDescription className="text-sm text-slate-600 mt-0.5">
+                    <DialogDescription className="text-sm text-slate-600">
                       Provide a reason for cancellation
                     </DialogDescription>
                   </div>
                 </div>
               </DialogHeader>
               
-              <div className="px-6 py-5">
-                <div className="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
-                  <p className="text-sm text-slate-600 mb-2">Employee:</p>
+              <div className="px-6 py-5 bg-slate-50">
+                <div className="bg-white rounded-lg p-4 mb-4 border border-slate-200 shadow-sm">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Employee</p>
                   <p className="text-base font-bold text-slate-900">{confirmDialog.employeeName}</p>
                 </div>
 
@@ -732,42 +736,44 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                     placeholder="Enter the reason for cancelling this purchase..."
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
-                    className="min-h-[100px] resize-none bg-white border-slate-300 focus:border-amber-500 focus:ring-amber-500"
+                    className="min-h-[100px] resize-none bg-white border-slate-300 focus:border-amber-500 focus:ring-amber-500 rounded-lg"
                     disabled={isProcessing}
                   />
                   {!cancelReason.trim() && (
-                    <p className="text-xs text-slate-500 mt-1.5">
-                      Please provide a reason before cancelling
+                    <p className="text-xs text-slate-500 mt-2">
+                      A reason is required to proceed
                     </p>
                   )}
                 </div>
                 
                 <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
-                  <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <div>
+                  <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="h-4 w-4 text-amber-700" />
+                  </div>
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-amber-900 mb-1">
-                      This will cancel the purchase order
+                      Status Update
                     </p>
-                    <p className="text-xs text-amber-700">
-                      The purchase will be marked as cancelled and will not be deducted from the employee's salary.
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      This purchase will be marked as cancelled and will not be deducted from salary.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <DialogFooter className="px-6 py-4 bg-slate-50 border-t flex-row gap-2 justify-end">
+              <DialogFooter className="px-6 py-4 bg-white border-t border-slate-200 flex-row gap-3 justify-end">
                 <Button
                   variant="outline"
                   onClick={handleCloseDialog}
                   disabled={isProcessing}
-                  className="border-slate-300"
+                  className="h-10 px-5 border-slate-300 hover:bg-slate-50"
                 >
                   Go Back
                 </Button>
                 <Button
                   onClick={handleConfirmAction}
                   disabled={isProcessing || !cancelReason.trim()}
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  className="h-10 px-5 bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
                 >
                   {isProcessing ? (
                     <>
