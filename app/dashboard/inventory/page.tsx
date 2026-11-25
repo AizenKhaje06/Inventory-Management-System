@@ -2130,71 +2130,85 @@ export default function InventoryPage() {
       {/* Adjust Stock Dialog */}
       {selectedAdjustItem && (
         <Dialog open={adjustStockDialogOpen} onOpenChange={setAdjustStockDialogOpen}>
-          <DialogContent className="max-w-[95vw] sm:max-w-2xl mx-4 sm:mx-auto max-h-[90vh] flex flex-col p-0 gap-0 rounded-xl sm:rounded-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 px-8 py-6 border-b border-slate-600 flex-shrink-0">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-                  <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-                    <Package className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-white text-lg font-medium">Adjust Stock</span>
-                    <span className="text-white text-xl font-bold capitalize">{selectedAdjustItem.name.toLowerCase()}</span>
-                  </div>
-                </DialogTitle>
-                <DialogDescription className="text-slate-200 text-sm mt-2 font-medium">
-                  Current stock: {selectedAdjustItem.quantity} units
-                </DialogDescription>
-              </DialogHeader>
-            </div>
+          <DialogContent className="max-w-[480px] p-0 gap-0 rounded-xl overflow-hidden border-0 shadow-2xl">
             
-            <div className="flex-1 overflow-y-auto px-8 py-6 space-y-4 min-h-0">
-              {/* Adjustment Type */}
+            {/* Header */}
+            <div className="bg-slate-800 px-6 py-4 border-b border-slate-700 flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <Package className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0 pr-6">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Adjust Stock</p>
+                <p className="text-sm font-bold text-white truncate">{selectedAdjustItem.name}</p>
+                <p className="text-xs text-slate-400 mt-0.5">Current stock: <span className="text-white font-semibold">{selectedAdjustItem.quantity} units</span></p>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-5 bg-white">
+
+              {/* Adjustment Type Toggle */}
               <div>
-                <Label className="text-slate-700 dark:text-slate-300 font-medium">Adjustment Type</Label>
-                <div className="flex gap-3 mt-2">
-                  <Button
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Adjustment Type</Label>
+                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg">
+                  <button
                     type="button"
-                    variant={adjustmentType === 'restock' ? 'default' : 'outline'}
                     onClick={() => setAdjustmentType('restock')}
-                    className="flex-1"
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-semibold transition-all ${
+                      adjustmentType === 'restock'
+                        ? 'bg-white text-emerald-700 shadow-sm border border-slate-200'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
                   >
-                    <PackagePlus className="h-4 w-4 mr-2" />
+                    <PackagePlus className={`h-4 w-4 ${adjustmentType === 'restock' ? 'text-emerald-600' : 'text-slate-400'}`} />
                     Increase Stock
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
-                    variant={adjustmentType === 'reduce' ? 'default' : 'outline'}
                     onClick={() => setAdjustmentType('reduce')}
-                    className="flex-1"
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-semibold transition-all ${
+                      adjustmentType === 'reduce'
+                        ? 'bg-white text-red-700 shadow-sm border border-slate-200'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
                   >
-                    <Package className="h-4 w-4 mr-2" />
+                    <Package className={`h-4 w-4 ${adjustmentType === 'reduce' ? 'text-red-500' : 'text-slate-400'}`} />
                     Reduce Stock
-                  </Button>
+                  </button>
                 </div>
               </div>
 
               {/* Amount */}
               <div>
-                <Label htmlFor="adjust-amount" className="text-slate-700 dark:text-slate-300 font-medium">
+                <Label htmlFor="adjust-amount" className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
                   Amount to {adjustmentType === 'restock' ? 'Add' : 'Reduce'}
                 </Label>
                 <Input
                   id="adjust-amount"
                   type="number"
                   min="1"
-                  value={adjustAmount}
+                  value={adjustAmount || ''}
                   onChange={(e) => setAdjustAmount(Number.parseInt(e.target.value) || 0)}
-                  placeholder="Enter amount"
-                  className="mt-1.5 h-10 rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                  placeholder="0"
+                  className="h-10 border-slate-200 bg-slate-50 focus:bg-white text-slate-900 font-medium"
                 />
+                {adjustAmount > 0 && (
+                  <p className="text-xs text-slate-500 mt-1.5">
+                    New stock will be: <span className={`font-bold ${adjustmentType === 'restock' ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {adjustmentType === 'restock'
+                        ? selectedAdjustItem.quantity + adjustAmount
+                        : Math.max(0, selectedAdjustItem.quantity - adjustAmount)
+                      } units
+                    </span>
+                  </p>
+                )}
               </div>
 
               {/* Reason */}
               <div>
-                <Label htmlFor="adjust-reason" className="text-slate-700 dark:text-slate-300 font-medium">Reason</Label>
+                <Label htmlFor="adjust-reason" className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Reason</Label>
                 <Select value={adjustReason} onValueChange={setAdjustReason}>
-                  <SelectTrigger id="adjust-reason" className="mt-1.5 h-10 rounded-lg border-2">
+                  <SelectTrigger id="adjust-reason" className="h-10 border-slate-200 bg-slate-50 focus:bg-white">
                     <SelectValue placeholder="Select a reason" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2231,233 +2245,228 @@ export default function InventoryPage() {
               {/* Notes (for reduce only) */}
               {adjustmentType === 'reduce' && (
                 <div>
-                  <Label htmlFor="adjust-notes" className="text-slate-700 dark:text-slate-300 font-medium">Notes (Optional)</Label>
+                  <Label htmlFor="adjust-notes" className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Notes <span className="normal-case font-normal text-slate-400">(optional)</span></Label>
                   <Input
                     id="adjust-notes"
                     value={adjustNotes}
                     onChange={(e) => setAdjustNotes(e.target.value)}
                     placeholder="Additional details..."
-                    className="mt-1.5 h-10 rounded-lg border-2"
+                    className="h-10 border-slate-200 bg-slate-50 focus:bg-white"
                   />
                 </div>
               )}
             </div>
-            
-            <div className="bg-slate-50 dark:bg-slate-900/50 px-8 py-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 flex-shrink-0">
-              <Button 
-                type="button" 
-                variant="outline" 
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setAdjustStockDialogOpen(false)}
-                className="px-6 border-2 font-semibold"
+                className="h-10 px-5 border-slate-300 font-semibold text-slate-700 hover:bg-slate-100"
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
-                onClick={handleAdjustStockSubmit} 
-                disabled={adjustAmount <= 0 || !adjustReason} 
-                className="px-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold shadow-lg"
+              <Button
+                type="submit"
+                onClick={handleAdjustStockSubmit}
+                disabled={adjustAmount <= 0 || !adjustReason}
+                className={`h-10 px-5 font-semibold text-white shadow-sm ${
+                  adjustmentType === 'restock'
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
               >
-                {adjustmentType === 'restock' ? 'Increase Stock' : 'Reduce Stock'}
+                {adjustmentType === 'restock' ? (
+                  <><PackagePlus className="h-4 w-4 mr-2" />Increase Stock</>
+                ) : (
+                  <><Package className="h-4 w-4 mr-2" />Reduce Stock</>
+                )}
               </Button>
             </div>
+
           </DialogContent>
         </Dialog>
       )}
 
       {/* Category Management Dialog */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] mx-4 sm:mx-auto flex flex-col p-0 gap-0 rounded-xl sm:rounded-2xl overflow-hidden">
-          {/* Professional Header with Dark Gradient - Mobile optimized */}
-          <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-600 flex-shrink-0">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-                  <Tag className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <span className="text-white">Category Management</span>
-              </DialogTitle>
-              <DialogDescription className="text-slate-200 text-xs sm:text-sm mt-1 sm:mt-2 font-medium">
-                Add and manage product categories
-              </DialogDescription>
-            </DialogHeader>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 px-4 sm:px-8 py-4 sm:py-6 min-h-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-600 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-500 [&::-webkit-scrollbar]:opacity-0 hover:[&::-webkit-scrollbar]:opacity-100 transition-opacity">
-            {/* Add New Category Section - Mobile optimized */}
-            <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-xl p-3 sm:p-4 space-y-2 sm:space-y-3">
-              <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-600" />
-                <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">Add New Category</h3>
-              </div>
-              
-              <div>
-                <Label className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 sm:mb-1.5 block">
-                  Category Name *
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Enter category name"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && newCategory.trim()) {
-                        handleAddCategory()
-                      }
-                    }}
-                    className="h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-                    disabled={submitting}
-                  />
-                  <Button
-                    onClick={handleAddCategory}
-                    disabled={!newCategory.trim() || submitting}
-                    className="h-9 sm:h-10 px-4 sm:px-6 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xs sm:text-sm font-semibold flex-shrink-0 shadow-sm"
-                  >
-                    {submitting ? (
-                      <CustomLoader size="sm" />
-                    ) : (
-                      <>
-                        <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5" />
-                        <span className="hidden sm:inline">Add</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
+        <DialogContent className="max-w-[480px] max-h-[85vh] flex flex-col p-0 gap-0 rounded-xl border-0 shadow-2xl overflow-hidden">
+
+          {/* Header */}
+          <div className="bg-slate-800 px-6 py-4 border-b border-slate-700 flex items-center gap-3 flex-shrink-0">
+            <div className="h-9 w-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <Tag className="h-5 w-5 text-white" />
             </div>
+            <div className="pr-6">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Products</p>
+              <p className="text-sm font-bold text-white">Category Management</p>
+            </div>
+          </div>
 
-            {/* Existing Categories List */}
-            <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-2 sm:mb-3 px-1">
-                Existing Categories ({categories.length})
-              </h3>
+          <div className="flex-1 overflow-y-auto min-h-0 bg-white">
 
-            {/* Category List */}
-            {categories.length === 0 ? (
-              <div className="text-center py-8 sm:py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
-                <Tag className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-slate-400 mb-2 sm:mb-3" />
-                <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">No categories yet</p>
-                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mt-1">Add your first category using the form above</p>
-              </div>
-            ) : (
-            <div className="space-y-2">
-              {categories.map((category) => (
-                <div
-                  key={category.id}
-                  className="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-orange-300 dark:hover:border-orange-700 transition-colors"
+            {/* Add New Category */}
+            <div className="px-6 pt-5 pb-4 border-b border-slate-100">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Add New Category</p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter category name"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && newCategory.trim()) handleAddCategory() }}
+                  className="h-10 border-slate-200 bg-slate-50 focus:bg-white text-slate-900 flex-1"
+                  disabled={submitting}
+                />
+                <Button
+                  onClick={handleAddCategory}
+                  disabled={!newCategory.trim() || submitting}
+                  className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold flex-shrink-0 shadow-sm"
                 >
-                  {editingCategory?.id === category.id ? (
-                    <div className="flex-1 flex gap-2">
-                      <Input
-                        value={editCategoryValue}
-                        onChange={(e) => setEditCategoryValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleEditCategory()
-                          }
-                          if (e.key === "Escape") {
-                            setEditingCategory(null)
-                            setEditCategoryValue("")
-                          }
-                        }}
-                        className="h-8 sm:h-9 text-xs sm:text-sm flex-1"
-                        disabled={submitting}
-                        autoFocus
-                      />
-                      <Button
-                        size="sm"
-                        onClick={handleEditCategory}
-                        disabled={submitting || !editCategoryValue.trim()}
-                        className="h-8 sm:h-9 px-3 sm:px-4 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm whitespace-nowrap"
-                      >
-                        {submitting ? <CustomLoader size="sm" /> : "Save"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingCategory(null)
-                          setEditCategoryValue("")
-                        }}
-                        disabled={submitting}
-                        className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+                  {submitting ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent" />
                   ) : (
-                    <>
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <Tag className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
-                        <span className="text-xs sm:text-sm font-medium text-slate-900 dark:text-white truncate">{category.name}</span>
-                      </div>
-                      <div className="flex items-center gap-0.5 flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingCategory(category)
-                            setEditCategoryValue(category.name)
-                          }}
-                          disabled={submitting}
-                          className="h-7 w-7 p-0 text-slate-600 hover:text-orange-600 dark:text-slate-400 dark:hover:text-orange-400"
-                        >
-                          <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteCategoryId(category.id)}
-                          disabled={submitting}
-                          className="h-7 w-7 p-0 text-slate-600 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                        </Button>
-                      </div>
-                    </>
+                    <><Plus className="h-4 w-4 mr-1.5" />Add</>
                   )}
-                </div>
-              ))}
+                </Button>
+              </div>
             </div>
-            )}
+
+            {/* Existing Categories */}
+            <div className="px-6 py-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                  Existing Categories
+                </p>
+                <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                  {categories.length}
+                </span>
+              </div>
+
+              {categories.length === 0 ? (
+                <div className="text-center py-10 border border-dashed border-slate-200 rounded-lg">
+                  <Tag className="h-8 w-8 mx-auto text-slate-300 mb-2" />
+                  <p className="text-sm font-medium text-slate-500">No categories yet</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Add your first category above</p>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {categories.map((category) => (
+                    <div
+                      key={category.id}
+                      className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/40 transition-all"
+                    >
+                      {editingCategory?.id === category.id ? (
+                        <div className="flex-1 flex items-center gap-2">
+                          <Input
+                            value={editCategoryValue}
+                            onChange={(e) => setEditCategoryValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleEditCategory()
+                              if (e.key === "Escape") { setEditingCategory(null); setEditCategoryValue("") }
+                            }}
+                            className="h-9 text-sm flex-1 border-slate-300"
+                            disabled={submitting}
+                            autoFocus
+                          />
+                          <Button
+                            onClick={handleEditCategory}
+                            disabled={submitting || !editCategoryValue.trim()}
+                            className="h-9 px-4 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm flex-shrink-0"
+                          >
+                            {submitting ? <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-r-transparent" /> : "Save"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => { setEditingCategory(null); setEditCategoryValue("") }}
+                            disabled={submitting}
+                            className="h-9 px-4 rounded-md text-xs border-slate-300 text-slate-600 hover:bg-slate-100 flex-shrink-0"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                            <Tag className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                            <span className="text-sm font-medium text-slate-900 truncate">{category.name}</span>
+                          </div>
+                          <div className="flex items-center gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => { setEditingCategory(category); setEditCategoryValue(category.name) }}
+                              disabled={submitting}
+                              className="h-7 w-7 p-0 hover:bg-blue-100 hover:text-blue-600"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteCategoryId(category.id)}
+                              disabled={submitting}
+                              className="h-7 w-7 p-0 hover:bg-red-100 hover:text-red-600"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
+
         </DialogContent>
       </Dialog>
 
       {/* Delete Category Confirmation */}
       <Dialog open={!!deleteCategoryId} onOpenChange={() => setDeleteCategoryId(null)}>
-        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 max-w-[95vw] sm:max-w-md mx-4 sm:mx-auto rounded-xl sm:rounded-2xl">
-          <DialogHeader className="px-1">
-            <DialogTitle className="text-slate-900 dark:text-white text-base sm:text-lg font-semibold">Delete Category</DialogTitle>
-            <DialogDescription className="text-slate-600 dark:text-slate-400 text-sm">
-              Are you sure you want to delete this category? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-row gap-2 pt-4">
+        <DialogContent className="max-w-[420px] p-0 gap-0 rounded-xl border-0 shadow-2xl overflow-hidden">
+          <div className="bg-slate-800 px-6 py-4 border-b border-slate-700 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
+              <Trash2 className="h-5 w-5 text-white" />
+            </div>
+            <div className="pr-6">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Confirm Action</p>
+              <p className="text-sm font-bold text-white">Delete Category</p>
+            </div>
+          </div>
+          <div className="px-6 py-5 bg-white">
+            <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-red-900 mb-1">This action cannot be undone</p>
+                <p className="text-xs text-red-700 leading-relaxed">
+                  Deleting this category may affect products currently assigned to it.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
             <Button
               variant="outline"
               onClick={() => setDeleteCategoryId(null)}
               disabled={submitting}
-              className="flex-1 sm:flex-initial h-9 sm:h-10 px-4 sm:px-6 text-sm"
+              className="h-10 px-5 border-slate-300 font-semibold text-slate-700 hover:bg-slate-100"
             >
               Cancel
             </Button>
             <Button
               onClick={() => deleteCategoryId && handleDeleteCategory(deleteCategoryId)}
               disabled={submitting}
-              className="bg-red-600 hover:bg-red-700 text-white flex-1 sm:flex-initial h-9 sm:h-10 px-4 sm:px-6 text-sm"
+              className="h-10 px-5 bg-red-600 hover:bg-red-700 text-white font-semibold shadow-sm"
             >
               {submitting ? (
-                <>
-                  <CustomLoader size="sm" className="mr-2" />
-                  Deleting...
-                </>
+                <><div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-r-transparent" />Deleting...</>
               ) : (
-                "Delete"
+                <><Trash2 className="h-4 w-4 mr-2" />Delete Category</>
               )}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

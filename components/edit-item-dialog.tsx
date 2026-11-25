@@ -4,11 +4,10 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import { Package, AlertCircle } from "lucide-react"
 import type { InventoryItem } from "@/lib/types"
 import { apiGet, apiPut } from "@/lib/api-client"
@@ -125,304 +124,255 @@ export function EditItemDialog({ open, onOpenChange, item, onSuccess }: EditItem
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
-        {/* Professional Header with Dark Gradient */}
-        <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 px-8 py-6 border-b border-slate-600 flex-shrink-0">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-                <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-                  <Package className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-white">Edit {isBundle ? 'Bundle' : 'Product'}</span>
-              </DialogTitle>
-              {isBundle && (
-                <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                  Bundle
-                </Badge>
-              )}
-            </div>
-            <DialogDescription className="text-slate-200 text-sm mt-2 font-medium">
-              Update {isBundle ? 'bundle' : 'product'} information and pricing
-            </DialogDescription>
-          </DialogHeader>
-        </div>
+      <DialogContent className="max-w-[560px] max-h-[90vh] flex flex-col p-0 gap-0 rounded-xl border-0 shadow-2xl overflow-hidden">
         
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-8 py-6 space-y-5 min-h-0">
-          {/* Product Image Upload - Now available for both products and bundles */}
-          <div className="space-y-2">
-            <Label className="text-slate-700 dark:text-slate-300 font-medium text-sm">
-              {isBundle ? 'Bundle' : 'Product'} Image <span className="text-slate-400 font-normal">(optional)</span>
-            </Label>
-            <ImageUpload
-              currentImageUrl={imageUrl}
-              itemId={item.id}
-              onUploadComplete={(url) => setImageUrl(url)}
-              onRemove={() => setImageUrl(null)}
-              uploadType="product"
-            />
+        {/* Header */}
+        <div className="bg-slate-800 px-6 py-4 border-b border-slate-700 flex items-center gap-3 flex-shrink-0">
+          <div className="h-9 w-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <Package className="h-5 w-5 text-white" />
           </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name" className="text-slate-700 dark:text-slate-300 font-medium">
-                Product Name
-              </Label>
-              <Input
-                id="edit-name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="rounded-[5px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-category" className="text-slate-700 dark:text-slate-300 font-medium">
-                Category
-              </Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
-                <SelectTrigger id="edit-category" className="w-full rounded-[5px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
-                  <SelectValue placeholder={loadingCategories ? "Loading categories..." : "Select a category"} />
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                  {loadingCategories ? (
-                    <SelectItem value="loading" disabled>Loading...</SelectItem>
-                  ) : categories.length === 0 ? (
-                    <SelectItem value="none" disabled>No categories available</SelectItem>
-                  ) : (
-                    categories.map((category) => (
-                      <SelectItem key={category.id} value={category.name}>
-                        {category.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-quantity" className="text-slate-700 dark:text-slate-300 font-medium">
-                Current Stock <span className="text-slate-400 font-normal text-xs">(Read-only)</span>
-              </Label>
-              <Input
-                id="edit-quantity"
-                type="number"
-                required
-                value={formData.quantity}
-                readOnly
-                disabled
-                className="rounded-[5px] border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-not-allowed"
-              />
-              <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                Use Restock button to change stock quantity
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-costPrice" className="text-slate-700 dark:text-slate-300 font-medium">
-                Cost Price (₱)
-              </Label>
-              <Input
-                id="edit-costPrice"
-                type="number"
-                step="0.01"
-                required
-                value={formData.costPrice}
-                onChange={(e) => setFormData({ ...formData, costPrice: Number.parseFloat(e.target.value) })}
-                className="rounded-[5px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-sellingPrice" className="text-slate-700 dark:text-slate-300 font-medium">
-                Selling Price (₱)
-              </Label>
-              <Input
-                id="edit-sellingPrice"
-                type="number"
-                step="0.01"
-                required
-                value={formData.sellingPrice}
-                onChange={(e) => setFormData({ ...formData, sellingPrice: Number.parseFloat(e.target.value) })}
-                className="rounded-[5px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-reorderLevel" className="text-slate-700 dark:text-slate-300 font-medium">
-                Reorder Level
-              </Label>
-              <Input
-                id="edit-reorderLevel"
-                type="number"
-                required
-                value={formData.reorderLevel}
-                onChange={(e) => setFormData({ ...formData, reorderLevel: Number.parseInt(e.target.value) })}
-                className="rounded-[5px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-              />
-            </div>
+          <div className="flex-1 min-w-0 pr-6">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+              Edit {isBundle ? 'Bundle' : 'Product'}
+            </p>
+            <p className="text-sm font-bold text-white truncate">{item.name}</p>
           </div>
-          
-          {/* Bundle Components Section */}
-          {isBundle && bundleComponents.length > 0 && (
-            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  Bundle Components
-                </h3>
+          {isBundle && (
+            <span className="flex-shrink-0 bg-purple-600 text-white text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-md">
+              Bundle
+            </span>
+          )}
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto min-h-0">
+          <div className="px-6 py-5 space-y-5 bg-white">
+
+            {/* Product Image */}
+            <div>
+              <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                {isBundle ? 'Bundle' : 'Product'} Image <span className="normal-case font-normal text-slate-400">(optional)</span>
+              </Label>
+              <ImageUpload
+                currentImageUrl={imageUrl}
+                itemId={item.id}
+                onUploadComplete={(url) => setImageUrl(url)}
+                onRemove={() => setImageUrl(null)}
+                uploadType="product"
+              />
+            </div>
+
+            {/* Name + Category */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-name" className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                  Product Name
+                </Label>
+                <Input
+                  id="edit-name"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="h-10 border-slate-200 bg-slate-50 focus:bg-white text-slate-900"
+                />
               </div>
-              
-              {loadingComponents ? (
-                <div className="text-center py-8 text-slate-500">Loading components...</div>
-              ) : (
-                <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                  {bundleComponents.map((component: any, index: number) => {
-                    const componentItem = componentItems.find(item => item.id === component.item_id)
-                    const subtotal = componentItem ? componentItem.costPrice * component.quantity : 0
-                    const canMake = componentItem ? Math.floor(componentItem.quantity / component.quantity) : 0
-                    
-                    return (
-                      <div
-                        key={component.item_id || index}
-                        className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Package className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                              <p className="font-medium text-sm text-slate-900 dark:text-white truncate">
+              <div>
+                <Label htmlFor="edit-category" className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                  Category
+                </Label>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
+                  <SelectTrigger id="edit-category" className="h-10 border-slate-200 bg-slate-50 focus:bg-white w-full">
+                    <SelectValue placeholder={loadingCategories ? "Loading..." : "Select category"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingCategories ? (
+                      <SelectItem value="loading" disabled>Loading...</SelectItem>
+                    ) : categories.length === 0 ? (
+                      <SelectItem value="none" disabled>No categories</SelectItem>
+                    ) : (
+                      categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>{category.name}</SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Current Stock + Cost Price */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-quantity" className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                  Current Stock <span className="normal-case font-normal text-slate-400">(Read-only)</span>
+                </Label>
+                <Input
+                  id="edit-quantity"
+                  type="number"
+                  value={formData.quantity}
+                  readOnly
+                  disabled
+                  className="h-10 border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed"
+                />
+                <p className="text-xs text-blue-600 flex items-center gap-1 mt-1.5">
+                  <AlertCircle className="h-3 w-3" />
+                  Use Adjust Stock to change quantity
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="edit-costPrice" className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                  Cost Price (₱)
+                </Label>
+                <Input
+                  id="edit-costPrice"
+                  type="number"
+                  step="0.01"
+                  required
+                  value={formData.costPrice}
+                  onChange={(e) => setFormData({ ...formData, costPrice: Number.parseFloat(e.target.value) })}
+                  className="h-10 border-slate-200 bg-slate-50 focus:bg-white text-slate-900"
+                />
+              </div>
+            </div>
+
+            {/* Selling Price + Reorder Level */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-sellingPrice" className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                  Selling Price (₱)
+                </Label>
+                <Input
+                  id="edit-sellingPrice"
+                  type="number"
+                  step="0.01"
+                  required
+                  value={formData.sellingPrice}
+                  onChange={(e) => setFormData({ ...formData, sellingPrice: Number.parseFloat(e.target.value) })}
+                  className="h-10 border-slate-200 bg-slate-50 focus:bg-white text-slate-900"
+                />
+                {formData.costPrice > 0 && formData.sellingPrice > 0 && (
+                  <p className="text-xs text-slate-500 mt-1.5">
+                    Margin: <span className={`font-bold ${((formData.sellingPrice - formData.costPrice) / formData.sellingPrice * 100) >= 20 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {((formData.sellingPrice - formData.costPrice) / formData.sellingPrice * 100).toFixed(1)}%
+                    </span>
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="edit-reorderLevel" className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                  Reorder Level
+                </Label>
+                <Input
+                  id="edit-reorderLevel"
+                  type="number"
+                  required
+                  value={formData.reorderLevel}
+                  onChange={(e) => setFormData({ ...formData, reorderLevel: Number.parseInt(e.target.value) })}
+                  className="h-10 border-slate-200 bg-slate-50 focus:bg-white text-slate-900"
+                />
+              </div>
+            </div>
+
+            {/* Bundle Components Section */}
+            {isBundle && bundleComponents.length > 0 && (
+              <div className="pt-4 border-t border-slate-200 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-purple-600" />
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Bundle Components</h3>
+                </div>
+
+                {loadingComponents ? (
+                  <div className="text-center py-6 text-sm text-slate-400">Loading components...</div>
+                ) : (
+                  <div className="space-y-2 max-h-[260px] overflow-y-auto">
+                    {bundleComponents.map((component: any, index: number) => {
+                      const componentItem = componentItems.find(item => item.id === component.item_id)
+                      const subtotal = componentItem ? componentItem.costPrice * component.quantity : 0
+                      const canMake = componentItem ? Math.floor(componentItem.quantity / component.quantity) : 0
+
+                      return (
+                        <div key={component.item_id || index} className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-slate-900 truncate">
                                 {componentItem?.name || 'Unknown Product'}
                               </p>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                              <div>
-                                <span className="text-slate-500 dark:text-slate-400">Quantity:</span>
-                                <span className="ml-1 font-medium text-slate-900 dark:text-white">
-                                  {component.quantity} {component.quantity === 1 ? 'unit' : 'units'}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-slate-500 dark:text-slate-400">Current Stock:</span>
-                                <span className={cn(
-                                  "ml-1 font-medium",
-                                  componentItem && componentItem.quantity < component.quantity
-                                    ? "text-red-600 dark:text-red-400"
-                                    : componentItem && componentItem.quantity < component.quantity * 5
-                                    ? "text-yellow-600 dark:text-yellow-400"
-                                    : "text-green-600 dark:text-green-400"
-                                )}>
-                                  {componentItem?.quantity || 0} units
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-slate-500 dark:text-slate-400">Unit Cost:</span>
-                                <span className="ml-1 font-medium text-slate-900 dark:text-white">
-                                  {componentItem ? formatCurrency(componentItem.costPrice) : '₱0.00'}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-slate-500 dark:text-slate-400">Subtotal:</span>
-                                <span className="ml-1 font-medium text-slate-900 dark:text-white">
-                                  {formatCurrency(subtotal)}
-                                </span>
+                              <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                                <span>Qty: <span className="font-medium text-slate-700">{component.quantity}</span></span>
+                                <span>Stock: <span className={`font-medium ${(componentItem?.quantity || 0) < component.quantity ? 'text-red-600' : 'text-emerald-600'}`}>{componentItem?.quantity || 0}</span></span>
+                                <span>Cost: <span className="font-medium text-slate-700">{formatCurrency(subtotal)}</span></span>
                               </div>
                             </div>
-                            
-                            <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                              <span className="text-xs text-slate-500 dark:text-slate-400">
-                                Can make: <span className="font-medium text-slate-900 dark:text-white">{canMake}</span> bundles
-                              </span>
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-xs text-slate-400">Can make</p>
+                              <p className={`text-sm font-bold ${canMake === 0 ? 'text-red-600' : 'text-emerald-600'}`}>{canMake}</p>
                             </div>
                           </div>
+                          {(componentItem?.quantity || 0) < component.quantity && (
+                            <div className="mt-2 flex items-center gap-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+                              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                              Insufficient stock
+                            </div>
+                          )}
                         </div>
-                        
-                        {componentItem && componentItem.quantity === 0 && (
-                          <div className="mt-3 flex items-start gap-2 p-2 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                            <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-red-700 dark:text-red-300">
-                              Out of stock - Cannot make any bundles
-                            </p>
-                          </div>
-                        )}
-                        
-                        {componentItem && componentItem.quantity > 0 && componentItem.quantity < component.quantity && (
-                          <div className="mt-3 flex items-start gap-2 p-2 rounded bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-                            <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                              Insufficient stock - Need {component.quantity} units per bundle
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-              
-              {/* Bundle Summary */}
-              {!loadingComponents && componentItems.length > 0 && (
-                <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <div>
-                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">
-                      Total Bundle Cost
-                    </p>
-                    <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
-                      {formatCurrency(calculateBundleCost(bundleComponents.map((c: any) => {
-                        const item = componentItems.find(i => i.id === c.item_id)
-                        return {
-                          ...c,
-                          itemId: c.item_id,
-                          costPrice: item?.costPrice || 0,
-                          currentStock: item?.quantity || 0
-                        }
-                      })))}
-                    </p>
+                      )
+                    })}
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">
-                      Virtual Stock
-                    </p>
-                    <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
-                      {calculateVirtualStock(bundleComponents.map((c: any) => {
-                        const item = componentItems.find(i => i.id === c.item_id)
-                        return {
-                          ...c,
-                          itemId: c.item_id,
-                          quantity: c.quantity,
-                          currentStock: item?.quantity || 0
-                        }
-                      }))} bundles
-                    </p>
+                )}
+
+                {!loadingComponents && componentItems.length > 0 && (
+                  <div className="grid grid-cols-2 gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div>
+                      <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-0.5">Bundle Cost</p>
+                      <p className="text-base font-bold text-blue-900">
+                        {formatCurrency(calculateBundleCost(bundleComponents.map((c: any) => {
+                          const it = componentItems.find(i => i.id === c.item_id)
+                          return { quantity: c.quantity, costPrice: it?.costPrice || 0 }
+                        })))}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-0.5">Virtual Stock</p>
+                      <p className="text-base font-bold text-blue-900">
+                        {calculateVirtualStock(bundleComponents.map((c: any) => {
+                          const it = componentItems.find(i => i.id === c.item_id)
+                          return { quantity: c.quantity, currentStock: it?.quantity || 0 }
+                        }))} bundles
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+
+          </div>
         </form>
-        
-        {/* Professional Footer */}
-        <div className="bg-slate-50 dark:bg-slate-900/50 px-8 py-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 flex-shrink-0">
-          <Button 
-            type="button" 
-            variant="outline" 
+
+        {/* Footer */}
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => onOpenChange(false)}
-            className="px-6 border-2 font-semibold"
+            className="h-10 px-5 border-slate-300 font-semibold text-slate-700 hover:bg-slate-100"
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={loading}
             onClick={handleSubmit}
-            className="px-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold shadow-lg"
+            className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm"
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? (
+              <>
+                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-r-transparent" />
+                Saving...
+              </>
+            ) : (
+              'Save Changes'
+            )}
           </Button>
         </div>
+
       </DialogContent>
     </Dialog>
   )
