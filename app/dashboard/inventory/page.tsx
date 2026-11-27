@@ -272,10 +272,8 @@ export default function InventoryPage() {
       filtered = filtered.filter((item) => item.category === categoryFilter)
     }
 
-    // Status filter (good vs bad items)
-    if (statusFilter === "good") {
-      filtered = filtered.filter((item) => item.item_status !== 'bad')
-    } else if (statusFilter === "bad") {
+    // Status filter (bad items only)
+    if (statusFilter === "bad") {
       filtered = filtered.filter((item) => item.item_status === 'bad')
     }
 
@@ -309,6 +307,7 @@ export default function InventoryPage() {
     }
 
     setFilteredItems(filtered)
+    setCurrentPage(1)
   }, [debouncedSearch, salesChannelFilter, categoryFilter, statusFilter, stockLevelFilter, sortBy, items])
 
   // Calculate pagination
@@ -1141,8 +1140,8 @@ export default function InventoryPage() {
             {/* Action Buttons - Right Side - Replaced with Category Filter */}
             <div className="flex gap-2 flex-wrap lg:flex-nowrap lg:ml-auto">
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-full lg:w-[200px] h-7 text-xs border-slate-200 dark:border-slate-700">
-                  <SelectValue placeholder="Filter by Category" />
+                <SelectTrigger className="w-full lg:w-[180px] h-9 text-sm border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 rounded-lg shadow-sm font-medium text-slate-700">
+                  <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
@@ -1154,23 +1153,22 @@ export default function InventoryPage() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={(value: "all" | "good" | "bad") => setStatusFilter(value)}>
-                <SelectTrigger className="w-full lg:w-[180px] h-7 text-xs border-slate-200 dark:border-slate-700">
+                <SelectTrigger className="w-full lg:w-[160px] h-9 text-sm border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 rounded-lg shadow-sm font-medium text-slate-700">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="good">Good Stock</SelectItem>
                   <SelectItem value="bad">Bad Stock</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={stockLevelFilter} onValueChange={(value: "all" | "low" | "out") => setStockLevelFilter(value)}>
-                <SelectTrigger className="w-full lg:w-[180px] h-7 text-xs border-slate-200 dark:border-slate-700">
+                <SelectTrigger className="w-full lg:w-[160px] h-9 text-sm border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 rounded-lg shadow-sm font-medium text-slate-700">
                   <SelectValue placeholder="Stock Level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="low">Low Stocks</SelectItem>
-                  <SelectItem value="out">Out of Stocks</SelectItem>
+                  <SelectItem value="all">All Stock Levels</SelectItem>
+                  <SelectItem value="low">Low Stock</SelectItem>
+                  <SelectItem value="out">Out of Stock</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -2026,7 +2024,7 @@ export default function InventoryPage() {
                           {!isReadOnly && (
                             <td className="py-2 px-3 md:sticky md:right-0 bg-white dark:bg-slate-900 md:z-10">
                               <TooltipProvider>
-                                <div className="flex justify-start gap-0">
+                                <div className="flex justify-center gap-0">
 
                                   {/* Adjust Stock - only for non-read-only users */}
                                   {!isReadOnly && (
