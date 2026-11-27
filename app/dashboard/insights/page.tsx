@@ -1754,30 +1754,30 @@ export default function InsightsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-0.5">How is Returns Analytics calculated?</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Tracks all orders marked as RETURNED in Track Orders. Measures return volume, value, and rate.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Tracks all orders marked as CANCELLED in Orders page. Measures cancellation volume, value, and rate.</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
                   <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider mb-1">Total Returns</p>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">Count of returned order quantities</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Sum of qty from all orders where parcel_status = RETURNED</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">Count of cancelled order quantities</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Sum of qty from all orders where is_cancelled = true</p>
                 </div>
                 <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
                   <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider mb-1">Return Rate %</p>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">(Returned Orders ÷ Delivered Orders) × 100</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">(Cancelled Orders ÷ Active Orders) × 100</p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Percentage based on number of orders, not item quantities</p>
                 </div>
                 <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
                   <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider mb-1">Return Value</p>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">Sum of total from returned orders</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Total revenue lost due to returns — excluded from gross profit</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">Sum of total from cancelled orders</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Total revenue lost due to cancellations — excluded from gross profit</p>
                 </div>
               </div>
               <div className="mt-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex items-start gap-2">
                 <span className="text-red-500 text-sm font-bold flex-shrink-0">ℹ</span>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Example: 100 delivered orders, 5 returned → Return Rate = 5%. A rate above 10% is a warning sign — check product quality or packaging. Returned orders are fully excluded from revenue calculations.
+                  Example: 100 active orders, 5 cancelled → Return Rate = 5%. A rate above 10% is a warning sign — check product quality, packaging, or shipping issues. Cancelled orders are fully excluded from revenue calculations.
                 </p>
               </div>
             </CardContent>

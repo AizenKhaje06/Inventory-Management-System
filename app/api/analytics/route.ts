@@ -21,11 +21,11 @@ export async function GET(request: Request) {
       getRestocks()
     ])
 
-    // Fetch orders directly without deleted_at filter
+    // Fetch orders directly - include Cancelled orders (is_cancelled = true) for return analytics
     const { data: ordersRaw } = await supabaseAdmin
       .from('orders')
-      .select('id, parcel_status, status')
-      .in('status', ['Packed', 'Shipped', 'Delivered'])
+      .select('id, parcel_status, status, is_cancelled, total, items')
+      .in('status', ['Packed', 'Shipped', 'Delivered', 'Cancelled'])
       .limit(5000)
 
     const orders = ordersRaw || []

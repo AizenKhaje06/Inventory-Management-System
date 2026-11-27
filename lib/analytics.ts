@@ -332,18 +332,18 @@ export function calculateReturnAnalytics(
   const totalReturns = returns.reduce((sum, r) => sum + r.quantity, 0)
   const totalReturnValue = returns.reduce((sum, r) => sum + r.totalCost, 0)
 
-  // NEW: Calculate return rate based on ORDER COUNT, not item quantities
+  // NEW: Calculate return rate based on ORDER COUNT using is_cancelled field
   let returnRate = 0
   if (orders && orders.length > 0) {
-    // Count unique orders by parcel_status
-    const returnedOrdersCount = orders.filter(o => o.parcel_status === 'RETURNED').length
-    const deliveredOrdersCount = orders.filter(o => o.parcel_status === 'DELIVERED').length
+    // Count unique orders by is_cancelled field
+    const cancelledOrdersCount = orders.filter(o => o.is_cancelled === true).length
+    const deliveredOrdersCount = orders.filter(o => !o.is_cancelled).length
     
-    // Return rate = (returned orders / delivered orders) × 100
-    returnRate = deliveredOrdersCount > 0 ? (returnedOrdersCount / deliveredOrdersCount) * 100 : 0
+    // Return rate = (cancelled orders / delivered orders) × 100
+    returnRate = deliveredOrdersCount > 0 ? (cancelledOrdersCount / deliveredOrdersCount) * 100 : 0
     
     console.log('[Return Analytics] Order-based calculation:', {
-      returnedOrders: returnedOrdersCount,
+      cancelledOrders: cancelledOrdersCount,
       deliveredOrders: deliveredOrdersCount,
       returnRate: returnRate.toFixed(2) + '%'
     })
