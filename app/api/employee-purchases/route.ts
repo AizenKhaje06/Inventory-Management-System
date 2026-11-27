@@ -50,10 +50,10 @@ export async function POST(request: Request) {
       `${item.name} (${item.quantity}x)${item.isFreebie ? ' [Freebie]' : ''}`
     ).join(', ')
 
-    // 1. Create purchase record with items stored as JSON
+    // 1. Create purchase record with items stored as JSONB
     const purchaseRecord = {
       employee_name: employee_name.trim(),
-      items: JSON.stringify(items), // Store items as JSON array
+      items: items, // Supabase automatically handles JSONB conversion
       total_quantity: totalQuantity,
       amount: calculatedTotal,
       purchase_date: new Date().toISOString(),

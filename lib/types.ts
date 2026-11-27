@@ -31,6 +31,7 @@ export interface Transaction {
   profit: number
   timestamp: string
   type: "sale" | "restock"
+  transactionType?: "sale" | "demo" | "internal" | "transfer"
   staffName?: string
   notes?: string
   waybillNumber?: string

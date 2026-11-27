@@ -41,8 +41,8 @@ export default function EmployeePurchasesPage() {
   // Calculate stats
   const pendingPurchases = purchases.filter((p: any) => p.status === 'pending')
   const pendingAmount = pendingPurchases.reduce((sum: number, p: any) => sum + p.amount, 0)
-  const paidPurchases = purchases.filter((p: any) => p.status === 'paid')
-  const paidAmount = paidPurchases.reduce((sum: number, p: any) => sum + p.amount, 0)
+  const deductedPurchases = purchases.filter((p: any) => p.status === 'deducted')
+  const deductedAmount = deductedPurchases.reduce((sum: number, p: any) => sum + p.amount, 0)
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -98,7 +98,7 @@ export default function EmployeePurchasesPage() {
           </CardContent>
         </Card>
 
-        {/* Paid This Month */}
+        {/* Deducted This Month */}
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
@@ -107,13 +107,13 @@ export default function EmployeePurchasesPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Paid This Month
+                  Deducted This Month
                 </p>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                  ₱{paidAmount.toLocaleString()}
+                  ₱{deductedAmount.toLocaleString()}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {paidPurchases.length} purchases
+                  {deductedPurchases.length} purchases
                 </p>
               </div>
             </div>

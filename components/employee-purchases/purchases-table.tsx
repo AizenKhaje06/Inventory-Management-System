@@ -57,7 +57,7 @@ interface Purchase {
   purchase_date: string
   deduction_date: string
   paid_date?: string
-  status: 'pending' | 'paid' | 'cancelled'
+  status: 'pending' | 'deducted' | 'cancelled'
   notes?: string
 }
 
@@ -72,7 +72,7 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
   const [statusFilter, setStatusFilter] = useState("all")
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
-    type: 'paid' | 'cancel' | 'delete' | null
+    type: 'deducted' | 'cancel' | 'delete' | null
     purchaseId: string | null
     employeeName: string
   }>({
@@ -155,11 +155,11 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
     return matchesSearch && matchesStatus
   })
 
-  // Handle mark as paid
-  const handleMarkAsPaid = async (id: string, employeeName: string) => {
+  // Handle mark as deducted
+  const handleMarkAsDeducted = async (id: string, employeeName: string) => {
     setConfirmDialog({
       open: true,
-      type: 'paid',
+      type: 'deducted',
       purchaseId: id,
       employeeName
     })
@@ -208,9 +208,9 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
           setConfirmDialog({ open: false, type: null, purchaseId: null, employeeName: '' })
         }
       } else {
-        // PATCH request for paid/cancel
+        // PATCH request for deducted/cancel
         const body: any = {
-          status: confirmDialog.type === 'paid' ? 'paid' : 'cancelled'
+          status: confirmDialog.type === 'deducted' ? 'deducted' : 'cancelled'
         }
         
         if (confirmDialog.type === 'cancel') {
@@ -324,7 +324,7 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="deducted">Deducted</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
@@ -470,7 +470,7 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                       <TableCell className="py-3.5">
                         <Badge
                           variant={
-                            purchase.status === 'paid'
+                            purchase.status === 'deducted'
                               ? 'default'
                               : purchase.status === 'cancelled'
                               ? 'destructive'
@@ -478,12 +478,12 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                           }
                           className={cn(
                             "font-semibold px-2.5 py-1 text-xs shadow-sm whitespace-nowrap",
-                            purchase.status === 'paid' && 'bg-emerald-500 hover:bg-emerald-600 text-white border-0',
+                            purchase.status === 'deducted' && 'bg-emerald-500 hover:bg-emerald-600 text-white border-0',
                             purchase.status === 'pending' && 'bg-amber-500 hover:bg-amber-600 text-white border-0',
                             purchase.status === 'cancelled' && 'bg-red-500 hover:bg-red-600 text-white border-0'
                           )}
                         >
-                          {purchase.status === 'paid' && <CheckCircle className="h-3 w-3 mr-1 inline" />}
+                          {purchase.status === 'deducted' && <CheckCircle className="h-3 w-3 mr-1 inline" />}
                           {purchase.status === 'cancelled' && <XCircle className="h-3 w-3 mr-1 inline" />}
                           {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
                         </Badge>
@@ -516,11 +516,11 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                               {purchase.status === 'pending' && (
                                 <>
                                   <DropdownMenuItem
-                                    onClick={() => handleMarkAsPaid(purchase.id, purchase.employee_name)}
+                                    onClick={() => handleMarkAsDeducted(purchase.id, purchase.employee_name)}
                                     className="cursor-pointer"
                                   >
                                     <CheckCircle className="h-4 w-4 mr-2 text-emerald-600" />
-                                    <span className="font-medium">Mark as Paid</span>
+                                    <span className="font-medium">Mark as Deducted</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() => handleCancel(purchase.id, purchase.employee_name)}
@@ -567,9 +567,9 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
       {/* Professional Confirmation Dialog */}
       <Dialog open={confirmDialog.open} onOpenChange={handleCloseDialog}>
         <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden rounded-xl border-0 shadow-2xl">
-          {confirmDialog.type === 'paid' ? (
+          {confirmDialog.type === 'deducted' ? (
             <>
-              {/* Mark as Paid Dialog */}
+              {/* Mark as Deducted Dialog */}
               <DialogHeader className="px-6 pt-6 pb-5 bg-white border-b border-slate-200">
                 <div className="flex items-start gap-4">
                   <div className="h-11 w-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-md flex-shrink-0">
@@ -577,10 +577,10 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                   </div>
                   <div className="flex-1">
                     <DialogTitle className="text-lg font-bold text-slate-900 mb-1">
-                      Mark as Paid
+                      Mark as Deducted
                     </DialogTitle>
                     <DialogDescription className="text-sm text-slate-600">
-                      Confirm that this purchase has been deducted
+                      Confirm that this purchase has been deducted from salary
                     </DialogDescription>
                   </div>
                 </div>
@@ -598,10 +598,10 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-emerald-900 mb-1">
-                      Payment Confirmation
+                      Deduction Confirmation
                     </p>
                     <p className="text-xs text-emerald-700 leading-relaxed">
-                      This will record today's date as the paid date. The purchase status will be updated to "Paid".
+                      This will update the purchase status to "Deducted". The amount has been deducted from the employee's salary.
                     </p>
                   </div>
                 </div>
@@ -629,7 +629,7 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Confirm Payment
+                      Confirm Deduction
                     </>
                   )}
                 </Button>
@@ -830,7 +830,7 @@ export function PurchasesTable({ purchases, loading, onRefresh }: PurchasesTable
                   <Badge
                     className={cn(
                       "font-medium text-sm px-3 py-1",
-                      viewDetailsDialog.purchase.status === 'paid' && 'bg-emerald-500 hover:bg-emerald-600 text-white border-0',
+                      viewDetailsDialog.purchase.status === 'deducted' && 'bg-emerald-500 hover:bg-emerald-600 text-white border-0',
                       viewDetailsDialog.purchase.status === 'pending' && 'bg-amber-500 hover:bg-amber-600 text-white border-0',
                       viewDetailsDialog.purchase.status === 'cancelled' && 'bg-red-500 hover:bg-red-600 text-white border-0'
                     )}

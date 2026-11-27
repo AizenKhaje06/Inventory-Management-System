@@ -15,10 +15,6 @@ export async function PATCH(
 
     const updates: any = { status }
 
-    if (status === 'paid') {
-      updates.paid_date = new Date().toISOString()
-    }
-
     if (notes) {
       updates.notes = notes
     }
